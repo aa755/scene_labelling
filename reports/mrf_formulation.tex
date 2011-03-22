@@ -14,12 +14,22 @@ $ log \Phi_i(k) = (y_i^k -  w_n^k.x_i )^2$  and the log of the edge potential as
 Substituting these potential functions, we can write the log likelihood as: 
 
 \begin{equation}
- \log P_w (y|x) = \sum_{i=1}^{N} \sum_{k=1}^{K} (y_i^k - w^{k}_{n}.x_{i})^2 + \sum_{(i,j)\in E} \sum_{l,k=1}^{K} w_{e}^{l,k}.x_{ij}(y_i^l - y_j^k)^2 - \log Z_w(x,w_e)
+ \log P_w (y|x) = \sum_{i=1}^{N} \sum_{k=1}^{K} (y_i^k - w^{k}_{n}.x_{i})^2 + \sum_{(i,j)\in E} \sum_{l,k=1}^{K} (|y_i^l - y_j^k| -w_{e}^{l,k}.x_{ij})^2- \log Z_w(x,w_e)
 \end{equation}
 
+\subsection{Learning}
+It's easy to see that the partition function Z is independent of $w_n$ and $w_e$.
+So, maximum likelihood approach learning will {\bf not} require the evaluation of the partition function. Closed form
+solution for most likely $w_n$ and $w_e$ can be computed
 
-Maximum likelihood approach learning will require the evaluation of the partition function. We are trying to compute $Z_w$ analytically. If that is not possible, we can use the pseudo-likelihood estimate for approximate parameter learning. 
+\subsection{Preddiction}
+Prediction boils down to a constrained quadratic program. We substitute $(|y_i^l - y_j^k|)$ by the variable $u_{i,j}^{l,k}$ and add corresponding constraints.
 
+\begin{eqnarray*}
+ min: \sum_{i=1}^{N} \sum_{k=1}^{K} (y_i^k - w^{k}_{n}.x_{i})^2 + \sum_{(i,j)\in E} \sum_{l,k=1}^{K} (u_{i,j}^{l,k} -w_{e}^{l,k}.x_{ij})^2\\
+ st:u_{i,j}^{l,k}>(y_i^l - y_j^k)\\
+ u_{i,j}^{l,k}>-(y_i^l - y_j^k)
+\end{eqnarray*}
 
 
 \section{Model Formulation 2}
