@@ -9,8 +9,6 @@ import commands;
 from scipy.constants.constants import fine_structure
 import re;
 
-out=commands.getoutput('ls *.pcd');
-files=out.split();
 
 scene_map={};
 #read the mapping file
@@ -24,9 +22,13 @@ for line in mapfile:
 
 
 #rename the files now
+out=commands.getoutput('ls *.txt');
+files=out.split();
+
 for file in files:
+    print file
 #    matches=re.search('([0-9]*)_(transformed_labeled_data_.*_segmented_xyzn\.pcd\.bag)\.pcd\.png',file)
-    matches=re.search('([0-9]*)_(transformed_labeled_data.*_segmented_xyzn(_binary)?\.pcd)',file)
+    matches=re.search('([0-9]*)_(transformed_labeled_.*_segmented_xyzn(_binary)?\.pcd)',file)
     frameNum=matches.group(1);
     imgfilename=matches.group(2);
     imflen=len(imgfilename);
