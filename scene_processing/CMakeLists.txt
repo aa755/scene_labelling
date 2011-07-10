@@ -67,7 +67,6 @@ rosbuild_add_executable (image_and_label src/genImageAndLabelFile.cpp)
 ##rosbuild_add_executable (compute_neighbors src/get_neighbors.cpp)
 ##rosbuild_add_executable (extract_frames src/extract_frames.cpp)
 ##rosbuild_add_executable (mls src/mls.cpp)
-##rosbuild_add_executable (mls src/mls.cpp)
 ##target_link_libraries ( pcl_kdtree pcl_surface)
 
 ##rosbuild_add_executable (combineNearestCam src/NearestCamMerge.cpp)
