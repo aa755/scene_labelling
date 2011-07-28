@@ -42,7 +42,7 @@ class NonTerminal : public Symbol
     
     /** indices into the pointcloud
      */
-    vector<int> pointIndices;
+    vector<int> pointIndices; // can be replaced with any sufficient statistic
     
     /** 
      * compute leaves by concatenating 
