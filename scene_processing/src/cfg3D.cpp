@@ -8,12 +8,13 @@
 #include <iostream>
 #include <vector>
 #include<typeinfo>
+#include<pcl/point_types.h>
 using namespace std;
+typedef pcl::PointXYZRGB PointT;
 
 /*
  * 
  */
-class Terminal;
 
 class Symbol
 {
@@ -32,13 +33,16 @@ class Terminal : public Symbol
         cost=0;
     }
 protected:
-    float x,y,z,rgb;
+    PointT pt;
 };
 
 class NonTerminal : public Symbol
 {
     vector<Symbol*> children;
-    vector<Terminal*> leaves;
+    
+    /** indices into the pointcloud
+     */
+    vector<int> pointIndices;
     
     /** 
      * compute leaves by concatenating 
