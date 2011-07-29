@@ -12,13 +12,13 @@
   <depend package="pcl_ros"/>
   <depend package="eigen"/>
   <depend package="opencv2"/>
+  <depend package="pcl_visualization"/>
   <export>
     <cpp cflags="-I${prefix}/src/includes"/>
   </export>
  <!-- 
 temporarily removed:
 
-  <depend package="pcl_visualization"/>
  <depend package="stereo_msgs"/>
 
  <depend package="octomap_ros"/>

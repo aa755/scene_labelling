@@ -196,7 +196,7 @@ void extractEuclideanClusters (
 
 
 
-/* 
+/** 
 Extract the clusters based on location and normals
 */
 void extractEuclideanClusters (
