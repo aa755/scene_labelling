@@ -9,12 +9,14 @@
 #include <vector>
 #include<typeinfo>
 #include<pcl/point_types.h>
+#include<pcl/features/normal_3d.h>
 using namespace std;
 typedef pcl::PointXYZRGB PointT;
 
 /*
  * 
  */
+pcl::PointCloud<PointT> scene;
 
 class Symbol
 {
@@ -38,15 +40,18 @@ protected:
 
 class NonTerminal : public Symbol
 {
+protected:
     vector<Symbol*> children;
     
     /** indices into the pointcloud
      */
     vector<int> pointIndices; // can be replaced with any sufficient statistic
+    //will be populated only when extracted as min
     
     /** 
      * compute leaves by concatenating 
      * leaves of children */
+public:
     void computeLeaves()
     {
         
@@ -67,7 +72,13 @@ class Rule
 
 class Plane : public NonTerminal
 {
-    
+    Eigen::Vector4f planeParams;
+    float curvature;
+    void computePlaneParams()
+    {
+        pcl::NormalEstimation<PointT,PointT> normalEstimator;
+        normalEstimator.computePointNormal(scene, pointIndices, planeParams, curvature);
+    }
 };
         
 int main(int argc, char** argv) 

@@ -99,7 +99,7 @@ int
   pcl::PassThrough<PointT> pass_;
 
   pcl_ros::BAGReader reader;
-  char *topic="/rgbdslam/my_clouds";
+  char *topic="/rgbdslam/transformed_cloud";
   if(argc>2)
 	topic=argv[2];
 std::cerr<<topic<<std::endl;
@@ -117,6 +117,7 @@ std::cerr<<topic<<std::endl;
     if (cloud_blob_prev != cloud_blob)
     {
       pcl::fromROSMsg (*cloud_blob, cloud);
+      
       ROS_INFO ("PointCloud with %d data points and frame %s (%f) received.", (int)cloud.points.size (), cloud.header.frame_id.c_str (), cloud.header.stamp.toSec ()); 
       cnt++;
     }
