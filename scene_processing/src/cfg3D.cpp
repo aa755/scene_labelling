@@ -10,6 +10,8 @@
 #include<typeinfo>
 #include<pcl/point_types.h>
 #include<pcl/features/normal_3d.h>
+#include<pcl/sample_consensus/sac_model_plane.h>
+//sac_model_plane.h
 using namespace std;
 typedef pcl::PointXYZRGB PointT;
 
@@ -61,7 +63,7 @@ public:
 
 class Rule
 {    
-    bool isApplicable(vector<Symbol*> RHS);
+    virtual bool isApplicable(vector<Symbol*> RHS)=0;
     
     /**
      *  applies this rule on the given params(RHS of rule)
@@ -72,15 +74,40 @@ class Rule
 
 class Plane : public NonTerminal
 {
+protected:
     Eigen::Vector4f planeParams;
     float curvature;
+    bool planeParamsComputed;
+public:
+    Plane()
+    {
+        planeParamsComputed=false;
+    }
+    
     void computePlaneParams()
     {
         pcl::NormalEstimation<PointT,PointT> normalEstimator;
         normalEstimator.computePointNormal(scene, pointIndices, planeParams, curvature);
+        planeParamsComputed=true;
+    }
+    
+    double costOfAddingPoint(PointT p)
+    {
+        if(pointIndices.size()<3)
+            return 0;
+        else
+        {
+            assert(planeParamsComputed);
+            return exp(pcl::pointToPlaneDistance<PointT>(p,planeParams));
+        }
     }
 };
-        
+
+class RPlane_PlanePoint : public Rule
+{
+    
+};
+
 int main(int argc, char** argv) 
 {
 
