@@ -28,16 +28,30 @@ protected:
      *  required for being a superior CFG 
      */
     double cost; 
+public:
+    virtual void insertPoints(vector<int> & points)=0;
 };
 
 class Terminal : public Symbol
 {
+protected:
+    int index;
+public:
+    void insertPoints(vector<int> & points)
+    {
+        points.push_back(index);
+    }
+    
     Terminal()
     {
         cost=0;
     }
-protected:
-    PointT pt;
+
+    int getIndex() const
+    {
+        return index;
+    }
+
 };
 
 class NonTerminal : public Symbol
@@ -54,27 +68,59 @@ protected:
      * compute leaves by concatenating 
      * leaves of children */
 public:
-    void computeLeaves()
+    void computePointIndices()
     {
-        
+        for(size_t i=0;i<children.size();i++)
+        {
+            children[i]->insertPoints(pointIndices);
+        }
     }
+
+    void insertPoints(vector<int> & points)
+    {
+        assert(pointIndices.size()>0);
+        points.insert(points.end(),pointIndices.begin(),pointIndices.end());
+    }    
 
 };
 
 class Rule
 {    
-    virtual bool isApplicable(vector<Symbol*> RHS)=0;
+public:
+    /** eg for A->BCD return 3
+     */
+    virtual int get_Nof_RHS_symbols()=0;
+    
+    /**
+     * this function will be used to check applicability of a rule
+     * @param RHS_symbolIndex 0 based index of the RHS symbol
+     * @return typename of this symbol
+     */
+    virtual void  get_typenames(vector<string> & names)=0;
     
     /**
      *  applies this rule on the given params(RHS of rule)
      * computes the cos of resulting NT
      */
-    virtual NonTerminal* applyRule(vector<Symbol*> RHS)=0;
+    virtual NonTerminal* applyRule(vector<Symbol*> & RHS)=0;
+    
+    bool checkApplicabilty(vector<Symbol*> & RHS)
+    {
+        vector<string> typenames;
+        get_typenames(typenames);
+        for(int i=0;i<get_Nof_RHS_symbols();i++)
+        {
+            if(typeid(RHS.at(i)).name()!=typenames.at(i))
+                return false;
+        }
+        return true;
+    }
 };
 
 class Plane : public NonTerminal
 {
 protected:
+    friend class RPlane_PlanePoint;
     Eigen::Vector4f planeParams;
     float curvature;
     bool planeParamsComputed;
@@ -91,6 +137,11 @@ public:
         planeParamsComputed=true;
     }
     
+    int getNumPoints()
+    {
+        return pointIndices.size();
+    }
+    
     double costOfAddingPoint(PointT p)
     {
         if(pointIndices.size()<3)
@@ -98,14 +149,38 @@ public:
         else
         {
             assert(planeParamsComputed);
-            return exp(pcl::pointToPlaneDistance<PointT>(p,planeParams));
+            return exp(pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
         }
     }
 };
 
 class RPlane_PlanePoint : public Rule
 {
+public:
+    int get_Nof_RHS_symbols()
+    {
+        return 2;
+    }
     
+    void  get_typenames(vector<string> & names)
+    {
+        names.push_back(typeid(Plane *).name());
+        names.push_back(typeid(Terminal *).name());
+    }
+    
+    NonTerminal* applyRule(vector<Symbol*> & RHS)
+    {
+        Plane * LHS=new Plane();
+        Plane * RHS_plane=dynamic_cast<Plane *>(RHS.at(0));
+        Terminal * RHS_point=dynamic_cast<Terminal *>(RHS.at(1));
+        LHS->cost=RHS_plane->costOfAddingPoint(scene.points[RHS_point->getIndex()]);
+        LHS->children.push_back(RHS_plane);
+        LHS->children.push_back(RHS_point);
+        LHS->computePointIndices();
+        LHS->computePlaneParams();  
+        return LHS;
+    }
+        
 };
 
 int main(int argc, char** argv) 
@@ -117,7 +192,7 @@ int main(int argc, char** argv)
     cout<<"type:"<<typeid(sym).name()<<endl;
     cout<<"type:"<<typeid(Symbol *).name()<<endl;
     cout<<"type:"<<(typeid(sym)==typeid(Symbol *))<<endl;
-    
+    //string types[3]={typeid(Symbol *).name(),typeid(Symbol *).name(),typeid(Symbol *).name()};
     return 0;
 }
 

@@ -56,7 +56,7 @@ rosbuild_add_executable (GUITransform src/GUITransform.cpp)
 rosbuild_add_executable (combineVisibility src/VisibilityMerge.cpp)
 #rosbuild_add_executable (bag2pcd src/bag2pcd.cpp)
 #rosbuild_add_executable (image_and_label src/genImageAndLabelFile.cpp)
-rosbuild_add_executable (cfg3D.cpp src/cfg3D)
+rosbuild_add_executable (cfg3D src/cfg3D.cpp)
 
 
 
