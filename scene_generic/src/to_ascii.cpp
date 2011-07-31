@@ -2,7 +2,7 @@
 #include "pcl/point_types.h"
 
 //typedef pcl::PointXYGRGBCam PointT;
-typedef pcl::PointXYZRGBCamSL PointT;
+typedef pcl::PointXYZRGB PointT;
 
 int
   main (int argc, char** argv)
