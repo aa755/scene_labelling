@@ -139,6 +139,8 @@ public:
         }
         return true;
     }
+    
+    virtual void combineAndPush(Symbol * sym,vector<Symbol *> pqueue)=0;
 };
 
 class Plane : public NonTerminal
@@ -204,7 +206,23 @@ public:
         LHS->computePlaneParams();  
         return LHS;
     }
+    
+    void combineAndPush(Symbol * sym,vector<Symbol *> pqueue)
+    {
         
+        if(typeid(sym)==typeid(Terminal*))
+        {
+            //find nearest plane and add
+        }
+        else if (typeid(sym)==typeid(Plane *))
+        {
+            
+        }
+        else
+            assert(1==2);
+    }
+
+    
 };
 
 class SymbolComparison
@@ -224,10 +242,15 @@ void runParse()
     {
         pq.push(new Terminal(i));
     }
-    for(int i=0;i<numPoints;i++)
+    
+    Symbol *min;
+    while(true)
     {
-        cout<<pq.top()->getCost()<<endl;
+        min=pq.top();
+        
+        
         pq.pop();
+        
     }
 }
 
