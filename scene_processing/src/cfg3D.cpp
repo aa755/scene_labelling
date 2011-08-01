@@ -11,6 +11,10 @@
 #include<pcl/point_types.h>
 #include<pcl/features/normal_3d.h>
 #include<pcl/sample_consensus/sac_model_plane.h>
+#include<queue>
+#include<pcl/io/pcd_io.h>
+#include<pcl/io/io.h>
+
 //sac_model_plane.h
 using namespace std;
 typedef pcl::PointXYZRGB PointT;
@@ -30,6 +34,14 @@ protected:
     double cost; 
 public:
     virtual void insertPoints(vector<int> & points)=0;
+    bool operator < (const Symbol &  rhs)
+    {
+        return cost <rhs.cost;
+    }
+
+    double getCost() const {
+        return cost;
+    }
 };
 
 class Terminal : public Symbol
@@ -47,6 +59,18 @@ public:
         cost=0;
     }
 
+    Terminal(int index_)
+    {
+        index=index_;
+        cost=0;
+    }
+
+    Terminal(int index_,double cost_)
+    {
+        index=index_;
+        cost=cost_;
+    }
+    
     int getIndex() const
     {
         return index;
@@ -183,16 +207,34 @@ public:
         
 };
 
+class SymbolComparison
+{
+public:
+  bool operator() (Symbol * & lhs, Symbol * & rhs) const
+  {
+      return lhs->getCost()>rhs->getCost();
+  }
+};
+
+void runParse()
+{
+    priority_queue<Symbol *,vector<Symbol *>,SymbolComparison> pq;
+    int numPoints=scene.size();
+    for(int i=0;i<numPoints;i++)
+    {
+        pq.push(new Terminal(i));
+    }
+    for(int i=0;i<numPoints;i++)
+    {
+        cout<<pq.top()->getCost()<<endl;
+        pq.pop();
+    }
+}
+
 int main(int argc, char** argv) 
 {
-
-    vector<int> hello;
-    NonTerminal nt1;
-    Symbol *sym=&nt1;
-    cout<<"type:"<<typeid(sym).name()<<endl;
-    cout<<"type:"<<typeid(Symbol *).name()<<endl;
-    cout<<"type:"<<(typeid(sym)==typeid(Symbol *))<<endl;
-    //string types[3]={typeid(Symbol *).name(),typeid(Symbol *).name(),typeid(Symbol *).name()};
+    pcl::io::loadPCDFile<PointT>("/home/abhishek/fridge.pcd", scene);
+    runParse();
     return 0;
 }
 
