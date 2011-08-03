@@ -737,6 +737,7 @@ int main(int argc, char** argv) {
   if(argc!=5)
   {
       printf("usage: %s image_file segmenation_file label_file scene_num",argv[0]);
+exit(-1);
   }
     int scene_num = atoi(argv[4]);
     std::ofstream nfeatfile, efeatfile;
@@ -750,6 +751,7 @@ int main(int argc, char** argv) {
     originalFrame=new OriginalFrameInfo(img);
     
     readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[2],",",segments);
+cout<<"done reading segments"<<endl;
     readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[3]," ",labels);
     
     nfeatfile.open("data_nodefeats.txt",ios::app);
