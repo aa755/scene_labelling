@@ -12,6 +12,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include <Eigen/Dense>
 #include <point_cloud_mapping/kdtree/kdtree_ann.h>
 #include <vector>
 #include "sensor_msgs/point_cloud_conversion.h"
@@ -37,12 +38,15 @@ typedef ColorHandler::Ptr ColorHandlerPtr;
 #include "wallDistance.h"
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
+using namespace boost;
+
 #include <octomap/octomap.h>
 #include <octomap_ros/OctomapROS.h>
 #include <octomap_ros/conversions.h>
 
 using namespace std;
 using namespace octomap;
+using namespace Eigen;
 //#include <Eig>
 //typedef pcl::PointXYGRGBCam PointT;
 
@@ -204,10 +208,27 @@ cvReleaseImage (&image);
   
 };
 
-template<class T>
-void readCSV(string filename, int width, int height, Matrix<T,Dynamic,Dynamic> & mat, char sep)
+template<typename _Scalar, int height, int width>
+void readCSV(string filename, string separator,Matrix<_Scalar, height,  width> mat)
 {
-    for
+   
+    std::ifstream file;
+    file.open(filename.data(),ios::in);
+    string line;
+    char_separator<char> sep(separator.data());
+    for(int r=0;r<height;r++)
+    {
+        getline(file, line);
+        tokenizer<char_separator<char> > tokens1(line, sep);        
+        map<int,int> segId2label;
+        int c=0;
+        BOOST_FOREACH(string t, tokens1) 
+        {
+            mat(r,c)=lexical_cast<_Scalar>(t);
+            c++;            
+        }
+        assert(c==width);
+    }
 }
 
 OriginalFrameInfo * originalFrame;
@@ -1336,12 +1357,19 @@ void get_pair_features( int segment_id, vector<int>  &neighbor_list,
     }
     
 }
-int imwidth=320;
-int imheight=240
-int counts[imwidth*imheight];
+#define IM_WIDTH 320
+#define IM_HEIGHT 240
+int counts[IM_WIDTH*IM_HEIGHT];
 int main(int argc, char** argv) {
   bool SHOW_CAM_POS_IN_VIEWER=false;
-    int scene_num = atoi(argv[2]);
+    int scene_num = atoi(argv[3]);
+    std::ofstream nfeatfile, efeatfile;
+    Matrix<int, IM_HEIGHT,IM_WIDTH> segments;
+    Matrix<int, IM_HEIGHT,IM_WIDTH> labels;
+    
+    readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[1],",",segments);
+    readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[2]," ",labels);
+    
     nfeatfile.open("data_nodefeats.txt",ios::app);
     efeatfile.open("data_edgefeats.txt",ios::app);
 
@@ -1352,7 +1380,7 @@ int main(int argc, char** argv) {
     // get segments
 
     // find the max segment number
-    
+ /*   
     int max_segment_num = 0;
     for (size_t i = 0; i < cloud.points.size(); ++i) {
         counts[cloud.points[i].segment]++;
@@ -1361,7 +1389,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    ExtractIndices<PointT> extract;
 
     int index_ = 0;
     vector<SpectralProfile> spectralProfiles;
