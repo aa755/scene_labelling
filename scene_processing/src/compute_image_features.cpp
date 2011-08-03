@@ -833,8 +833,8 @@ cout<<"done reading segments"<<endl;
       nfeatfile<<"#"<<nodeFeatNames[i]<<endl;
     
     for (map< int, vector<float> >::iterator it = features.begin(); it != features.end(); it++ ){
-        //assert(nodeFeatNames.size ()==(*it).second.size ());
-        cerr << (*it).second.size() << endl;
+        assert(nodeFeatNames.size ()==(*it).second.size ());
+        //cerr << (*it).second.size() << endl;
         nfeatfile <<  scene_num << "\t" << (*it).first << "\t" << segment_clouds[segment_num_index_map[(*it).first]].points[1].label << "\t";
         for (vector<float>::iterator it2 = (*it).second.begin(); it2 != (*it).second.end(); it2++) {
            //cerr << *it2 << "\t";
