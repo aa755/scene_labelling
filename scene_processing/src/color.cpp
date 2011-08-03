@@ -29,6 +29,7 @@ class ColorRGB{
        assert(r<=1&&r>=0);
        assert(g<=1&&g>=0);
        assert(b<=1&&b>=0);
+       convertToHSV();
    }
 
    ColorRGB(int rgbi)

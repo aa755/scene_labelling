@@ -11,8 +11,8 @@
 //#include "descriptors_3d/all_descriptors.h"
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#define IM_WIDTH 320
-#define IM_HEIGHT 240
+int IM_WIDTH=320;
+int IM_HEIGHT=240;
 
 #include <Eigen/Dense>
 #include <point_cloud_mapping/kdtree/kdtree_ann.h>
@@ -58,10 +58,13 @@ using namespace pcl;
 ColorRGB getColorOfPixel(IplImage *image, int y,int x)
 {
     float r,g,b;
-        b=CV_IMAGE_ELEM ( image, float, y, 3 * x );
-        g=CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 );
-        r=CV_IMAGE_ELEM ( image, float, y, 3 * x + 2 );
-        return ColorRGB(r,g,b);
+assert(y<image->height);
+assert(x<image->width);
+        b=CV_IMAGE_ELEM ( image, uchar, y, 3 * x );
+        g=CV_IMAGE_ELEM ( image, uchar, y, 3 * x + 1 );
+        r=CV_IMAGE_ELEM ( image, uchar, y, 3 * x + 2 );
+//cout<<r<<" "<<g<<" "<<b<<endl;
+        return ColorRGB(r/255.0,g/255.0,b/255.0);
 }
 class OriginalFrameInfo
 {
@@ -136,8 +139,8 @@ public:
   
 };
 
-template<typename _Scalar, int height, int width>
-void readCSV(string filename, string separator,Matrix<_Scalar, height,  width> & mat)
+template<typename _Scalar>
+void readCSV(string filename, int height,int width, string separator,Matrix<_Scalar, Dynamic,  Dynamic> & mat)
 {
    
     std::ifstream file;
@@ -400,7 +403,7 @@ int MIN_SEG_SIZE=15;
 #define MAX_LABEL 10
 /** it also discards unlabeled segments
  */
-void apply_segment_filter_and_compute_HOG(IplImage * img,Matrix<int, IM_HEIGHT,IM_WIDTH> & segments,Matrix<int, IM_HEIGHT,IM_WIDTH> & labels, pcl::PointCloud<PointT> &outcloud, int segment,SpectralProfile & feats) {
+void apply_segment_filter_and_compute_HOG(IplImage * img,Matrix<int,Dynamic,Dynamic> & segments,Matrix<int,Dynamic,Dynamic> & labels, pcl::PointCloud<PointT> &outcloud, int segment,SpectralProfile & feats) {
     //ROS_INFO("applying filter");
 
     outcloud.points.clear();
@@ -726,12 +729,12 @@ void get_pair_features( int segment_id, vector<int>  &neighbor_list,
         }
              
 // this line should be in the end
-        addEdgeHeader=false;
  * */
+        addEdgeHeader=false;
     }
     
 }
-int counts[IM_WIDTH*IM_HEIGHT];
+//int counts[IM_WIDTH*IM_HEIGHT];
 int main(int argc, char** argv) {
   bool SHOW_CAM_POS_IN_VIEWER=false;
   if(argc!=5)
@@ -741,18 +744,19 @@ exit(-1);
   }
     int scene_num = atoi(argv[4]);
     std::ofstream nfeatfile, efeatfile;
-    Matrix<int, IM_HEIGHT,IM_WIDTH> segments;
-    Matrix<int, IM_HEIGHT,IM_WIDTH> labels;
     
     IplImage* img=0;
     img=cvLoadImage(argv[1]);
-    
+    IM_WIDTH=img->width;
+    IM_HEIGHT=img->height;
+    Matrix<int, Dynamic,Dynamic> segments(IM_HEIGHT,IM_WIDTH);
+    Matrix<int, Dynamic,Dynamic> labels(IM_HEIGHT,IM_WIDTH);
     if(!img) printf("Could not load image file: %s\n",argv[1]);
     originalFrame=new OriginalFrameInfo(img);
     
-    readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[2],",",segments);
+    readCSV<int>(argv[2],IM_HEIGHT,IM_WIDTH,",",segments);
 cout<<"done reading segments"<<endl;
-    readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[3]," ",labels);
+    readCSV<int>(argv[3],IM_HEIGHT,IM_WIDTH," ",labels);
     
     nfeatfile.open("data_nodefeats.txt",ios::app);
     efeatfile.open("data_edgefeats.txt",ios::app);
@@ -829,8 +833,8 @@ cout<<"done reading segments"<<endl;
       nfeatfile<<"#"<<nodeFeatNames[i]<<endl;
     
     for (map< int, vector<float> >::iterator it = features.begin(); it != features.end(); it++ ){
-        assert(nodeFeatNames.size ()==(*it).second.size ());
-        //cerr << (*it).first << ":\t";
+        //assert(nodeFeatNames.size ()==(*it).second.size ());
+        cerr << (*it).second.size() << endl;
         nfeatfile <<  scene_num << "\t" << (*it).first << "\t" << segment_clouds[segment_num_index_map[(*it).first]].points[1].label << "\t";
         for (vector<float>::iterator it2 = (*it).second.begin(); it2 != (*it).second.end(); it2++) {
            //cerr << *it2 << "\t";
