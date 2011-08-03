@@ -26,9 +26,7 @@ typedef pcl::PointXYInt PointT;
 #include "includes/CombineUtils.h"
 #include<boost/numeric/ublas/matrix.hpp>
 #include<boost/numeric/ublas/io.hpp>
-#include<boost/numeric/bindings/traits/ublas_matrix.hpp>
-#include<boost/numeric/bindings/lapack/gels.hpp>
-#include <boost/numeric/bindings/traits/ublas_vector2.hpp>
+
 
 #include "pcl_visualization/pcl_visualizer.h"
 typedef pcl_visualization::PointCloudColorHandler<sensor_msgs::PointCloud2> ColorHandler;
@@ -1233,7 +1231,7 @@ void get_pair_features( int segment_id, vector<int>  &neighbor_list,
         
         edge_features[seg2_id].push_back(segment1Spectral.getVDiff (segment2Spectral)); addToEdgeHeader ("Viff");
 
-        edge_features[seg2_id].push_back(segment1Spectral.getCoplanarity (segment2Spectral)); addToEdgeHeader ("Coplanarity");
+/*        edge_features[seg2_id].push_back(segment1Spectral.getCoplanarity (segment2Spectral)); addToEdgeHeader ("Coplanarity");
         
         edge_features[seg2_id].push_back(segment1Spectral.getConvexity (segment2Spectral,distance_matrix[make_pair(segment_id,seg2_id)] ));addToEdgeHeader ("convexity");
 
@@ -1267,6 +1265,7 @@ void get_pair_features( int segment_id, vector<int>  &neighbor_list,
              
 // this line should be in the end
         addEdgeHeader=false;
+ * */
     }
     
 }

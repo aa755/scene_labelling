@@ -39,6 +39,7 @@ namespace pcl
     {
         int x;
         int y;
+        
         int segment;
         int label;
     };
