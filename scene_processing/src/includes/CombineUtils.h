@@ -582,7 +582,7 @@ TransformG readTranform(const string & file) {
   //              originalFrame->setCameraTrans (transG);
                 return transG;
 }
-void appendCamIndex(pcl::PointCloud<PointT>::Ptr in,pcl::PointCloud<pcl::PointXYGRGBCam>::Ptr out,int camIndex)
+/*void appendCamIndex(pcl::PointCloud<PointT>::Ptr in,pcl::PointCloud<pcl::PointXYGRGBCam>::Ptr out,int camIndex)
 {
     out->header=in->header;
     out->points.resize(in->size());
@@ -595,7 +595,7 @@ void appendCamIndex(pcl::PointCloud<PointT>::Ptr in,pcl::PointCloud<pcl::PointXY
         out->points[i].cameraIndex=camIndex;
     }
 }
-
+*/
 void appendCamIndexAndDistance(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr in,pcl::PointCloud<pcl::PointXYGRGBCam>::Ptr out,int camIndex,VectorG camOrigin)
 {
     out->header=in->header;
