@@ -39,6 +39,8 @@ namespace pcl
     {
         int x;
         int y;
+        int segment;
+        int label;
     };
     
     struct PointXYZRGBCamSL
@@ -74,6 +76,8 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
         pcl::PointXYInt,
         (int, x, x)
         (int, y, y)
+        (int, segment, segment)
+        (int, label, label)
         )
         
 POINT_CLOUD_REGISTER_POINT_STRUCT(

@@ -55,6 +55,14 @@ bool UseVolFeats=false;
 pcl::PCDWriter writer;
 
 using namespace pcl;
+ColorRGB getColorOfPixel(IplImage *image, int y,int x)
+{
+    float r,g,b;
+        b=CV_IMAGE_ELEM ( image, float, y, 3 * x );
+        g=CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 );
+        r=CV_IMAGE_ELEM ( image, float, y, 3 * x + 2 );
+        return ColorRGB(r,g,b);
+}
 class OriginalFrameInfo
 {
   HOG hogDescriptors;
@@ -103,37 +111,11 @@ cvReleaseImage (&image);
     
   }
   
-  OriginalFrameInfo(pcl::PointCloud<pcl::PointXYZRGBCamSL>::ConstPtr RGBDSlamFrame_)
+  OriginalFrameInfo(IplImage *image)
   {
     cameraTransSet=false;
-    RGBDSlamFrame=RGBDSlamFrame_;
-  CvSize size;
-  size.height=480;
-  size.width=640;
-  cout<<"RGBslam size:"<<RGBDSlamFrame->size ()<<endl;
-    if(RGBDSlamFrame->size ()==0)
-      return;// can be 0 for dummy pcds of manually transformed
-
-  assert(RGBDSlamFrame->size ()==size.width*size.height); // can be 0 for dummy pcds of manually transformed
-
-  IplImage * image = cvCreateImage ( size, IPL_DEPTH_32F, 3 );
-  
-          pcl::PointXYZRGBCamSL tmp;
-          
-  for(int x=0;x<size.width;x++)
-    for(int y=0;y<size.height;y++)
-      {
-        int index=x+y*size.width;
-        tmp= RGBDSlamFrame->points[index];
-        ColorRGB tmpColor(tmp.rgb);
-        CV_IMAGE_ELEM ( image, float, y, 3 * x ) = tmpColor.b;
-        CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 ) = tmpColor.g;
-        CV_IMAGE_ELEM ( image, float, y, 3 * x + 2 ) = tmpColor.r;
-      }
-          
           hogDescriptors.computeHog (image);
           
-          cvReleaseImage (&image);
   }
   
   static Point2DAbhishek getPixelFromIndex(int index)
@@ -570,10 +552,11 @@ void apply_segment_filter(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<Poin
        outcloud.points.clear ();
 }
 
-int MIN_SEG_SIZE=1500;
+int MIN_SEG_SIZE=15;
+#define MAX_LABEL 10
 /** it also discards unlabeled segments
  */
-void apply_segment_filter_and_compute_HOG(IplImage * img,Matrix<int, IM_HEIGHT,IM_WIDTH> & segments, pcl::PointCloud<PointT> &outcloud, int segment,SpectralProfile & feats) {
+void apply_segment_filter_and_compute_HOG(IplImage * img,Matrix<int, IM_HEIGHT,IM_WIDTH> & segments,Matrix<int, IM_HEIGHT,IM_WIDTH> & labels, pcl::PointCloud<PointT> &outcloud, int segment,SpectralProfile & feats) {
     //ROS_INFO("applying filter");
 
     outcloud.points.clear();
@@ -581,25 +564,36 @@ void apply_segment_filter_and_compute_HOG(IplImage * img,Matrix<int, IM_HEIGHT,I
     outcloud.header.frame_id = incloud.header.frame_id;
 //    outcloud.points = incloud.points;
 
-    
-    
+    int label;
+    vector<int> histogram(MAX_LABEL+1,0);
     PointT point;
     for (size_t r = 0; r < img->height; r++) 
     for (size_t c = 0; c < img->width; c++) {
+        label=labels(r,c);
 
-        if (segments(r,c) == segment && incloud.points[i].label>=0) {
+        if (segments(r,c) ==segment && label>=0) {
             point.x=c;
             point.y=r;
+            point.segment=segment;
+            assert(label<=MAX_LABEL);
+            histogram[label]++;
+            
           outcloud.points.push_back(point);
         }
     }
-    
-    if(outcloud.points.size()==0)
+    int finalLabel= std::max_element( histogram.begin(), histogram.end() ) - histogram.begin();
+    if(outcloud.points.size()<MIN_SEG_SIZE)
     {
-        cerr<<"segment "<<seg<<" all labels unknown"<<endl;
+        cerr<<"segment "<<seg<<" less than "<<MIN_SEG_SIZE<<" with known labels"<<endl;
+        outcloud.points.clear();
     }
     else
+    {
+        for(int i=0;i<outcloud.size();i++)
+            outcloud.points[i].label=finalLabel;
+        
         OriginalFrameInfo::findHog ( indices, incloud, feats.avgHOGFeatsOfSegment,originalFrame);
+    }
 }
 
 void apply_notsegment_filter(const pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment) {
@@ -689,46 +683,18 @@ pair<float,int>  getSmallestDistance (const pcl::PointCloud<PointT> &cloud1,cons
 {
   float min_distance = FLT_MAX;
   int min_index = 0;
-  pcl::PointCloud<PointT>::Ptr small_cloud;
-  pcl::PointCloud<PointT>::Ptr big_cloud;
-  if (cloud1.points.size() > cloud2.points.size()){
-    pcl::PointCloud<PointT>::Ptr cloud_ptr1(new pcl::PointCloud<PointT > (cloud1));
-    pcl::PointCloud<PointT>::Ptr cloud_ptr2(new pcl::PointCloud<PointT > (cloud2));
-    small_cloud = cloud_ptr2;
-    big_cloud = cloud_ptr1;
-  }else {
-    pcl::PointCloud<PointT>::Ptr cloud_ptr1(new pcl::PointCloud<PointT > (cloud1));
-    pcl::PointCloud<PointT>::Ptr cloud_ptr2(new pcl::PointCloud<PointT > (cloud2));
-    small_cloud = cloud_ptr1;
-    big_cloud = cloud_ptr2;
-  }
-
-  pcl::KdTreeFLANN<PointT>::Ptr tree (new pcl::KdTreeFLANN<PointT>);//= boost::make_shared<pcl::KdTreeFLANN<PointT> > ();
-  //initTree (0, tree);
-  tree->setInputCloud (big_cloud );// ,indicesp);
-  std::vector<int> nn_indices;
-  nn_indices.resize(2);
-  std::vector<float> nn_distances;
-  nn_distances.resize(2);
-  //float tolerance = 0.3;
-  
-  for (size_t i = 0; i < small_cloud->points.size (); ++i)
+  for (size_t i = 0; i < cloud1.size (); i++)
   {
   
-	//if (!tree->radiusSearch ((*small_cloud).points[i], tolerance, nn_indices, nn_distances))
-	tree->nearestKSearch (small_cloud->points[i], 2 , nn_indices, nn_distances);
   	
-	for (size_t j = 0; j < nn_indices.size (); ++j)             // nn_indices[0] should be sq_idx
+	for (size_t j = 0; j < cloud2.size (); ++j)             // nn_indices[0] should be sq_idx
       	{
 			
-      		//float distance = pow(cloud1.points[i].x - cloud2.points[nn_indices[j]].x,2) + pow(cloud1.points[i].y - cloud2.points[ nn_indices[j]].y,2) + pow(cloud1.points[i].z - cloud2.points[ nn_indices[j]].z,2);
-     		 //cout<< "i,j = " << i << "," << j<< " dist = " <<distance << endl;
-                 //float a = nn_distances[j];
-                 //cout<< nn_distances[j] << " "<< a << endl;
-      		 if (min_distance > nn_distances[j])
+      		float distance = pow(cloud1.points[i].x - cloud2.points[j].x,2) + pow(cloud1.points[i].y - cloud2.points[j].y,2);
+      		 if (min_distance > distance)
                  {
-                     min_distance = nn_distances[j];
-                     min_index = nn_indices[j];
+                     min_distance = distance;
+                     min_index = j;
                   //   cout << "changing min_distance to "  << min_distance<< endl;
 
                  }
@@ -752,7 +718,7 @@ pair<float,int>  getSmallestDistance (const pcl::PointCloud<PointT> &cloud1,cons
 
 void get_neighbors ( const std::vector<pcl::PointCloud<PointT> > &segment_clouds, map< pair <int,int> , float > &distance_matrix, map <int , vector <int> > &neighbor_map )
 {
-   float tolerance =0.6;
+   float tolerance =30;
 // get distance matrix
     for (size_t i = 0; i< segment_clouds.size(); i++)
     {
@@ -1041,10 +1007,10 @@ void concat_feats(vector<float> &features, vector<float> &feats) {
     }
 }
 
-void get_color_features(const pcl::PointCloud<PointT> &cloud, vector<float> &features, SpectralProfile & spectralProfileOfSegment) {
- int num_bin_H=6;
- int num_bin_S=2;
- int num_bin_V=2;
+void get_color_features(IplImage *img,const pcl::PointCloud<PointT> &cloud, vector<float> &features, SpectralProfile & spectralProfileOfSegment) {
+ int num_bin_H=9;
+ int num_bin_S=4;
+ int num_bin_V=4;
     // histogram and average of hue and intensity
 
     vector<vector<float> > hist_features;
@@ -1052,7 +1018,7 @@ void get_color_features(const pcl::PointCloud<PointT> &cloud, vector<float> &fea
     vector < vector <float> > color_features(cloud.points.size());
     vector <vector <float> >::iterator it = color_features.begin();
     for (size_t i = 0; i < cloud.points.size(); ++i, it++) {
-        ColorRGB c(cloud.points[i].rgb);
+        ColorRGB c=getColorOfPixel(img,cloud.points[i].y,cloud.points[i].x);
         (*it).push_back(c.H);
         (*it).push_back(c.S);
         (*it).push_back(c.V);
@@ -1075,40 +1041,10 @@ void get_color_features(const pcl::PointCloud<PointT> &cloud, vector<float> &fea
 }
 
 void get_global_features(const pcl::PointCloud<PointT> &cloud, vector<float> &features, SpectralProfile & spectralProfileOfSegment) {
-    
-    Eigen::Vector4f min_p;
-    Eigen::Vector4f max_p;
-
-
-
-    // get bounding box features
-    getSpectralProfile (cloud, spectralProfileOfSegment);
-    
-    getMinMax(cloud, min_p, max_p);
-    float xExtent=max_p[0] - min_p[0];
-    float yExtent=max_p[1] - min_p[1];
-    float horizontalExtent=sqrt(xExtent*xExtent+yExtent*yExtent);
-    float zExtent=max_p[2] - min_p[2];
-    
-    features.push_back(horizontalExtent);addToNodeHeader ("horizontalExtent");
-    
-    features.push_back(zExtent);addToNodeHeader ("zExtent");
-
-    features.push_back(spectralProfileOfSegment.centroid.z);addToNodeHeader ("centroid_z");
-    
-    
-    features.push_back (spectralProfileOfSegment.getNormalZComponent ());addToNodeHeader ("normal_z");
-  
-    //spectral saliency features
-    features.push_back ((spectralProfileOfSegment.getLinearNess ()));addToNodeHeader ("linearness");
-    features.push_back ((spectralProfileOfSegment.getPlanarNess ()));addToNodeHeader ("planarness");
-    features.push_back ((spectralProfileOfSegment.getScatter ()));addToNodeHeader ("scatter");
     spectralProfileOfSegment.avgHOGFeatsOfSegment.pushBackAllFeats (features);addToNodeHeader ("HOG",31);
     
-    
-   
- 
 }
+
 float get_occupancy_feature(const pcl::PointCloud<PointT> &cloud1, const pcl::PointCloud<PointT> &cloud2,  OcTreeROS & tree){
     //
     OcTreeROS::NodeType* treeNode;
@@ -1352,6 +1288,7 @@ int main(int argc, char** argv) {
     img=cvLoadImage(argv[1]);
     
     if(!img) printf("Could not load image file: %s\n",argv[1]);
+    originalFrame=new OriginalFrameInfo(img);
     
     readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[2],",",segments);
     readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[3]," ",labels);
@@ -1387,14 +1324,14 @@ int main(int argc, char** argv) {
         apply_segment_filter_and_compute_HOG (img,*cloud_seg,seg,temp);
         
         //if (label!=0) cout << "segment: "<< seg << " label: " << label << " size: " << cloud_seg->points.size() << endl;
-        if (!cloud_seg->points.empty () && cloud_seg->points.size() > MIN_SEG_SIZE  && cloud_seg->points[1].label != 0) {
+        if (!cloud_seg->points.empty ()) {
          //std::cout << seg << ". Cloud size after extracting : " << cloud_seg->points.size() << std::endl;
 			segment_clouds.push_back(*cloud_seg);
                         pcl::PointCloud<PointT>::Ptr tempPtr(new pcl::PointCloud<PointT > (segment_clouds[segment_clouds.size()-1]));
                         temp.cloudPtr=tempPtr;
  
                         spectralProfiles.push_back (temp);
-			segment_num_index_map[cloud_seg->points[1].segment] = index_;
+			segment_num_index_map[seg] = index_;
 			index_ ++; 
         }
     }
@@ -1415,34 +1352,20 @@ int main(int argc, char** argv) {
     for (size_t i = 0; i< segment_clouds.size(); i++)
     {
      //   vector<float> features;
-        int seg_id = segment_clouds[i].points[1].segment;
+        int seg_id = segments[segment_clouds[i].points[1].y,segment_clouds[i].points[1].x];
         // get color features
         //cout << "computing color features" << std::endl;
-        get_color_features(segment_clouds[i], features[seg_id],spectralProfiles[i]);
+        get_color_features(img,segment_clouds[i], features[seg_id],spectralProfiles[i]);
 
-        // get shape features - now in global features
-     //   get_shape_features(segment_clouds[i], features[seg_id], num_bin_shape);
-
-        // get bounding box and centroid point features
-        get_global_features(segment_clouds[i], features[seg_id],spectralProfiles[i]);
+        get_global_features(segment_clouds[i], features[seg_id],spectralProfiles[i]);// now gets HOG features
           addNodeHeader=false;
 
     }
- /*   
-    cerr<<"adding wall distance features"<<endl;
-    start_time=clock();
-    add_distance_features(cloud,features, segment_clouds);nodeFeatNames.push_back ("distance_from_wall0");
-    elapsed=clock()-start_time;
-    cerr<<"time for computing wall"<< elapsed /((double)CLOCKS_PER_SEC)<<endl;
-
-    cerr<<"done adding wall distance features"<<endl;
     
-  //  vector<pcl::Normal> cloud_normals;
-   // get_avg_normals(segment_clouds,cloud_normals);
-    // print the node features
- //   assert(nodeFeatNames.size ()<100); // some error in setting flag can cause trouble
-  //  for(size_t i=0;i<nodeFeatNames.size ();i++)
-  //    nfeatfile<<"#"<<nodeFeatNames[i]<<endl;
+    
+    assert(nodeFeatNames.size ()<100); // some error in setting flag can cause trouble
+    for(size_t i=0;i<nodeFeatNames.size ();i++)
+      nfeatfile<<"#"<<nodeFeatNames[i]<<endl;
     
     for (map< int, vector<float> >::iterator it = features.begin(); it != features.end(); it++ ){
         assert(nodeFeatNames.size ()==(*it).second.size ());
