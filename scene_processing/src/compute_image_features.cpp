@@ -812,7 +812,7 @@ int main(int argc, char** argv) {
     for (size_t i = 0; i< segment_clouds.size(); i++)
     {
      //   vector<float> features;
-        int seg_id = segments[segment_clouds[i].points[1].y,segment_clouds[i].points[1].x];
+        int seg_id = segment_clouds[i].points[1].segment;
         // get color features
         //cout << "computing color features" << std::endl;
         get_color_features(img,segment_clouds[i], features[seg_id],spectralProfiles[i]);
