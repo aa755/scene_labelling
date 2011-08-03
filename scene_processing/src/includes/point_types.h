@@ -35,6 +35,12 @@ namespace pcl
 
     };
 
+    struct PointXYInt
+    {
+        int x;
+        int y;
+    };
+    
     struct PointXYZRGBCamSL
     {
         PCL_ADD_POINT4D;
@@ -64,6 +70,12 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
         (float, distance, distance)
         )
 
+POINT_CLOUD_REGISTER_POINT_STRUCT(
+        pcl::PointXYInt,
+        (int, x, x)
+        (int, y, y)
+        )
+        
 POINT_CLOUD_REGISTER_POINT_STRUCT(
         pcl::PointXYZRGBCamSL,
         (float, x, x)

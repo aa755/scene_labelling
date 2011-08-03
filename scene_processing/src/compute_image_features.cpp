@@ -22,15 +22,14 @@
 #include <point_cloud_mapping/geometry/nearest.h>
 #include <pcl_ros/io/bag_io.h>
 #include "HOG.cpp"
-typedef pcl::PointXYZRGBCamSL PointT;
+typedef pcl::PointXYInt PointT;
 #include "includes/CombineUtils.h"
 #include<boost/numeric/ublas/matrix.hpp>
 #include<boost/numeric/ublas/io.hpp>
 #include<boost/numeric/bindings/traits/ublas_matrix.hpp>
 #include<boost/numeric/bindings/lapack/gels.hpp>
 #include <boost/numeric/bindings/traits/ublas_vector2.hpp>
-namespace ublas = boost::numeric::ublas;
-namespace lapack= boost::numeric::bindings::lapack;
+
 #include "pcl_visualization/pcl_visualizer.h"
 typedef pcl_visualization::PointCloudColorHandler<sensor_msgs::PointCloud2> ColorHandler;
 typedef ColorHandler::Ptr ColorHandlerPtr;
@@ -50,8 +49,8 @@ using namespace Eigen;
 //#include <Eig>
 //typedef pcl::PointXYGRGBCam PointT;
 
-typedef  pcl::KdTree<PointT> KdTree;
-typedef  pcl::KdTree<PointT>::Ptr KdTreePtr;
+//typedef  pcl::KdTree<PointT> KdTree;
+//typedef  pcl::KdTree<PointT>::Ptr KdTreePtr;
 bool UseVolFeats=false;
 pcl::PCDWriter writer;
 
@@ -148,19 +147,15 @@ cvReleaseImage (&image);
     return ret;
   }
   
-  static void findHog(vector<size_t> & pointIndices,pcl::PointCloud<PointT> &incloud, HOGFeaturesOfBlock &hogSegment, OriginalFrameInfo*  targetFrame)
+  static void findHog(pcl::PointCloud<PointT> &incloud, HOGFeaturesOfBlock &hogSegment, OriginalFrameInfo*  targetFrame)
   {
-    static int rejectCout=0;
-    assert(targetFrame->RGBDSlamFrame->size ()>0);
-	assert(targetFrame->cameraTransSet);
     
     vector<Point2DAbhishek> pointsInImageLyingOnSegment;
-    for(size_t i=0;i<pointIndices.size ();i++)
+    for(size_t i=0;i<incloud.size ();i++)
       {
-              pointsInImageLyingOnSegment.push_back (getPixelFromIndex (pointIndices[i]));     
+              pointsInImageLyingOnSegment.push_back (Point2DAbhishek(incloud.x,incloud.y));     
       }
     
-    assert(pointsInImageLyingOnSegment.size ()>0);
     targetFrame->hogDescriptors.getFeatValForPixels (pointsInImageLyingOnSegment,hogSegment);
    // targetFrame->saveImage (incloud.points[pointIndices[1]].segment,incloud.points[pointIndices[1]].label,pointsInImageLyingOnSegment);
     
@@ -209,7 +204,7 @@ cvReleaseImage (&image);
 };
 
 template<typename _Scalar, int height, int width>
-void readCSV(string filename, string separator,Matrix<_Scalar, height,  width> mat)
+void readCSV(string filename, string separator,Matrix<_Scalar, height,  width> & mat)
 {
    
     std::ifstream file;
@@ -578,51 +573,33 @@ void apply_segment_filter(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<Poin
 int MIN_SEG_SIZE=1500;
 /** it also discards unlabeled segments
  */
-void apply_segment_filter_and_compute_HOG(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment,SpectralProfile & feats) {
+void apply_segment_filter_and_compute_HOG(IplImage * img,Matrix<int, IM_HEIGHT,IM_WIDTH> & segments, pcl::PointCloud<PointT> &outcloud, int segment,SpectralProfile & feats) {
     //ROS_INFO("applying filter");
 
-    outcloud.points.erase(outcloud.points.begin(), outcloud.points.end());
+    outcloud.points.clear();
 
     outcloud.header.frame_id = incloud.header.frame_id;
 //    outcloud.points = incloud.points;
-    outcloud.points.resize ( incloud.points.size() );
 
     
     
-    
-    vector<size_t> indices;
-    int j = -1;
-    for (size_t i = 0; i < incloud.points.size(); ++i) {
+    PointT point;
+    for (size_t r = 0; r < img->height; r++) 
+    for (size_t c = 0; c < img->width; c++) {
 
-        if (incloud.points[i].segment == segment && incloud.points[i].label>0) {
-          j++;
-          outcloud.points[j].x = incloud.points[i].x;
-          outcloud.points[j].y = incloud.points[i].y;
-          outcloud.points[j].z = incloud.points[i].z;
-          outcloud.points[j].rgb = incloud.points[i].rgb;
-          outcloud.points[j].segment = incloud.points[i].segment;
-          outcloud.points[j].label = incloud.points[i].label;
-          outcloud.points[j].cameraIndex = incloud.points[i].cameraIndex;
-          outcloud.points[j].distance = incloud.points[i].distance;
-        //  cerr<<incloud.points[i].cameraIndex<<","<<numFrames<<endl;
-          indices.push_back (i);
-
-            //     std::cerr<<segment_cloud.points[j].label<<",";
+        if (segments(r,c) == segment && incloud.points[i].label>=0) {
+            point.x=c;
+            point.y=r;
+          outcloud.points.push_back(point);
         }
     }
     
-   // cout<<j << ","<<segment<<endl;
-    if(j>=MIN_SEG_SIZE)
+    if(outcloud.points.size()==0)
     {
-        outcloud.points.resize ( j+1 );
-            OriginalFrameInfo::findHog ( indices, incloud, feats.avgHOGFeatsOfSegment,originalFrame);
+        cerr<<"segment "<<seg<<" all labels unknown"<<endl;
     }
     else
-      {
-        outcloud.points.clear ();
-        return;
-      }
-    
+        OriginalFrameInfo::findHog ( indices, incloud, feats.avgHOGFeatsOfSegment,originalFrame);
 }
 
 void apply_notsegment_filter(const pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment) {
@@ -1362,13 +1339,22 @@ void get_pair_features( int segment_id, vector<int>  &neighbor_list,
 int counts[IM_WIDTH*IM_HEIGHT];
 int main(int argc, char** argv) {
   bool SHOW_CAM_POS_IN_VIEWER=false;
-    int scene_num = atoi(argv[3]);
+  if(argc!=5)
+  {
+      printf("usage: %s image_file segmenation_file label_file scene_num",argv[0]);
+  }
+    int scene_num = atoi(argv[4]);
     std::ofstream nfeatfile, efeatfile;
     Matrix<int, IM_HEIGHT,IM_WIDTH> segments;
     Matrix<int, IM_HEIGHT,IM_WIDTH> labels;
     
-    readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[1],",",segments);
-    readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[2]," ",labels);
+    IplImage* img=0;
+    img=cvLoadImage(argv[1]);
+    
+    if(!img) printf("Could not load image file: %s\n",argv[1]);
+    
+    readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[2],",",segments);
+    readCSV<int, IM_HEIGHT,IM_WIDTH>(argv[3]," ",labels);
     
     nfeatfile.open("data_nodefeats.txt",ios::app);
     efeatfile.open("data_edgefeats.txt",ios::app);
@@ -1380,24 +1366,25 @@ int main(int argc, char** argv) {
     // get segments
 
     // find the max segment number
- /*   
     int max_segment_num = 0;
-    for (size_t i = 0; i < cloud.points.size(); ++i) {
-        counts[cloud.points[i].segment]++;
-        if (max_segment_num < cloud.points[i].segment) {
-            max_segment_num = (int) cloud.points[i].segment;
+
+    for (int = 0; i < IM_WIDTH*IM_HEIGHT; i++) {
+//        counts[cloud.points[i].segment]++;
+        if (max_segment_num < segments(i)) {
+            max_segment_num = (int) segments(i);
         }
     }
-
-
+    cout<< "found "<<max_segment_num<<" segments"<<endl;
+    
+    std::vector<pcl::PointCloud<PointT> > segment_clouds;
+    std::map<int,int>  segment_num_index_map;
+     pcl::PointCloud<PointT>::Ptr cloud_seg(new pcl::PointCloud<PointT > ());
     int index_ = 0;
     vector<SpectralProfile> spectralProfiles;
     for (int seg = 1; seg <= max_segment_num; seg++) {
-        if(counts[seg]<=MIN_SEG_SIZE)
-            continue;
         
-        SpectralProfile temp;
-        apply_segment_filter_and_compute_HOG (*cloud_ptr,*cloud_seg,seg,temp);
+       SpectralProfile temp;
+        apply_segment_filter_and_compute_HOG (img,*cloud_seg,seg,temp);
         
         //if (label!=0) cout << "segment: "<< seg << " label: " << label << " size: " << cloud_seg->points.size() << endl;
         if (!cloud_seg->points.empty () && cloud_seg->points.size() > MIN_SEG_SIZE  && cloud_seg->points[1].label != 0) {
@@ -1441,6 +1428,7 @@ int main(int argc, char** argv) {
           addNodeHeader=false;
 
     }
+ /*   
     cerr<<"adding wall distance features"<<endl;
     start_time=clock();
     add_distance_features(cloud,features, segment_clouds);nodeFeatNames.push_back ("distance_from_wall0");
