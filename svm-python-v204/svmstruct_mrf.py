@@ -2274,7 +2274,10 @@ def evaluation_class_pr_sum1(Y,Ybar,K,N,sparm):
     zeroClasses=zeros((K,1))
     prec = zeros((K,1))
     recall = zeros((K,1))
+    f = open('pred.txt','a')
+ 
     for node in xrange(0,N):
+        flag = 0;
         numPositives=0;
         predClass=-1;
         actualClass=-1;
@@ -2312,7 +2315,10 @@ def evaluation_class_pr_sum1(Y,Ybar,K,N,sparm):
             singlepredcount[prediction,0] += 1;
             if(actualClass==prediction):
                 tpcount[prediction,0] += 1
-             
+                flag = 1;
+				
+        print>>f, node+1,flag         
+    print>>f, "\n"
     for label in xrange(0,K):
         if(singlepredcount[label,0] != 0):
             prec[label,0] = tpcount[label,0]/float(singlepredcount[label,0])
