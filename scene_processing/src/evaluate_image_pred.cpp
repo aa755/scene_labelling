@@ -769,7 +769,6 @@ exit(-1);
         exit(-1);
     }
     
-    std::ofstream nfeatfile, efeatfile;
     
     IplImage* img=0;
     img=cvLoadImage(argv[1]);
@@ -801,6 +800,7 @@ cout<<"done reading segments"<<endl;
         }
     }
     
+    std::ofstream nfeatfile, efeatfile;
     nfeatfile.open("res.txt",ios::app);
     nfeatfile<<countTrue<<" "<<countFalse<<" "<<IM_WIDTH*IM_HEIGHT<<endl;
 }
