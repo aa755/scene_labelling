@@ -18,7 +18,6 @@
 //sac_model_plane.h
 using namespace std;
 typedef pcl::PointXYZRGB PointT;
-
 /*
  * 
  */
@@ -32,6 +31,7 @@ protected:
      *  required for being a superior CFG 
      */
     double cost; 
+    vector<NonTerminal*> parents;
 public:
     virtual void insertPoints(vector<int> & points)=0;
     bool operator < (const Symbol &  rhs)
@@ -77,6 +77,7 @@ public:
     }
 
 };
+Terminal * terminals;
 
 class NonTerminal : public Symbol
 {
@@ -202,6 +203,8 @@ public:
         LHS->cost=RHS_plane->costOfAddingPoint(scene.points[RHS_point->getIndex()]);
         LHS->children.push_back(RHS_plane);
         LHS->children.push_back(RHS_point);
+        RHS_plane->parents->push_back(LHS);
+        RHS_point->parents->push_back(LHS);
         LHS->computePointIndices();
         LHS->computePlaneParams();  
         return LHS;
