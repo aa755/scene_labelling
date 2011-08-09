@@ -28,10 +28,11 @@ typedef pcl::PointXYZRGB PointT;
  * @param set_1
  * @param set_2
  */
-void setIntersection(std::set<int> set_1, std::set<int> set_2)
+template<typename T>
+void setIntersection(std::set<T> set_1, std::set<T> set_2)
 {
-    std::set<int>::iterator it1 = set_1.begin();
-    std::set<int>::iterator it2 = set_2.begin();
+    typename set<T>::iterator it1 = set_1.begin();
+    typename set<T>::iterator it2 = set_2.begin();
     while ((it1 != set_1.end()) && (it2 != set_2.end()))
     {
         if (*it1 < *it2)
@@ -74,7 +75,7 @@ public:
     
     virtual void getCentroid(pcl::PointXYZ & centroid)=0;
     
-    virtual void finalize(vector<set<NonTerminal*> > & ancestors)=0;
+    virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)=0;
     
 //    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)=0;
 };
@@ -120,15 +121,14 @@ public:
         centroid.z=point.z;        
     }
 
-    virtual void finalize(vector<set<NonTerminal*> > & ancestors){}
+    virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors){return true;}
     
-    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)
-    {
-        return false; // each terminal can be derived in only 1 way
+    //bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)    {
+//        return false; // each terminal can be derived in only 1 way
         /* contrast it with a set of terminals which can be derived in multiple way
          * (1 U 2) U 3  or  1 U (2 U 3 )
          */
-    }
+   // }
 };
 Terminal * terminals;
 
@@ -181,11 +181,13 @@ public:
      * do the book-keeping work:
      * 1) compute the set of points spanned by this NT
      * 2) add itself to the list of ancestors of all those points
-     * @param ancestors: list of ancestor-sets for all poinst in scene 
+     * @param ancestors: list of ancestor-sets for all points in scene 
      */
-    virtual void finalize(vector<set<NonTerminal*> > & ancestors)
+    virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)
     {
         computePointIndices();
+        if(checkDuplicate(ancestors))
+            return false;
         std::pair< set<NonTerminal*>::iterator , bool > resIns;
         
         for(size_t i=0;i<pointIndices.size();i++)
@@ -196,6 +198,7 @@ public:
                                 
         computeCentroid();
         additionalFinalize();
+        return true;
     }
     
     void getCentroid(pcl::PointXYZ & centroid1)
@@ -210,7 +213,23 @@ public:
     
     bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)
     {
-        
+        set<NonTerminal*> intersect=ancestors[pointIndices[0]];
+        for(size_t i=1;i<pointIndices.size();i++)
+        {
+            setIntersection<NonTerminal *>(intersect,ancestors[pointIndices[i]]);
+        }
+        if(intersect.size()==0)
+            return false;
+        else
+        {
+            set<NonTerminal*>::iterator it;
+            for ( it=intersect.begin() ; it != intersect.end(); it++ )
+            {
+                if(typeid(this)==typeid(*it) && pointIndices.size()==(*it)->pointIndices.size())
+                    return true;
+            }
+            return false;
+        }
     }
     
 };
@@ -364,7 +383,17 @@ void runParse()
     while(true)
     {
         min=pq.top();
-        min->finalize(ancestors);
+        if(min->finalize_if_not_duplicate(ancestors))
+        {
+            
+        }
+        else
+        {
+            delete min; 
+            // since there are no parent links, and it was not a child of anyone
+            // deleting does not cause dangling pointers
+            
+        }
         
         
         
