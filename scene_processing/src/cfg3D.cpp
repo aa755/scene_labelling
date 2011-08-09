@@ -14,8 +14,10 @@
 #include<queue>
 #include<pcl/io/pcd_io.h>
 #include<pcl/io/io.h>
+#include <kdtree++/kdtree.hpp>
 
 //sac_model_plane.h
+ 
 using namespace std;
 typedef pcl::PointXYZRGB PointT;
 /*
@@ -42,7 +44,41 @@ public:
     double getCost() const {
         return cost;
     }
+    
+    virtual void getCentroid(pcl::PointXYZ & centroid)=0;
+    
+    virtual void finalize()=0;
 };
+
+struct kdtreeNode
+{
+ typedef double value_type;
+
+ double xyz[3];
+ Symbol * sym;
+ 
+ value_type operator[](size_t n) const
+ {
+   return xyz[n];
+ }
+
+ double distance( const kdtreeNode &node)
+ {
+   double x = xyz[0] - node.xyz[0];
+   double y = xyz[1] - node.xyz[1];
+   double z = xyz[2] - node.xyz[2];
+
+// this is not correct   return sqrt( x*x+y*y+z*z);
+
+// this is what kdtree checks with find_within_range()
+// the "manhattan distance" from the search point.
+// effectively, distance is the maximum distance in any one dimension.
+   return max(fabs(x),max(fabs(y),fabs(z)));
+
+ }
+};
+
+typedef KDTree::KDTree<3,kdtreeNode> treeType;
 
 class Terminal : public Symbol
 {
@@ -75,7 +111,16 @@ public:
     {
         return index;
     }
+    
+    void getCentroid(pcl::PointXYZ & centroid)
+    {
+        PointT point=scene.points[index];
+        centroid.x=point.x;
+        centroid.y=point.y;
+        centroid.z=point.z;        
+    }
 
+    virtual void finalize(){}
 };
 Terminal * terminals;
 
@@ -83,11 +128,28 @@ class NonTerminal : public Symbol
 {
 protected:
     vector<Symbol*> children;
-    
+    PointT centroid;
     /** indices into the pointcloud
      */
     vector<int> pointIndices; // can be replaced with any sufficient statistic
     //will be populated only when extracted as min
+    void computeCentroid()
+    {
+        PointT point;
+        centroid.x=0;
+        centroid.y=0;
+        centroid.z=0;
+        for (size_t i = 0; i < pointIndices.size(); i++)
+        {
+            point = scene.points[i];
+            centroid.x += point.x;
+            centroid.y += point.y;
+            centroid.z += point.z;
+        }
+            centroid.x /=pointIndices.size();
+            centroid.y /=pointIndices.size();
+            centroid.z /=pointIndices.size();                
+    }
     
     /** 
      * compute leaves by concatenating 
@@ -105,8 +167,14 @@ public:
     {
         assert(pointIndices.size()>0);
         points.insert(points.end(),pointIndices.begin(),pointIndices.end());
-    }    
-
+    }
+    
+    virtual void finalize()
+    {
+        computePointIndices();
+        computeCentroid();
+    }
+    
 };
 
 class Rule
@@ -179,6 +247,12 @@ public:
             return exp(pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
         }
     }
+    
+    void finalize()
+    {
+        NonTerminal::finalize();
+        computePlaneParams();
+    }
 };
 
 class RPlane_PlanePoint : public Rule
@@ -205,8 +279,9 @@ public:
         LHS->children.push_back(RHS_point);
         RHS_plane->parents->push_back(LHS);
         RHS_point->parents->push_back(LHS);
-        LHS->computePointIndices();
-        LHS->computePlaneParams();  
+        // not required ... these will be needed only when this is extracted ... it cannot be combined with others
+//        LHS->computePointIndices();
+//        LHS->computePlaneParams();  
         return LHS;
     }
     
@@ -250,6 +325,8 @@ void runParse()
     while(true)
     {
         min=pq.top();
+        min->finalize();
+        
         
         
         pq.pop();
