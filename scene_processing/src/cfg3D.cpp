@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+//class NonTerminal;
 #include <vector>
 #include<typeinfo>
 #include<pcl/point_types.h>
@@ -14,7 +15,6 @@
 #include<queue>
 #include<pcl/io/pcd_io.h>
 #include<pcl/io/io.h>
-#include <kdtree++/kdtree.hpp>
 
 //sac_model_plane.h
  
@@ -23,8 +23,35 @@ typedef pcl::PointXYZRGB PointT;
 /*
  * 
  */
-pcl::PointCloud<PointT> scene;
+/**
+ * does in-place set intersection ...O(n) amortized... result is in set_1
+ * @param set_1
+ * @param set_2
+ */
+void setIntersection(std::set<int> set_1, std::set<int> set_2)
+{
+    std::set<int>::iterator it1 = set_1.begin();
+    std::set<int>::iterator it2 = set_2.begin();
+    while ((it1 != set_1.end()) && (it2 != set_2.end()))
+    {
+        if (*it1 < *it2)
+        {
+            set_1.erase(it1++);
+        }
+        else if (*it2 < *it1)
+        {
+            ++it2;
+        }
+        else
+        { // *it1 == *it2
+            ++it1;
+            ++it2;
+        }
+    };
+}
 
+class NonTerminal;
+pcl::PointCloud<PointT> scene;
 class Symbol
 {
 protected:
@@ -33,7 +60,7 @@ protected:
      *  required for being a superior CFG 
      */
     double cost; 
-    vector<NonTerminal*> parents;
+//    vector<NonTerminal*> parents;
 public:
     virtual void insertPoints(vector<int> & points)=0;
     bool operator < (const Symbol &  rhs)
@@ -47,38 +74,11 @@ public:
     
     virtual void getCentroid(pcl::PointXYZ & centroid)=0;
     
-    virtual void finalize()=0;
+    virtual void finalize(vector<set<NonTerminal*> > & ancestors)=0;
+    
+//    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)=0;
 };
 
-struct kdtreeNode
-{
- typedef double value_type;
-
- double xyz[3];
- Symbol * sym;
- 
- value_type operator[](size_t n) const
- {
-   return xyz[n];
- }
-
- double distance( const kdtreeNode &node)
- {
-   double x = xyz[0] - node.xyz[0];
-   double y = xyz[1] - node.xyz[1];
-   double z = xyz[2] - node.xyz[2];
-
-// this is not correct   return sqrt( x*x+y*y+z*z);
-
-// this is what kdtree checks with find_within_range()
-// the "manhattan distance" from the search point.
-// effectively, distance is the maximum distance in any one dimension.
-   return max(fabs(x),max(fabs(y),fabs(z)));
-
- }
-};
-
-typedef KDTree::KDTree<3,kdtreeNode> treeType;
 
 class Terminal : public Symbol
 {
@@ -120,7 +120,15 @@ public:
         centroid.z=point.z;        
     }
 
-    virtual void finalize(){}
+    virtual void finalize(vector<set<NonTerminal*> > & ancestors){}
+    
+    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)
+    {
+        return false; // each terminal can be derived in only 1 way
+        /* contrast it with a set of terminals which can be derived in multiple way
+         * (1 U 2) U 3  or  1 U (2 U 3 )
+         */
+    }
 };
 Terminal * terminals;
 
@@ -128,7 +136,7 @@ class NonTerminal : public Symbol
 {
 protected:
     vector<Symbol*> children;
-    PointT centroid;
+    pcl::PointXYZ centroid;
     /** indices into the pointcloud
      */
     vector<int> pointIndices; // can be replaced with any sufficient statistic
@@ -169,10 +177,40 @@ public:
         points.insert(points.end(),pointIndices.begin(),pointIndices.end());
     }
     
-    virtual void finalize()
+    /**
+     * do the book-keeping work:
+     * 1) compute the set of points spanned by this NT
+     * 2) add itself to the list of ancestors of all those points
+     * @param ancestors: list of ancestor-sets for all poinst in scene 
+     */
+    virtual void finalize(vector<set<NonTerminal*> > & ancestors)
     {
         computePointIndices();
+        std::pair< set<NonTerminal*>::iterator , bool > resIns;
+        
+        for(size_t i=0;i<pointIndices.size();i++)
+        {
+            resIns=ancestors[i].insert(this);
+            assert(resIns.second);
+        }   
+                                
         computeCentroid();
+        additionalFinalize();
+    }
+    
+    void getCentroid(pcl::PointXYZ & centroid1)
+    {
+        centroid1=centroid;
+    }
+    
+    virtual void additionalFinalize()
+    {
+        
+    }
+    
+    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)
+    {
+        
     }
     
 };
@@ -248,9 +286,8 @@ public:
         }
     }
     
-    void finalize()
+    void additionalFinalize()
     {
-        NonTerminal::finalize();
         computePlaneParams();
     }
 };
@@ -277,8 +314,8 @@ public:
         LHS->cost=RHS_plane->costOfAddingPoint(scene.points[RHS_point->getIndex()]);
         LHS->children.push_back(RHS_plane);
         LHS->children.push_back(RHS_point);
-        RHS_plane->parents->push_back(LHS);
-        RHS_point->parents->push_back(LHS);
+//        RHS_plane->parents->push_back(LHS);
+//        RHS_point->parents->push_back(LHS);
         // not required ... these will be needed only when this is extracted ... it cannot be combined with others
 //        LHS->computePointIndices();
 //        LHS->computePlaneParams();  
@@ -316,6 +353,8 @@ void runParse()
 {
     priority_queue<Symbol *,vector<Symbol *>,SymbolComparison> pq;
     int numPoints=scene.size();
+    vector<set<NonTerminal*> > ancestors(numPoints,set<NonTerminal*>());
+    
     for(int i=0;i<numPoints;i++)
     {
         pq.push(new Terminal(i));
@@ -325,7 +364,7 @@ void runParse()
     while(true)
     {
         min=pq.top();
-        min->finalize();
+        min->finalize(ancestors);
         
         
         
@@ -340,4 +379,3 @@ int main(int argc, char** argv)
     runParse();
     return 0;
 }
-
