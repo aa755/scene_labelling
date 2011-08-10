@@ -129,7 +129,8 @@ public:
         combineCanditates.insert(allAncestors[nearest_index[0]].begin(),allAncestors[nearest_index[0]].end());
         set<NonTerminal*> thisAncestors;
         getSetOfAncestors(thisAncestors,allAncestors);
-        setDiffernce<NonTerminal*>(combineCanditates,thisAncestors);
+        setDiffernce<NonTerminal*>(static_cast<set<NonTerminal*> >(combineCanditates)/*at this point, it only contains NT's*/,thisAncestors);
+        //combineCanditates.pu
         
     }
     
