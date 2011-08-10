@@ -78,6 +78,20 @@ void setDiffernce(std::set<T> & set_1, std::set<T> & set_2)
     
     set_1.erase(it1, set_1.end());
 }
+struct null_deleter
+{
+    void operator()(void const *) const
+    {
+    }
+};
+
+
+template<typename X>
+boost::shared_ptr<X> createStaticShared(X * x)
+{
+    boost::shared_ptr<X> px(x, null_deleter());
+    return px;
+}
 
 class NonTerminal;
 pcl::PointCloud<PointT> scene;
@@ -115,7 +129,7 @@ public:
         vector<int> indices;
         getComplementPointSet(indices);
 //        pcl::PointCloud<PointT>::Ptr scene_ptr=new pcl::PointCloud<PointT>::Ptr(scene)
-        nnFinder.setInputCloud(scene_ptr,boost::make_shared<vector<int> >(indices));
+        nnFinder.setInputCloud(scene_ptr,createStaticShared<vector<int> >(&indices));
         vector<int> nearest_index;
         vector<float> nearest_distances;
         pcl::PointXYZ centroidt;
