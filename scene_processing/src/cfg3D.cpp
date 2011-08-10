@@ -94,6 +94,7 @@ boost::shared_ptr<X> createStaticShared(X * x)
 }
 
 class NonTerminal;
+class Terminal;
 pcl::PointCloud<PointT> scene;
 pcl::PointCloud<PointT>::Ptr scene_ptr;
 class Symbol
@@ -123,8 +124,9 @@ public:
     virtual void getComplementPointSet(vector<int> & indices /* = 0 */)=0;
     virtual void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)=0;
 
-    void getValidSymbolsForCombination(vector<set<NonTerminal*> > & allAncestors, set<Symbol*> combineCanditates)
+    void getValidSymbolsForCombination(vector<set<NonTerminal*> > & allAncestors,vector<Terminal*> & terminals,set<Symbol*> & combineCanditates)
     {
+        // find the nearest point not in this segment
         pcl::KdTreeFLANN<PointT> nnFinder;
         vector<int> indices;
         getComplementPointSet(indices);
@@ -139,13 +141,23 @@ public:
         centroidTT.y=centroidt.y;
         centroidTT.z=centroidt.z;
         nnFinder.nearestKSearch(centroidTT,1,nearest_index,nearest_distances);
-        combineCanditates.clear();
-        combineCanditates.insert(allAncestors[nearest_index[0]].begin(),allAncestors[nearest_index[0]].end());
-        set<NonTerminal*> thisAncestors;
-        getSetOfAncestors(thisAncestors,allAncestors);
-        setDiffernce<NonTerminal*>(static_cast<set<NonTerminal*> >(combineCanditates)/*at this point, it only contains NT's*/,thisAncestors);
-        //combineCanditates.pu
         
+        
+        //get all it's ancestors which are not in common with ancesstors of this
+        set<NonTerminal*> thisAncestors;
+        set<NonTerminal*> combineNTCanditates;
+        combineNTCanditates.insert(allAncestors[nearest_index[0]].begin(),allAncestors[nearest_index[0]].end());
+        getSetOfAncestors(thisAncestors,allAncestors);
+        setDiffernce<NonTerminal*>(combineNTCanditates/*at this point, it only contains NT's*/,thisAncestors);
+        combineCanditates.clear();
+        set<NonTerminal*>::iterator it;
+        for(it=combineNTCanditates.begin();it!=combineNTCanditates.end();it++)
+        {
+            combineCanditates.insert(combineCanditates.end(),(Symbol*)*it);
+        }
+        
+        //add itself
+        combineCanditates.insert((Symbol*)terminals[nearest_index[0]]);        
     }
     
 //    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)=0;
@@ -155,7 +167,7 @@ public:
 class Terminal : public Symbol
 {
 protected:
-    int index;
+    size_t index;
 public:
     void insertPoints(vector<int> & points)
     {
@@ -204,7 +216,7 @@ public:
     {
         // will be called only once ... when this terminal is extracted
         indices.clear();
-        for(int i=0;i<indices.size();i++)
+        for(size_t i=0;i<indices.size();i++)
         {
             if(i!=index)
                 indices.push_back(i);
@@ -482,6 +494,11 @@ public:
 
     
 };
+typedef boost::shared_ptr<Rule>  RulePtr;
+void appendRuleInstances(vector<RulePtr> rules)
+{
+    rules.push_back(RulePtr(new RPlane_PlanePoint()));    
+}
 
 class SymbolComparison
 {
@@ -498,9 +515,14 @@ void runParse()
     int numPoints=scene.size();
     vector<set<NonTerminal*> > ancestors(numPoints,set<NonTerminal*>());
     
+    vector<Terminal *> terminals;
+   
+    Terminal * temp;
     for(int i=0;i<numPoints;i++)
     {
-        pq.push(new Terminal(i));
+        temp=new Terminal(i);
+        terminals.push_back(temp);
+        pq.push(temp);
     }
     
     Symbol *min;
@@ -509,6 +531,8 @@ void runParse()
         min=pq.top();
         if(min->finalize_if_not_duplicate(ancestors))
         {
+            set<Symbol*> combineCandidates;
+            min->getValidSymbolsForCombination(ancestors,terminals,combineCandidates);
             
         }
         else
