@@ -15,6 +15,7 @@
 #include<queue>
 #include<pcl/io/pcd_io.h>
 #include<pcl/io/io.h>
+#include <pcl/kdtree/kdtree_flann.h>
 
 //sac_model_plane.h
  
@@ -29,7 +30,7 @@ typedef pcl::PointXYZRGB PointT;
  * @param set_2
  */
 template<typename T>
-void setIntersection(std::set<T> set_1, std::set<T> set_2)
+void setIntersection(std::set<T> & set_1, std::set<T> & set_2)
 {
     typename set<T>::iterator it1 = set_1.begin();
     typename set<T>::iterator it2 = set_2.begin();
@@ -53,8 +54,34 @@ void setIntersection(std::set<T> set_1, std::set<T> set_2)
     set_1.erase(it1, set_1.end());
 }
 
+template<typename T>
+void setDiffernce(std::set<T> & set_1, std::set<T> & set_2)
+{
+    typename set<T>::iterator it1 = set_1.begin();
+    typename set<T>::iterator it2 = set_2.begin();
+    while ((it1 != set_1.end()) && (it2 != set_2.end()))
+    {
+        if (*it1 < *it2)
+        {
+            //set_1.erase(it1++);
+        }
+        else if (*it2 < *it1)
+        {
+            ++it2;
+        }
+        else
+        { // *it1 == *it2
+            set_1.erase(it1++);
+            ++it2;
+        }
+    }
+    
+    set_1.erase(it1, set_1.end());
+}
+
 class NonTerminal;
 pcl::PointCloud<PointT> scene;
+pcl::PointCloud<PointT>::Ptr scene_ptr;
 class Symbol
 {
 protected:
@@ -81,8 +108,28 @@ public:
     
     virtual void getComplementPointSet(vector<int> & indices /* = 0 */)=0;
     virtual void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)=0;
-    void getValidSymbolsForCombination()
+
+    void getValidSymbolsForCombination(vector<set<NonTerminal*> > & allAncestors, set<Symbol*> combineCanditates)
     {
+        pcl::KdTreeFLANN<PointT> nnFinder;
+        vector<int> indices;
+        getComplementPointSet(indices);
+//        pcl::PointCloud<PointT>::Ptr scene_ptr=new pcl::PointCloud<PointT>::Ptr(scene)
+        nnFinder.setInputCloud(scene_ptr,boost::make_shared<vector<int> >(indices));
+        vector<int> nearest_index;
+        vector<float> nearest_distances;
+        pcl::PointXYZ centroidt;
+        getCentroid(centroidt);
+        PointT centroidTT;
+        centroidTT.x=centroidt.x;
+        centroidTT.y=centroidt.y;
+        centroidTT.z=centroidt.z;
+        nnFinder.nearestKSearch(centroidTT,1,nearest_index,nearest_distances);
+        combineCanditates.clear();
+        combineCanditates.insert(allAncestors[nearest_index[0]].begin(),allAncestors[nearest_index[0]].end());
+        set<NonTerminal*> thisAncestors;
+        getSetOfAncestors(thisAncestors,allAncestors);
+        setDiffernce<NonTerminal*>(combineCanditates,thisAncestors);
         
     }
     
@@ -467,6 +514,7 @@ void runParse()
 int main(int argc, char** argv) 
 {
     pcl::io::loadPCDFile<PointT>("/home/abhishek/fridge.pcd", scene);
+    *scene_ptr=scene;
     runParse();
     return 0;
 }
