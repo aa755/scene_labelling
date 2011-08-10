@@ -48,7 +48,9 @@ void setIntersection(std::set<T> set_1, std::set<T> set_2)
             ++it1;
             ++it2;
         }
-    };
+    }
+    
+    set_1.erase(it1, set_1.end());
 }
 
 class NonTerminal;
@@ -76,6 +78,13 @@ public:
     virtual void getCentroid(pcl::PointXYZ & centroid)=0;
     
     virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)=0;
+    
+    virtual void getComplementPointSet(vector<int> & indices /* = 0 */)=0;
+    virtual void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)=0;
+    void getValidSymbolsForCombination()
+    {
+        
+    }
     
 //    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)=0;
 };
@@ -129,6 +138,21 @@ public:
          * (1 U 2) U 3  or  1 U (2 U 3 )
          */
    // }
+    void getComplementPointSet(vector<int>& indices /* = 0 */)
+    {
+        // will be called only once ... when this terminal is extracted
+        indices.clear();
+        for(int i=0;i<indices.size();i++)
+        {
+            if(i!=index)
+                indices.push_back(i);
+        }
+    }
+    
+    void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)
+    {
+        thisAncestors=allAncestors[index];
+    }
 };
 Terminal * terminals;
 
@@ -229,6 +253,44 @@ public:
                     return true;
             }
             return false;
+        }
+    }
+
+    void getComplementPointSet(vector<int>& indices /* = 0 */)
+    {
+        int it1=0;
+        int numPoints=scene.size();
+        indices.clear();
+        sort(pointIndices.begin(),pointIndices.end());
+        vector<int>::iterator it2=pointIndices.begin();
+        while ((it1 < numPoints ) && (it2 != pointIndices.end()))
+        {
+            if (it1 < *it2)
+            {
+                indices.push_back(it1);
+                it1++;
+            }
+            else if (it1==*it2)
+            { 
+                ++it1; //skip this point
+                ++it2;
+            }
+            else
+            {
+                assert(1==2);
+            }
+
+        
+        }
+    }
+    
+    void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)
+    {
+        thisAncestors=allAncestors[pointIndices[0]];
+        for(size_t i=1;i<allAncestors.size();i++)
+        {
+             set<NonTerminal*> & temp=allAncestors[pointIndices[i]];
+             thisAncestors.insert(temp.begin(),temp.end());
         }
     }
     
