@@ -784,7 +784,16 @@ void runParse()
 int main(int argc, char** argv) 
 {
     pcl::io::loadPCDFile<PointT>("transformed_fridge.pcd", scene);
+        pcl::KdTreeFLANN<PointT> nnFinder;
+        nnFinder.setInputCloud(createStaticShared<pcl::PointCloud<PointT> >(&scene));
+        vector<int> nearest_index;
+        vector<float> nearest_distances;
+        nearest_index.resize(2,0);
+        nearest_distances.resize(2,0.0);
+        nnFinder.nearestKSearch(scene.points[1022],2,nearest_index,nearest_distances);
+        cout<<"nearest index found was "<<nearest_index[0]<<endl;
+        cout<<"2nd nearest index found was "<<nearest_index[1]<<endl;
     cout<<"scene has "<<scene.size()<<" points"<<endl;
-    runParse();
+//    runParse();
     return 0;
 }
