@@ -299,7 +299,7 @@ public:
 
     void setAdditionalCost(double additionalCost)
     {
-        assert(additionalCost>0);
+        assert(additionalCost>=0);
         cost=0;
         for(size_t i=0;i<children.size();i++)
             cost+=children[i]->getCost();
@@ -467,10 +467,11 @@ class Plane : public NonTerminal
 {
 protected:
 //    friend class RPlane_PlanePoint;
-    Eigen::Vector4f planeParams;
     float curvature;
     bool planeParamsComputed;
+    Eigen::Vector4f planeParams;
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Plane():NonTerminal()
     {
         planeParamsComputed=false;
@@ -612,6 +613,7 @@ public:
         Terminal * RHS_point2=dynamic_cast<Terminal *>(RHS.at(1));
         LHS->addChild(RHS_point1);
         LHS->addChild(RHS_point2);
+        assert(RHS_point1->getIndex()!=RHS_point2->getIndex());
         LHS->setAdditionalCost(pcl::euclideanDistance<PointT,PointT>(RHS_point1->getPoint(),RHS_point2->getPoint()));
         return LHS;
     }
