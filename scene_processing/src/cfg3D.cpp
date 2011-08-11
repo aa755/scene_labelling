@@ -209,7 +209,7 @@ public:
         return index;
     }
     
-    PointT getPoint()
+    const PointT & getPoint()
     {
         return scene.points[index];
     }
@@ -451,10 +451,6 @@ double sqr(double d)
     return d*d;
 }
 
-double distance(PointT  p1, PointT  p2)
-{
-    return sqrt(sqr(p1.x-p2.x)+sqr(p1.y-p2.y)+sqr(p1.z-p2.z));
-}
 
 class Plane : public NonTerminal
 {
@@ -487,8 +483,8 @@ public:
         {
             /*return it's min distance to either points
              */
-            double d1=distance(p,scene.points[pointIndices[0]]);
-            double d2=distance(p,scene.points[pointIndices[1]]);
+            double d1=pcl::euclideanDistance<PointT,PointT>(p,scene.points[pointIndices[0]]);
+            double d2=pcl::euclideanDistance<PointT,PointT>(p,scene.points[pointIndices[1]]);
             if(d1<d2)
                 return d1;
             else
@@ -598,7 +594,7 @@ public:
         Terminal * RHS_point2=dynamic_cast<Terminal *>(RHS.at(1));
         LHS->addChild(RHS_point1);
         LHS->addChild(RHS_point2);
-        LHS->setAdditionalCost(distance(RHS_point1->getPoint(),RHS_point2->getPoint()));
+        LHS->setAdditionalCost(pcl::euclideanDistance<PointT,PointT>(RHS_point1->getPoint(),RHS_point2->getPoint()));
         return LHS;
     }
     
@@ -621,11 +617,11 @@ public:
     }    
 };
 
-class S : public NonTerminal
+class Goal_S : public NonTerminal
 {
 protected:
 public:
-    S():NonTerminal()
+    Goal_S():NonTerminal()
     {
         
     }
@@ -647,7 +643,7 @@ public:
     
     NonTerminal* applyRule(vector<Symbol*> & RHS)
     {
-        S * LHS=new S();
+        Goal_S * LHS=new Goal_S();
         Plane * RHS_plane1=dynamic_cast<Plane *>(RHS.at(0));
         Plane * RHS_plane2=dynamic_cast<Plane *>(RHS.at(0));
         LHS->addChild(RHS_plane1);
