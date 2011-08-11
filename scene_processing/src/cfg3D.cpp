@@ -163,6 +163,17 @@ public:
 //    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)=0;
 };
 
+class SymbolComparison
+{
+public:
+  bool operator() (Symbol * & lhs, Symbol * & rhs) const
+  {
+      return lhs->getCost()>rhs->getCost();
+  }
+};
+
+
+typedef priority_queue<Symbol *,vector<Symbol *>,SymbolComparison> SymbolPriorityQueue;
 
 class Terminal : public Symbol
 {
@@ -402,7 +413,7 @@ public:
         return true;
     }
     
-    virtual void combineAndPush(Symbol * sym,vector<Symbol *> pqueue)=0;
+    virtual void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)=0;
 };
 
 class Plane : public NonTerminal
@@ -420,7 +431,7 @@ public:
     
     void computePlaneParams()
     {
-        pcl::NormalEstimation<PointT,PointT> normalEstimator;
+        pcl::NormalEstimation<PointT,pcl::Normal> normalEstimator;
         normalEstimator.computePointNormal(scene, pointIndices, planeParams, curvature);
         planeParamsComputed=true;
     }
@@ -477,41 +488,55 @@ public:
         return LHS;
     }
     
-    void combineAndPush(Symbol * sym,vector<Symbol *> pqueue)
+     void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)
     {
-        
+        set<Symbol*>::iterator it;
         if(typeid(sym)==typeid(Terminal*))
         {
-            //find nearest plane and add
+            for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
+            {
+                if(typeid(*it)==typeid(Plane*))
+                {
+                    vector<Symbol*> temp;
+                    temp.push_back(*it); // must be pushed in order
+                    temp.push_back(sym);
+                    pqueue.push(applyRule(temp));
+                    
+                }
+            }
         }
         else if (typeid(sym)==typeid(Plane *))
         {
+            for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
+            {
+                if(typeid(*it)==typeid(Terminal*))
+                {
+                    vector<Symbol*> temp;
+                    temp.push_back(sym);
+                    temp.push_back(*it); // must be pushed in order
+                    pqueue.push(applyRule(temp));
+                    
+                }
+            }
             
         }
         else
             assert(1==2);
-    }
-
-    
+    }    
 };
+
 typedef boost::shared_ptr<Rule>  RulePtr;
 void appendRuleInstances(vector<RulePtr> rules)
 {
     rules.push_back(RulePtr(new RPlane_PlanePoint()));    
 }
 
-class SymbolComparison
-{
-public:
-  bool operator() (Symbol * & lhs, Symbol * & rhs) const
-  {
-      return lhs->getCost()>rhs->getCost();
-  }
-};
 
 void runParse()
 {
-    priority_queue<Symbol *,vector<Symbol *>,SymbolComparison> pq;
+    vector<RulePtr> rules;
+    appendRuleInstances(rules);
+    SymbolPriorityQueue pq;
     int numPoints=scene.size();
     vector<set<NonTerminal*> > ancestors(numPoints,set<NonTerminal*>());
     
@@ -533,6 +558,11 @@ void runParse()
         {
             set<Symbol*> combineCandidates;
             min->getValidSymbolsForCombination(ancestors,terminals,combineCandidates);
+            cout<<combineCandidates.size()<<" candidates found and queue has "<<pq.size()<<" elements"<<endl;
+            for(size_t i=0;i<rules.size();i++)
+            {
+                rules[i]->combineAndPush(min,combineCandidates,pq);
+            }
             
         }
         else
