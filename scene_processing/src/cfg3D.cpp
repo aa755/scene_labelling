@@ -145,10 +145,10 @@ public:
         centroidTT.x=centroidt.x;
         centroidTT.y=centroidt.y;
         centroidTT.z=centroidt.z;
-        nearest_index.resize(1);
-        nearest_distances.resize(1);
+        nearest_index.resize(1,0);
+        nearest_distances.resize(1,0.0);
         nnFinder.nearestKSearch(centroidTT,1,nearest_index,nearest_distances);
-        
+        cout<<"nearest index found was "<<nearest_index[0]<<endl;
         
         //get all it's ancestors which are not in common with ancesstors of this
         set<NonTerminal*> thisAncestors;
@@ -239,7 +239,7 @@ public:
     void getComplementPointSet(vector<int>& indices /* = 0 */)
     {
         // will be called only once ... when this terminal is extracted
-       // cout<<" terminal complement\n";
+        cout<<" terminal complement of index"<<index<<"\n";
         indices.clear();
         for(size_t i=0;i<scene.size();i++)
         {
@@ -613,7 +613,9 @@ public:
         Terminal * RHS_point2=dynamic_cast<Terminal *>(RHS.at(1));
         LHS->addChild(RHS_point1);
         LHS->addChild(RHS_point2);
+        cout<<RHS_point1->getIndex()<<","<<RHS_point2->getIndex()<<endl;
         assert(RHS_point1->getIndex()!=RHS_point2->getIndex());
+        
         LHS->setAdditionalCost(pcl::euclideanDistance<PointT,PointT>(RHS_point1->getPoint(),RHS_point2->getPoint()));
         return LHS;
     }
@@ -683,7 +685,7 @@ public:
     {
         Goal_S * LHS=new Goal_S();
         Plane * RHS_plane1=dynamic_cast<Plane *>(RHS.at(0));
-        Plane * RHS_plane2=dynamic_cast<Plane *>(RHS.at(0));
+        Plane * RHS_plane2=dynamic_cast<Plane *>(RHS.at(1));
         LHS->addChild(RHS_plane1);
         LHS->addChild(RHS_plane2);
         LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)); // more coplanar => bad
