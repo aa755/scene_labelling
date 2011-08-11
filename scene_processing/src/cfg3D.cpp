@@ -332,7 +332,7 @@ public:
      * 2) add itself to the list of ancestors of all those points
      * @param ancestors: list of ancestor-sets for all points in scene 
      */
-    virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)
+    bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)
     {
         assert(costSet); // cost must be set before adding it to pq
         computePointIndices();
@@ -454,7 +454,7 @@ public:
         return true;
     }
     
-    virtual void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)=0;
+    virtual void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)=0;
 };
 
 double sqr(double d)
@@ -556,7 +556,7 @@ public:
         return LHS;
     }
     
-     void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)
+     void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
     {
         set<Symbol*>::iterator it;
         if(typeid(sym)==typeid(Terminal*))
@@ -618,7 +618,7 @@ public:
         return LHS;
     }
     
-     void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)
+     void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
     {
         set<Symbol*>::iterator it;
         if(typeid(sym)==typeid(Terminal*))
@@ -631,6 +631,7 @@ public:
                     temp.push_back(*it); // must be pushed in order
                     temp.push_back(sym);
                     pqueue.push(applyRule(temp));
+                    cout<<"applied rule p->tt\n";
                 }
             }
         }
@@ -686,7 +687,7 @@ public:
         return LHS;
     }
     
-     void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)
+     void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
     {
         set<Symbol*>::iterator it;
         if(typeid(sym)==typeid(Plane*))
@@ -712,7 +713,7 @@ public:
 };
 
 typedef boost::shared_ptr<Rule>  RulePtr;
-void appendRuleInstances(vector<RulePtr> rules)
+void appendRuleInstances(vector<RulePtr> & rules)
 {
     rules.push_back(RulePtr(new RPlane_PlanePoint()));    
     rules.push_back(RulePtr(new RPlane_PointPoint()));    
