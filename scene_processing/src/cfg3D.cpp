@@ -64,6 +64,7 @@ void setDiffernce(std::set<T> & set_1, std::set<T> & set_2)
         if (*it1 < *it2)
         {
             //set_1.erase(it1++);
+            it1++;
         }
         else if (*it2 < *it1)
         {
@@ -76,8 +77,8 @@ void setDiffernce(std::set<T> & set_1, std::set<T> & set_2)
         }
     }
     
-    set_1.erase(it1, set_1.end());
 }
+
 struct null_deleter
 {
     void operator()(void const *) const
@@ -96,7 +97,6 @@ boost::shared_ptr<X> createStaticShared(X * x)
 class NonTerminal;
 class Terminal;
 pcl::PointCloud<PointT> scene;
-pcl::PointCloud<PointT>::Ptr scene_ptr;
 class Symbol
 {
 protected:
@@ -131,7 +131,7 @@ public:
         vector<int> indices;
         getComplementPointSet(indices);
 //        pcl::PointCloud<PointT>::Ptr scene_ptr=new pcl::PointCloud<PointT>::Ptr(scene)
-        nnFinder.setInputCloud(scene_ptr,createStaticShared<vector<int> >(&indices));
+        nnFinder.setInputCloud(createStaticShared<pcl::PointCloud<PointT> >(&scene),createStaticShared<vector<int> >(&indices));
         vector<int> nearest_index;
         vector<float> nearest_distances;
         pcl::PointXYZ centroidt;
@@ -582,8 +582,16 @@ void runParse()
 
 int main(int argc, char** argv) 
 {
-    pcl::io::loadPCDFile<PointT>("/home/abhishek/fridge.pcd", scene);
-    *scene_ptr=scene;
-    runParse();
+    pcl::io::loadPCDFile<PointT>("/home/aa755/fridge.pcd", scene);
+    cout<<"scene has "<<scene.size()<<" points"<<endl;
+    int myints1[] = {6,2,3,4,5};
+    int myints2[] = {6,2};
+    set<int> s1(myints1,myints1+5);
+    set<int> s2(myints2,myints2+2);
+    setDiffernce<int>(s1,s2);
+    set<int>::iterator it;
+    for(it=s1.begin();it!=s1.end();it++)
+        cout<<*it<<endl;
+//    runParse();
     return 0;
 }
