@@ -588,8 +588,6 @@ public:
             }
             
         }
-        else
-            assert(1==2);
     }    
 };
 
@@ -621,10 +619,12 @@ public:
      void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
     {
         set<Symbol*>::iterator it;
+        cout<<"my type:"<<typeid(sym).name()<<endl;
         if(typeid(sym)==typeid(Terminal*))
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
+                cout<<"cand type:"<<typeid(*it).name()<<endl;
                 if(typeid(*it)==typeid(Terminal*))
                 {
                     vector<Symbol*> temp;
