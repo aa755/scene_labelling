@@ -536,8 +536,8 @@ public:
     
     void  get_typenames(vector<string> & names)
     {
-        names.push_back(typeid(Plane *).name());
-        names.push_back(typeid(Terminal *).name());
+        names.push_back(typeid(Plane ).name());
+        names.push_back(typeid(Terminal ).name());
     }
     
     NonTerminal* applyRule(vector<Symbol*> & RHS)
@@ -559,11 +559,11 @@ public:
      void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
     {
         set<Symbol*>::iterator it;
-        if(typeid(sym)==typeid(Terminal*))
+        if(typeid(*sym)==typeid(Terminal))
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
-                if(typeid(*it)==typeid(Plane*))
+                if(typeid(*(*it))==typeid(Plane))
                 {
                     vector<Symbol*> temp;
                     temp.push_back(*it); // must be pushed in order
@@ -573,11 +573,11 @@ public:
                 }
             }
         }
-        else if (typeid(sym)==typeid(Plane *))
+        else if (typeid(*sym)==typeid(Plane ))
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
-                if(typeid(*it)==typeid(Terminal*))
+                if(typeid(*(*it))==typeid(Terminal))
                 {
                     vector<Symbol*> temp;
                     temp.push_back(sym);
@@ -601,8 +601,8 @@ public:
     
     void  get_typenames(vector<string> & names)
     {
-        names.push_back(typeid(Terminal *).name());
-        names.push_back(typeid(Terminal *).name());
+        names.push_back(typeid(Terminal ).name());
+        names.push_back(typeid(Terminal ).name());
     }
     
     NonTerminal* applyRule(vector<Symbol*> & RHS)
@@ -619,13 +619,14 @@ public:
      void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
     {
         set<Symbol*>::iterator it;
-        cout<<"my type:"<<typeid(sym).name()<<endl;
-        if(typeid(sym)==typeid(Terminal*))
+     //   cout<<"my type:"<<typeid(*sym).name()<<endl;
+     //   cout<<"my type:"<<typeid(Terminal).name()<<endl;
+        if(typeid(*sym)==typeid(Terminal))
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
                 cout<<"cand type:"<<typeid(*it).name()<<endl;
-                if(typeid(*it)==typeid(Terminal*))
+                if(typeid(*(*it))==typeid(Terminal))
                 {
                     vector<Symbol*> temp;
                     temp.push_back(*it); // must be pushed in order
@@ -672,8 +673,8 @@ public:
     
     void  get_typenames(vector<string> & names)
     {
-        names.push_back(typeid(Plane *).name());
-        names.push_back(typeid(Plane *).name());
+        names.push_back(typeid(Plane).name());
+        names.push_back(typeid(Plane).name());
     }
     
     NonTerminal* applyRule(vector<Symbol*> & RHS)
@@ -690,11 +691,11 @@ public:
      void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
     {
         set<Symbol*>::iterator it;
-        if(typeid(sym)==typeid(Plane*))
+        if(typeid(*sym)==typeid(Plane))
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
-                if(typeid(*it)==typeid(Plane*))
+                if(typeid(*(*it))==typeid(Plane))
                 {
                     Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
                     Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
@@ -778,7 +779,7 @@ void runParse()
 
 int main(int argc, char** argv) 
 {
-    pcl::io::loadPCDFile<PointT>("/home/aa755/transformed_fridge.pcd", scene);
+    pcl::io::loadPCDFile<PointT>("transformed_fridge.pcd", scene);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
     runParse();
     return 0;
