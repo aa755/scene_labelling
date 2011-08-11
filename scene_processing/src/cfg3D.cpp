@@ -6,7 +6,6 @@
  */
 
 #include <iostream>
-//class NonTerminal;
 #include <vector>
 #include<typeinfo>
 #include<pcl/point_types.h>
@@ -141,6 +140,8 @@ public:
         centroidTT.x=centroidt.x;
         centroidTT.y=centroidt.y;
         centroidTT.z=centroidt.z;
+        nearest_index.resize(1);
+        nearest_distances.resize(1);
         nnFinder.nearestKSearch(centroidTT,1,nearest_index,nearest_distances);
         
         
@@ -208,6 +209,11 @@ public:
         return index;
     }
     
+    PointT getPoint()
+    {
+        return scene.points[index];
+    }
+    
     void getCentroid(pcl::PointXYZ & centroid)
     {
         PointT point=scene.points[index];
@@ -273,7 +279,28 @@ protected:
     /** 
      * compute leaves by concatenating 
      * leaves of children */
+    bool costSet;
 public:
+    NonTerminal()
+    {
+        costSet=false;
+    }
+    
+    void setAdditionalCost(double additionalCost)
+    {
+        assert(additionalCost>0);
+        cost=0;
+        for(size_t i=0;i<children.size();i++)
+            cost+=children[i]->getCost();
+        cost+=additionalCost;
+        costSet=true;
+    }
+    
+    void addChild(Symbol * child)
+    {
+        assert(!costSet);
+        children.push_back(child);
+    }
     void computePointIndices()
     {
         for(size_t i=0;i<children.size();i++)
@@ -296,6 +323,7 @@ public:
      */
     virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)
     {
+        assert(costSet); // cost must be set before adding it to pq
         computePointIndices();
         if(checkDuplicate(ancestors))
             return false;
@@ -418,15 +446,25 @@ public:
     virtual void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)=0;
 };
 
+double sqr(double d)
+{
+    return d*d;
+}
+
+double distance(PointT  p1, PointT  p2)
+{
+    return sqrt(sqr(p1.x-p2.x)+sqr(p1.y-p2.y)+sqr(p1.z-p2.z));
+}
+
 class Plane : public NonTerminal
 {
 protected:
-    friend class RPlane_PlanePoint;
+//    friend class RPlane_PlanePoint;
     Eigen::Vector4f planeParams;
     float curvature;
     bool planeParamsComputed;
 public:
-    Plane()
+    Plane():NonTerminal()
     {
         planeParamsComputed=false;
     }
@@ -445,18 +483,30 @@ public:
     
     double costOfAddingPoint(PointT p)
     {
-        if(pointIndices.size()<3)
-            return 0;
-        else
+        if(pointIndices.size()==2)
+        {
+            /*return it's min distance to either points
+             */
+            double d1=distance(p,scene.points[pointIndices[0]]);
+            double d2=distance(p,scene.points[pointIndices[1]]);
+            if(d1<d2)
+                return d1;
+            else
+                return d2;
+        }
+        else if(pointIndices.size()>=3)
         {
             assert(planeParamsComputed);
-            return exp(pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
+            return exp(2*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
         }
+        else
+            assert(1==2);
     }
     
     void additionalFinalize()
     {
-        computePlaneParams();
+        if(pointIndices.size()>=3)
+            computePlaneParams();
     }
 };
 
@@ -479,9 +529,9 @@ public:
         Plane * LHS=new Plane();
         Plane * RHS_plane=dynamic_cast<Plane *>(RHS.at(0));
         Terminal * RHS_point=dynamic_cast<Terminal *>(RHS.at(1));
-        LHS->cost=RHS_plane->costOfAddingPoint(scene.points[RHS_point->getIndex()]);
-        LHS->children.push_back(RHS_plane);
-        LHS->children.push_back(RHS_point);
+        LHS->addChild(RHS_plane);
+        LHS->addChild(RHS_point);
+        LHS->setAdditionalCost(RHS_plane->costOfAddingPoint(RHS_point->getPoint()));
 //        RHS_plane->parents->push_back(LHS);
 //        RHS_point->parents->push_back(LHS);
         // not required ... these will be needed only when this is extracted ... it cannot be combined with others
@@ -524,6 +574,104 @@ public:
         }
         else
             assert(1==2);
+    }    
+};
+
+class RPlane_PointPoint : public Rule
+{
+public:
+    int get_Nof_RHS_symbols()
+    {
+        return 2;
+    }
+    
+    void  get_typenames(vector<string> & names)
+    {
+        names.push_back(typeid(Terminal *).name());
+        names.push_back(typeid(Terminal *).name());
+    }
+    
+    NonTerminal* applyRule(vector<Symbol*> & RHS)
+    {
+        Plane * LHS=new Plane();
+        Terminal * RHS_point1=dynamic_cast<Terminal *>(RHS.at(0));
+        Terminal * RHS_point2=dynamic_cast<Terminal *>(RHS.at(1));
+        LHS->addChild(RHS_point1);
+        LHS->addChild(RHS_point2);
+        LHS->setAdditionalCost(distance(RHS_point1->getPoint(),RHS_point2->getPoint()));
+        return LHS;
+    }
+    
+     void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)
+    {
+        set<Symbol*>::iterator it;
+        if(typeid(sym)==typeid(Terminal*))
+        {
+            for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
+            {
+                if(typeid(*it)==typeid(Terminal*))
+                {
+                    vector<Symbol*> temp;
+                    temp.push_back(*it); // must be pushed in order
+                    temp.push_back(sym);
+                    pqueue.push(applyRule(temp));
+                }
+            }
+        }
+    }    
+};
+
+class S : public NonTerminal
+{
+protected:
+public:
+    S():NonTerminal()
+    {
+        
+    }
+};
+
+class RS_PlanePlane : public Rule
+{
+public:
+    int get_Nof_RHS_symbols()
+    {
+        return 2;
+    }
+    
+    void  get_typenames(vector<string> & names)
+    {
+        names.push_back(typeid(Plane *).name());
+        names.push_back(typeid(Plane *).name());
+    }
+    
+    NonTerminal* applyRule(vector<Symbol*> & RHS)
+    {
+        S * LHS=new S();
+        Plane * RHS_plane1=dynamic_cast<Plane *>(RHS.at(0));
+        Plane * RHS_plane2=dynamic_cast<Plane *>(RHS.at(0));
+        LHS->addChild(RHS_plane1);
+        LHS->addChild(RHS_plane2);
+//        LHS->setAdditionalCost(distance(RHS_point1->getPoint(),RHS_point2->getPoint()));
+        return LHS;
+    }
+    
+     void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)
+    {
+        set<Symbol*>::iterator it;
+        if(typeid(sym)==typeid(Terminal*))
+        {
+            for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
+            {
+                if(typeid(*it)==typeid(Terminal*))
+                {
+                    vector<Symbol*> temp;
+                    temp.push_back(*it); // must be pushed in order
+                    temp.push_back(sym);
+                    pqueue.push(applyRule(temp));
+                }
+            }
+        }
     }    
 };
 
