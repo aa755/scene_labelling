@@ -130,6 +130,7 @@ public:
         pcl::KdTreeFLANN<PointT> nnFinder;
         vector<int> indices;
         getComplementPointSet(indices);
+        cout<<indices.size()<<" points in complement set"<<endl;
 //        pcl::PointCloud<PointT>::Ptr scene_ptr=new pcl::PointCloud<PointT>::Ptr(scene)
         nnFinder.setInputCloud(createStaticShared<pcl::PointCloud<PointT> >(&scene),createStaticShared<vector<int> >(&indices));
         vector<int> nearest_index;
@@ -226,8 +227,9 @@ public:
     void getComplementPointSet(vector<int>& indices /* = 0 */)
     {
         // will be called only once ... when this terminal is extracted
+        cout<<" terminal complement\n";
         indices.clear();
-        for(size_t i=0;i<indices.size();i++)
+        for(size_t i=0;i<scene.size();i++)
         {
             if(i!=index)
                 indices.push_back(i);
@@ -584,14 +586,6 @@ int main(int argc, char** argv)
 {
     pcl::io::loadPCDFile<PointT>("/home/aa755/fridge.pcd", scene);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
-    int myints1[] = {6,2,3,4,5};
-    int myints2[] = {6,2};
-    set<int> s1(myints1,myints1+5);
-    set<int> s2(myints2,myints2+2);
-    setDiffernce<int>(s1,s2);
-    set<int>::iterator it;
-    for(it=s1.begin();it!=s1.end();it++)
-        cout<<*it<<endl;
-//    runParse();
+    runParse();
     return 0;
 }
