@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include<typeinfo>
 #include<pcl/point_types.h>
@@ -106,6 +107,10 @@ protected:
     double cost; 
 //    vector<NonTerminal*> parents;
 public:
+        virtual void printData()
+        {
+            
+        }
     virtual void insertPoints(vector<int> & points)=0;
     bool operator < (const Symbol &  rhs)
     {
@@ -158,6 +163,7 @@ public:
             combineCanditates.insert(combineCanditates.end(),(Symbol*)*it);
         }
         
+        cout<<"sa "<<combineCanditates.size()<<endl;
         //add itself
         combineCanditates.insert((Symbol*)terminals[nearest_index[0]]);        
     }
@@ -233,7 +239,7 @@ public:
     void getComplementPointSet(vector<int>& indices /* = 0 */)
     {
         // will be called only once ... when this terminal is extracted
-        cout<<" terminal complement\n";
+       // cout<<" terminal complement\n";
         indices.clear();
         for(size_t i=0;i<scene.size();i++)
         {
@@ -256,7 +262,6 @@ protected:
     pcl::PointXYZ centroid;
     /** indices into the pointcloud
      */
-    vector<int> pointIndices; // can be replaced with any sufficient statistic
     //will be populated only when extracted as min
     void computeCentroid()
     {
@@ -281,11 +286,17 @@ protected:
      * leaves of children */
     bool costSet;
 public:
+    vector<int> pointIndices; // can be replaced with any sufficient statistic
     NonTerminal()
     {
         costSet=false;
     }
     
+    size_t getNumPoints()
+    {
+        return pointIndices.size();
+    }
+
     void setAdditionalCost(double additionalCost)
     {
         assert(additionalCost>0);
@@ -465,16 +476,25 @@ public:
         planeParamsComputed=false;
     }
     
+    double getNorm()
+    {
+         return exp(planeParams[0]*planeParams[0]  +  planeParams[1]*planeParams[1]  +  planeParams[3]*planeParams[3]);
+
+    }
+    
     void computePlaneParams()
     {
         pcl::NormalEstimation<PointT,pcl::Normal> normalEstimator;
         normalEstimator.computePointNormal(scene, pointIndices, planeParams, curvature);
+        assert(getNorm()>0.9);
+        assert(getNorm()<1.1);
         planeParamsComputed=true;
     }
     
-    int getNumPoints()
+    
+    double coplanarity(Plane * plane2)
     {
-        return pointIndices.size();
+        return exp(planeParams[0]*plane2->planeParams[0]  +  planeParams[1]*plane2->planeParams[1]  +  planeParams[3]*plane2->planeParams[3]);
     }
     
     double costOfAddingPoint(PointT p)
@@ -625,6 +645,20 @@ public:
     {
         
     }
+    
+    void printData()
+    {
+        std::ofstream logFile;
+        logFile.open("log.txt",ios::out);
+        NonTerminal *plane1=dynamic_cast<NonTerminal *>(children[0]);
+        NonTerminal *plane2=dynamic_cast<NonTerminal *>(children[1]);
+        for(size_t i=0;i<plane1->pointIndices.size();i++)
+            cout<<","<<plane1->pointIndices[i];
+        cout<<endl;
+        for(size_t i=0;i<plane2->pointIndices.size();i++)
+            cout<<","<<plane2->pointIndices[i];
+        cout<<endl;
+    }
 };
 
 class RS_PlanePlane : public Rule
@@ -648,19 +682,25 @@ public:
         Plane * RHS_plane2=dynamic_cast<Plane *>(RHS.at(0));
         LHS->addChild(RHS_plane1);
         LHS->addChild(RHS_plane2);
-//        LHS->setAdditionalCost(distance(RHS_point1->getPoint(),RHS_point2->getPoint()));
+        LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)); // more coplanar => bad
         return LHS;
     }
     
      void combineAndPush(Symbol * sym, set<Symbol*> combineCandidates , SymbolPriorityQueue pqueue)
     {
         set<Symbol*>::iterator it;
-        if(typeid(sym)==typeid(Terminal*))
+        if(typeid(sym)==typeid(Plane*))
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
-                if(typeid(*it)==typeid(Terminal*))
+                if(typeid(*it)==typeid(Plane*))
                 {
+                    Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
+                    Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
+                    
+                    if(RHS_plane1->getNumPoints()+RHS_plane2->getNumPoints()<scene.size())
+                        continue;
+                    
                     vector<Symbol*> temp;
                     temp.push_back(*it); // must be pushed in order
                     temp.push_back(sym);
@@ -675,6 +715,8 @@ typedef boost::shared_ptr<Rule>  RulePtr;
 void appendRuleInstances(vector<RulePtr> rules)
 {
     rules.push_back(RulePtr(new RPlane_PlanePoint()));    
+    rules.push_back(RulePtr(new RPlane_PointPoint()));    
+    rules.push_back(RulePtr(new RS_PlanePlane()));    
 }
 
 
@@ -700,6 +742,13 @@ void runParse()
     while(true)
     {
         min=pq.top();
+        if(typeid(min)==typeid(Goal_S*))
+        {
+            cout<<"goal reached!!"<<endl;
+            min->printData();
+            return;
+            
+        }
         if(min->finalize_if_not_duplicate(ancestors))
         {
             set<Symbol*> combineCandidates;
@@ -728,7 +777,7 @@ void runParse()
 
 int main(int argc, char** argv) 
 {
-    pcl::io::loadPCDFile<PointT>("/home/aa755/fridge.pcd", scene);
+    pcl::io::loadPCDFile<PointT>("/home/aa755/transformed_fridge.pcd", scene);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
     runParse();
     return 0;
