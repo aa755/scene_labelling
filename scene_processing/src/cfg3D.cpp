@@ -375,7 +375,7 @@ public:
             set<NonTerminal*>::iterator it;
             for ( it=intersect.begin() ; it != intersect.end(); it++ )
             {
-                if(typeid(this)==typeid(*it) && pointIndices.size()==(*it)->pointIndices.size())
+                if(typeid(*this)==typeid(*(*it)) && pointIndices.size()==(*it)->pointIndices.size())
                     return true;
             }
             return false;
@@ -448,7 +448,7 @@ public:
         get_typenames(typenames);
         for(int i=0;i<get_Nof_RHS_symbols();i++)
         {
-            if(typeid(RHS.at(i)).name()!=typenames.at(i))
+            if(typeid(*(RHS.at(i))).name()!=typenames.at(i))
                 return false;
         }
         return true;
@@ -625,7 +625,7 @@ public:
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
-                cout<<"cand type:"<<typeid(*it).name()<<endl;
+                cout<<"cand type:"<<typeid(**it).name()<<endl;
                 if(typeid(*(*it))==typeid(Terminal))
                 {
                     vector<Symbol*> temp;
@@ -744,7 +744,7 @@ void runParse()
     while(true)
     {
         min=pq.top();
-        if(typeid(min)==typeid(Goal_S*))
+        if(typeid(*min)==typeid(Goal_S))
         {
             cout<<"goal reached!!"<<endl;
             min->printData();
