@@ -528,7 +528,7 @@ public:
              */
             double d1=pcl::euclideanDistance<PointT,PointT>(p,scene.points[pointIndices[0]]);
             double d2=pcl::euclideanDistance<PointT,PointT>(p,scene.points[pointIndices[1]]);
-            if(d1<d2)
+            if(d1>d2)
                 return d1;
             else
                 return d2;
@@ -536,7 +536,7 @@ public:
         else if(pointIndices.size()>=3)
         {
             assert(planeParamsComputed);
-            return exp(2*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
+            return exp(1000*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
         }
         else
             assert(1==2);
