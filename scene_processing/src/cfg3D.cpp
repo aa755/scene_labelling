@@ -10,6 +10,7 @@
 #include <vector>
 #include<typeinfo>
 #include<pcl/point_types.h>
+#include "point_struct.h"
 #include<pcl/features/normal_3d.h>
 #include<pcl/sample_consensus/sac_model_plane.h>
 #include<queue>
@@ -673,16 +674,34 @@ public:
     
     void printData()
     {
+        pcl::PointCloud<pcl::PointXYZRGBIndex> sceneOut;
+        sceneOut.points.resize(scene.size());
+        for(size_t i=0;i<scene.size();i++)
+        {
+            sceneOut.points[i].x=scene.points[i].x;
+            sceneOut.points[i].y=scene.points[i].y;
+            sceneOut.points[i].z=scene.points[i].z;
+            sceneOut.points[i].rgb=scene.points[i].rgb;
+        }
+
         std::ofstream logFile;
         logFile.open("log.txt",ios::out);
         NonTerminal *plane1=dynamic_cast<NonTerminal *>(children[0]);
         NonTerminal *plane2=dynamic_cast<NonTerminal *>(children[1]);
         for(size_t i=0;i<plane1->pointIndices.size();i++)
-            cout<<","<<plane1->pointIndices[i];
-        cout<<endl;
+        {
+            logFile<<","<<plane1->pointIndices[i];
+            sceneOut.points[plane1->pointIndices[i]].index=1;
+        }
+        logFile<<endl;
         for(size_t i=0;i<plane2->pointIndices.size();i++)
-            cout<<","<<plane2->pointIndices[i];
-        cout<<endl;
+        {
+            logFile<<","<<plane2->pointIndices[i];
+            sceneOut.points[plane2->pointIndices[i]].index=2;
+        }
+        logFile<<endl;
+        logFile.close();
+    pcl::io::savePCDFile("fridge_out.pcd",sceneOut,true);
     }
 };
 
@@ -820,10 +839,8 @@ int main(int argc, char** argv)
    // subsample(scene,temp);
    // pcl::io::savePCDFile("fridge_sub100.pcd",temp,true);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
-    vector<int> trial;
-    trial.push_back(5);
     
     
-   // runParse();
+    runParse();
     return 0;
 }
