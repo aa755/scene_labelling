@@ -746,7 +746,7 @@ public:
                 {
                     Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
                     Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
-                    
+                    cout<<"spp candidate: p1s"<<RHS_plane1->getNumPoints()<<",p1c"<<RHS_plane1->getCost()<<",p2s"<<RHS_plane2->getNumPoints()<<",p2c"<<RHS_plane2->getCost()<<",cop"<<RHS_plane1->coplanarity(RHS_plane2)<<endl;                    
                     if(RHS_plane1->getNumPoints()+RHS_plane2->getNumPoints()<scene.size())
                         continue;
                     
