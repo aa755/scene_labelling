@@ -16,7 +16,8 @@
 #include<pcl/io/pcd_io.h>
 #include<pcl/io/io.h>
 #include <pcl/kdtree/kdtree_flann.h>
-
+#include <stdlib.h>
+#include <time.h>
 //sac_model_plane.h
  
 using namespace std;
@@ -135,7 +136,6 @@ public:
         vector<int> indices;
         getComplementPointSet(indices);
         cout<<indices.size()<<" points in complement set"<<endl;
-//        pcl::PointCloud<PointT>::Ptr scene_ptr=new pcl::PointCloud<PointT>::Ptr(scene)
         nnFinder.setInputCloud(createStaticShared<pcl::PointCloud<PointT> >(&scene),createStaticShared<vector<int> >(&indices));
         vector<int> nearest_indices;
         vector<float> nearest_distances;
@@ -156,6 +156,7 @@ public:
         set<NonTerminal*> combineNTCanditates;
         combineNTCanditates.insert(allAncestors[nearest_index].begin(),allAncestors[nearest_index].end());
         getSetOfAncestors(thisAncestors,allAncestors);
+        cout<<thisAncestors.size()<<" ancestor found"<<endl;
         setDiffernce<NonTerminal*>(combineNTCanditates/*at this point, it only contains NT's*/,thisAncestors);
         combineCanditates.clear();
         set<NonTerminal*>::iterator it;
@@ -164,7 +165,7 @@ public:
             combineCanditates.insert(combineCanditates.end(),(Symbol*)*it);
         }
         
-        cout<<"sa "<<combineCanditates.size()<<endl;
+        cout<<"ancestor canditates "<<combineCanditates.size()<<endl;
         //add itself
         combineCanditates.insert((Symbol*)terminals[nearest_index]);        
     }
@@ -415,9 +416,9 @@ public:
     void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)
     {
         thisAncestors=allAncestors[pointIndices[0]];
-        for(size_t i=1;i<allAncestors.size();i++)
+        for(size_t i=1;i<getNumPoints();i++)
         {
-             set<NonTerminal*> & temp=allAncestors[pointIndices[i]];
+             set<NonTerminal*> & temp=allAncestors[pointIndices.at(i)];
              thisAncestors.insert(temp.begin(),temp.end());
         }
     }
@@ -481,7 +482,7 @@ public:
     
     double getNorm()
     {
-         return exp(planeParams[0]*planeParams[0]  +  planeParams[1]*planeParams[1]  +  planeParams[3]*planeParams[3]);
+         return (planeParams[0]*planeParams[0]  +  planeParams[1]*planeParams[1]  +  planeParams[3]*planeParams[3]);
 
     }
     
@@ -489,8 +490,8 @@ public:
     {
         pcl::NormalEstimation<PointT,pcl::Normal> normalEstimator;
         normalEstimator.computePointNormal(scene, pointIndices, planeParams, curvature);
-        assert(getNorm()>0.9);
-        assert(getNorm()<1.1);
+        double norm=getNorm();
+        planeParams/=norm;
         planeParamsComputed=true;
     }
     
@@ -633,7 +634,7 @@ public:
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
-                cout<<"cand type:"<<typeid(**it).name()<<endl;
+              //  cout<<"cand type:"<<typeid(**it).name()<<endl;
                 if(typeid(*(*it))==typeid(Terminal))
                 {
                     vector<Symbol*> temp;
@@ -749,9 +750,11 @@ void runParse()
     }
     
     Symbol *min;
+    int count=0;
     while(true)
     {
         min=pq.top();
+        cout<<"iter: "<<count++<<" type of min was "<<typeid(*min).name()<<endl;
         if(typeid(*min)==typeid(Goal_S))
         {
             cout<<"goal reached!!"<<endl;
@@ -784,11 +787,25 @@ void runParse()
         
     }
 }
-
+void subsample(pcl::PointCloud<PointT> & inp,pcl::PointCloud<PointT> & out)
+{
+    out.points.clear();
+    out.header=inp.header;
+    for(size_t i=0;i<inp.size();i++)
+    {
+        if(rand() % 100==1)
+        {
+            out.points.push_back(inp.points[i]);
+        }
+    }
+}
 int main(int argc, char** argv) 
 {
     pcl::io::loadPCDFile<PointT>("transformed_fridge.pcd", scene);
+    pcl::PointCloud<PointT> temp;
+    subsample(scene,temp);
+    pcl::io::savePCDFile("fridge_sub100.pcd",temp,true);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
-    runParse();
+//    runParse();
     return 0;
 }
