@@ -532,7 +532,7 @@ public:
     
     double coplanarity(Plane * plane2)
     {
-        return exp( fabs(planeParams[0]*plane2->planeParams[0]  +  planeParams[1]*plane2->planeParams[1]  +  planeParams[2]*plane2->planeParams[2]) )-1;
+        return exp( 100*fabs(planeParams[0]*plane2->planeParams[0]  +  planeParams[1]*plane2->planeParams[1]  +  planeParams[2]*plane2->planeParams[2]) )-1;
     }
     
     double costOfAddingPoint(PointT p)
@@ -762,6 +762,8 @@ public:
                     Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
                     Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
                     cout<<"spp candidate: p1s"<<RHS_plane1->getNumPoints()<<",p1c"<<RHS_plane1->getCost()<<",p2s"<<RHS_plane2->getNumPoints()<<",p2c"<<RHS_plane2->getCost()<<",cop"<<RHS_plane1->coplanarity(RHS_plane2)<<endl;                    
+                    if(RHS_plane1->getNumPoints()<5 || RHS_plane2->getNumPoints()<5)
+                        continue;
                     if(RHS_plane1->getNumPoints()+RHS_plane2->getNumPoints()<scene.size())
                         continue;
                     
