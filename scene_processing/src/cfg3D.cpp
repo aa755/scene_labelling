@@ -516,7 +516,7 @@ public:
     
     double getNorm()
     {
-         return (planeParams[0]*planeParams[0]  +  planeParams[1]*planeParams[1]  +  planeParams[3]*planeParams[3]);
+         return (planeParams[0]*planeParams[0]  +  planeParams[1]*planeParams[1]  +  planeParams[2]*planeParams[2]);
 
     }
     
@@ -532,7 +532,7 @@ public:
     
     double coplanarity(Plane * plane2)
     {
-        return exp(planeParams[0]*plane2->planeParams[0]  +  planeParams[1]*plane2->planeParams[1]  +  planeParams[3]*plane2->planeParams[3]);
+        return exp( fabs(planeParams[0]*plane2->planeParams[0]  +  planeParams[1]*plane2->planeParams[1]  +  planeParams[2]*plane2->planeParams[2]) )-1;
     }
     
     double costOfAddingPoint(PointT p)
@@ -551,7 +551,7 @@ public:
         else if(pointIndices.size()>=3)
         {
             assert(planeParamsComputed);
-            return exp(10*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
+            return exp(100*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
         }
         else
             assert(1==2);
