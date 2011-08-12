@@ -165,7 +165,8 @@ public:
         set<NonTerminal*> combineNTCanditates;
         combineNTCanditates.insert(allAncestors[nearest_index].begin(),allAncestors[nearest_index].end());
         getSetOfAncestors(thisAncestors,allAncestors);
-        cout<<thisAncestors.size()<<" ancestor found"<<endl;
+        cout<<thisAncestors.size()<<" ancestors found of min"<<endl;
+        cout<<allAncestors[nearest_index].size()<<" ancestors found of nearest pointto min"<<endl;
         setDiffernce<NonTerminal*>(combineNTCanditates/*at this point, it only contains NT's*/,thisAncestors);
         set<NonTerminal*>::iterator it;
         for(it=combineNTCanditates.begin();it!=combineNTCanditates.end();it++)
@@ -173,7 +174,7 @@ public:
             combineCanditates.insert(combineCanditates.end(),(Symbol*)*it);
         }
         
-        cout<<"ancestor canditates "<<combineCanditates.size()<<endl;
+        cout<<"ancestor canditates(set difference) "<<combineCanditates.size()<<endl;
         //add itself
         combineCanditates.insert((Symbol*)terminals[nearest_index]);        
     }
@@ -238,6 +239,11 @@ public:
         centroid.z=point.z;        
     }
 
+        virtual void printData()
+        {
+            cout<<"Terminal: "<<index<<endl;
+        }
+        
     virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors){return true;}
     
     //bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)    {
@@ -286,7 +292,7 @@ protected:
         centroid.z=0;
         for (size_t i = 0; i < pointIndices.size(); i++)
         {
-            point = scene.points[i];
+            point = scene.points[pointIndices[i]];
             centroid.x += point.x;
             centroid.y += point.y;
             centroid.z += point.z;
@@ -307,6 +313,14 @@ public:
         costSet=false;
     }
     
+        virtual void printData()
+        {
+            cout<<"NonTerminal: ";
+            for(size_t i=0;i<pointIndices.size();i++)
+                cout<<pointIndices[i]<<",";
+            cout<<endl;
+        }
+        
     size_t getNumPoints()
     {
         return pointIndices.size();
@@ -358,7 +372,7 @@ public:
         
         for(size_t i=0;i<pointIndices.size();i++)
         {
-            resIns=ancestors[i].insert(this);
+            resIns=ancestors[pointIndices[i]].insert(this);
             assert(resIns.second);
         }   
                                 
@@ -384,6 +398,7 @@ public:
         {
             setIntersection<NonTerminal *>(intersect,ancestors[pointIndices[i]]);
         }
+        
         if(intersect.size()==0)
             return false;
         else
@@ -536,7 +551,7 @@ public:
         else if(pointIndices.size()>=3)
         {
             assert(planeParamsComputed);
-            return exp(1000*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
+            return exp(10*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
         }
         else
             assert(1==2);
@@ -792,7 +807,7 @@ void runParse()
     while(true)
     {
         min=pq.top();
-        cout<<"iter: "<<count++<<" type of min was "<<typeid(*min).name()<<endl;
+        cout<<"\n\n\niter: "<<count++<<" type of min was "<<typeid(*min).name()<<endl;
         if(typeid(*min)==typeid(Goal_S))
         {
             cout<<"goal reached!!"<<endl;
@@ -804,7 +819,14 @@ void runParse()
         {
             set<Symbol*> combineCandidates;
             min->getValidSymbolsForCombination(ancestors,terminals,combineCandidates);
-            cout<<combineCandidates.size()<<" candidates found and queue has "<<pq.size()<<" elements"<<endl;
+            cout<<combineCandidates.size()<<" candidates found and queue has "<<pq.size()<<" elements: \n------------"<<endl;
+            set<Symbol*>::iterator it;
+            for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
+            {
+                (*it)->printData();
+            }
+            cout<<"--------\n";
+            
             for(size_t i=0;i<rules.size();i++)
             {
                 rules[i]->combineAndPush(min,combineCandidates,pq);
@@ -814,6 +836,7 @@ void runParse()
         else
         {
             delete min; 
+            cout<<"duplicate detected"<<endl;
             // since there are no parent links, and it was not a child of anyone
             // deleting does not cause dangling pointers
             
@@ -839,7 +862,7 @@ void subsample(pcl::PointCloud<PointT> & inp,pcl::PointCloud<PointT> & out)
 }
 int main(int argc, char** argv) 
 {
-    pcl::io::loadPCDFile<PointT>("fridge_sub500.pcd", scene);
+    pcl::io::loadPCDFile<PointT>(argv[1], scene);
 //    pcl::PointCloud<PointT> temp;
 //    subsample(scene,temp);
 //    pcl::io::savePCDFile("fridge_sub500.pcd",temp,true);
