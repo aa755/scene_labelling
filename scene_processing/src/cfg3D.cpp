@@ -137,7 +137,7 @@ public:
         cout<<indices.size()<<" points in complement set"<<endl;
 //        pcl::PointCloud<PointT>::Ptr scene_ptr=new pcl::PointCloud<PointT>::Ptr(scene)
         nnFinder.setInputCloud(createStaticShared<pcl::PointCloud<PointT> >(&scene),createStaticShared<vector<int> >(&indices));
-        vector<int> nearest_index;
+        vector<int> nearest_indices;
         vector<float> nearest_distances;
         pcl::PointXYZ centroidt;
         getCentroid(centroidt);
@@ -145,15 +145,16 @@ public:
         centroidTT.x=centroidt.x;
         centroidTT.y=centroidt.y;
         centroidTT.z=centroidt.z;
-        nearest_index.resize(1,0);
+        nearest_indices.resize(1,0);
         nearest_distances.resize(1,0.0);
-        nnFinder.nearestKSearch(centroidTT,1,nearest_index,nearest_distances);
-        cout<<"nearest index found was "<<nearest_index[0]<<endl;
+        nnFinder.nearestKSearch(centroidTT,1,nearest_indices,nearest_distances);
         
+        int nearest_index=indices[nearest_indices[0]];
+        cout<<"nearest index found was "<<nearest_index<<endl;
         //get all it's ancestors which are not in common with ancesstors of this
         set<NonTerminal*> thisAncestors;
         set<NonTerminal*> combineNTCanditates;
-        combineNTCanditates.insert(allAncestors[nearest_index[0]].begin(),allAncestors[nearest_index[0]].end());
+        combineNTCanditates.insert(allAncestors[nearest_index].begin(),allAncestors[nearest_index].end());
         getSetOfAncestors(thisAncestors,allAncestors);
         setDiffernce<NonTerminal*>(combineNTCanditates/*at this point, it only contains NT's*/,thisAncestors);
         combineCanditates.clear();
@@ -165,7 +166,7 @@ public:
         
         cout<<"sa "<<combineCanditates.size()<<endl;
         //add itself
-        combineCanditates.insert((Symbol*)terminals[nearest_index[0]]);        
+        combineCanditates.insert((Symbol*)terminals[nearest_index]);        
     }
     
 //    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)=0;
@@ -305,6 +306,7 @@ public:
             cost+=children[i]->getCost();
         cost+=additionalCost;
         costSet=true;
+        cout<< "ac: "<<additionalCost<<" tc: "<<cost<<endl;
     }
     
     void addChild(Symbol * child)
@@ -570,6 +572,7 @@ public:
                     temp.push_back(*it); // must be pushed in order
                     temp.push_back(sym);
                     pqueue.push(applyRule(temp));
+                    cout<<"applied rule p->pt\n";
                     
                 }
             }
@@ -584,6 +587,7 @@ public:
                     temp.push_back(sym);
                     temp.push_back(*it); // must be pushed in order
                     pqueue.push(applyRule(temp));
+                    cout<<"applied rule p->pt\n";
                     
                 }
             }
@@ -784,16 +788,7 @@ void runParse()
 int main(int argc, char** argv) 
 {
     pcl::io::loadPCDFile<PointT>("transformed_fridge.pcd", scene);
-        pcl::KdTreeFLANN<PointT> nnFinder;
-        nnFinder.setInputCloud(createStaticShared<pcl::PointCloud<PointT> >(&scene));
-        vector<int> nearest_index;
-        vector<float> nearest_distances;
-        nearest_index.resize(2,0);
-        nearest_distances.resize(2,0.0);
-        nnFinder.nearestKSearch(scene.points[1022],2,nearest_index,nearest_distances);
-        cout<<"nearest index found was "<<nearest_index[0]<<endl;
-        cout<<"2nd nearest index found was "<<nearest_index[1]<<endl;
     cout<<"scene has "<<scene.size()<<" points"<<endl;
-//    runParse();
+    runParse();
     return 0;
 }
