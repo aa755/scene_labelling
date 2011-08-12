@@ -138,6 +138,11 @@ public:
         pcl::KdTreeFLANN<PointT> nnFinder;
         vector<int> indices;
         indices.reserve(scene.size()-getNumPoints()+1); // +1 is not required
+        combineCanditates.clear();
+
+        if(scene.size()==getNumPoints())
+		return;
+
         getComplementPointSet(indices);
         cout<<indices.size()<<" points in complement set ... this has "<<getNumPoints()<<endl;
         nnFinder.setInputCloud(createStaticShared<pcl::PointCloud<PointT> >(&scene),createStaticShared<vector<int> >(&indices));
@@ -162,7 +167,6 @@ public:
         getSetOfAncestors(thisAncestors,allAncestors);
         cout<<thisAncestors.size()<<" ancestor found"<<endl;
         setDiffernce<NonTerminal*>(combineNTCanditates/*at this point, it only contains NT's*/,thisAncestors);
-        combineCanditates.clear();
         set<NonTerminal*>::iterator it;
         for(it=combineNTCanditates.begin();it!=combineNTCanditates.end();it++)
         {
@@ -727,6 +731,7 @@ public:
         LHS->addChild(RHS_plane1);
         LHS->addChild(RHS_plane2);
         LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)); // more coplanar => bad
+        cout<<"applied rule S->pp\n";        
         return LHS;
     }
     
@@ -826,7 +831,7 @@ void subsample(pcl::PointCloud<PointT> & inp,pcl::PointCloud<PointT> & out)
     out.header=inp.header;
     for(size_t i=0;i<inp.size();i++)
     {
-        if(rand() % 100==1)
+        if(rand() % 5==1)
         {
             out.points.push_back(inp.points[i]);
         }
@@ -834,13 +839,13 @@ void subsample(pcl::PointCloud<PointT> & inp,pcl::PointCloud<PointT> & out)
 }
 int main(int argc, char** argv) 
 {
-    pcl::io::loadPCDFile<PointT>("fridge_sub100.pcd", scene);
-   // pcl::PointCloud<PointT> temp;
-   // subsample(scene,temp);
-   // pcl::io::savePCDFile("fridge_sub100.pcd",temp,true);
+    pcl::io::loadPCDFile<PointT>("fridge_sub500.pcd", scene);
+//    pcl::PointCloud<PointT> temp;
+//    subsample(scene,temp);
+//    pcl::io::savePCDFile("fridge_sub500.pcd",temp,true);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
     
     
-    runParse();
+   runParse();
     return 0;
 }
