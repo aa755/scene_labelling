@@ -4,22 +4,29 @@
      scene_processing
 
   </description>
-  <author>Hema Koppula and Abhishek Anand</author>
+  <author> Abhishek Anand </author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/scene_processing</url>
   <depend package="pcl"/>
   <depend package="pcl_ros"/>
-  <depend package="pcl_visualization"/>
   <depend package="eigen"/>
- <depend package="stereo_msgs"/>
- <depend package="octomap_ros"/>
- <depend package="point_cloud_mapping"/>
   <depend package="opencv2"/>
+  <depend package="pcl_visualization"/>
+  <depend package="rospy"/>
+  <depend package="roscpp"/>
+
   <export>
     <cpp cflags="-I${prefix}/src/includes"/>
   </export>
  <!-- 
+temporarily removed:
+
+ <depend package="stereo_msgs"/>
+
+ <depend package="octomap_ros"/>
+ <depend package="point_cloud_mapping"/>
+
  <depend package="cloud_geometry"/>
  <depend package="cloud_io"/>
  <depend package="cloud_kdtree"/>
@@ -29,8 +36,6 @@
  <depend package="octomap_ros"/>
 -  <depend package="tf2"/>
 -  <depend package="pcl"/>
--  <depend package="rospy"/>
--  <depend package="roscpp"/>
 -  <depend package="eigen"/>
 -  <depend package="pcl_ros"/>
 -  <depend package="cv_bridge"/>
@@ -38,6 +43,8 @@
 -  <depend package="geometry_msgs"/>
 -  <depend package="image_geometry"/>
 -  <depend package="pcl_ros"/>
+  <depend package="flann"/>
+  <depend package="cminpack"/>
 
  -->
 </package>
