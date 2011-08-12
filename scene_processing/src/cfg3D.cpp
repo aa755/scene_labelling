@@ -122,6 +122,8 @@ public:
         return cost;
     }
     
+     virtual size_t getNumPoints()=0;
+
     virtual void getCentroid(pcl::PointXYZ & centroid)=0;
     
     virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)=0;
@@ -134,8 +136,9 @@ public:
         // find the nearest point not in this segment
         pcl::KdTreeFLANN<PointT> nnFinder;
         vector<int> indices;
+        indices.reserve(scene.size()-getNumPoints()+1); // +1 is not required
         getComplementPointSet(indices);
-        cout<<indices.size()<<" points in complement set"<<endl;
+        cout<<indices.size()<<" points in complement set ... this has "<<getNumPoints()<<endl;
         nnFinder.setInputCloud(createStaticShared<pcl::PointCloud<PointT> >(&scene),createStaticShared<vector<int> >(&indices));
         vector<int> nearest_indices;
         vector<float> nearest_distances;
@@ -248,6 +251,11 @@ public:
             if(i!=index)
                 indices.push_back(i);
         }
+    }
+    
+    size_t getNumPoints()
+    {
+        return 1;
     }
     
     void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)
@@ -410,6 +418,12 @@ public:
             }
 
         
+        }
+        
+        while (it1 < numPoints )
+        {
+            indices.push_back(it1);
+            it1++;
         }
     }
     
@@ -801,11 +815,15 @@ void subsample(pcl::PointCloud<PointT> & inp,pcl::PointCloud<PointT> & out)
 }
 int main(int argc, char** argv) 
 {
-    pcl::io::loadPCDFile<PointT>("transformed_fridge.pcd", scene);
-    pcl::PointCloud<PointT> temp;
-    subsample(scene,temp);
-    pcl::io::savePCDFile("fridge_sub100.pcd",temp,true);
+    pcl::io::loadPCDFile<PointT>("fridge_sub100.pcd", scene);
+   // pcl::PointCloud<PointT> temp;
+   // subsample(scene,temp);
+   // pcl::io::savePCDFile("fridge_sub100.pcd",temp,true);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
-//    runParse();
+    vector<int> trial;
+    trial.push_back(5);
+    
+    
+   // runParse();
     return 0;
 }
