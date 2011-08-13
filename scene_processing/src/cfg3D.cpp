@@ -19,6 +19,7 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <stdlib.h>
 #include <time.h>
+#include <boost//lexical_cast.hpp>
 //sac_model_plane.h
  
 using namespace std;
@@ -160,26 +161,34 @@ public:
         vector<int> pointIndicess;
         pointIndicess.reserve(getNumPoints());
         insertPoints(pointIndicess);
-        set<int> nearPoints;
+        //set<int> nearPoints;
         set<int>::iterator npit;
+        double minDist=DBL_MAX;
+        double minDistIndex=-1;
         for(size_t i=0;i<pointIndicess.size();i++)
         {
         nearest_indices.resize(1,0);
         nearest_distances.resize(1,0.0);
                 nnFinder.nearestKSearch(scene.points[pointIndicess[i]],1,nearest_indices,nearest_distances);
                 int nearest_index=indices[nearest_indices[0]];
-                cout<<"nearest index found was "<<nearest_index<<endl;
+                if(nearest_distances[0]<minDist)
+                {
+                    minDist=nearest_distances[0];
+                    minDistIndex=nearest_index;
+                }
                 //get all it's ancestors which are not in common with ancesstors of this
-                nearPoints.insert(nearest_index);
+                //nearPoints.insert(nearest_index);
         }
         
-         cout<<nearPoints.size()<<"unique points found"<<endl;
+                cout<<"nearest index found was "<<minDistIndex<<endl;
+                combineNTCanditates.insert(allAncestors[minDistIndex].begin(),allAncestors[minDistIndex].end());
+/*         cout<<nearPoints.size()<<"unique points found"<<endl;
         for(npit=nearPoints.begin();npit!=nearPoints.end();npit++)
         {
                 combineNTCanditates.insert(allAncestors[*npit].begin(),allAncestors[*npit].end());
         }
         cout<<combineNTCanditates.size()<<" ancestors found of nearest points to min"<<endl;
-        
+  */      
         
         getSetOfAncestors(thisAncestors,allAncestors);
         cout<<thisAncestors.size()<<" ancestors found of min"<<endl;
@@ -193,10 +202,13 @@ public:
         
         cout<<"ancestor canditates(set difference) "<<combineCanditates.size()<<endl;
         //add itself
-        for(npit=nearPoints.begin();npit!=nearPoints.end();npit++)
+/*        for(npit=nearPoints.begin();npit!=nearPoints.end();npit++)
         {
                 combineCanditates.insert((Symbol*)terminals[*npit]);        
         }
+ */
+                combineCanditates.insert((Symbol*)terminals[minDistIndex]);        
+        
     }
     
 //    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)=0;
@@ -571,7 +583,8 @@ public:
         else if(pointIndices.size()>=3)
         {
             assert(planeParamsComputed);
-            return exp(100*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
+//            return exp(100*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
+            return getNumPoints()*pcl::pointToPlaneDistance<PointT>(p,planeParams);
         }
         else
             assert(1==2);
@@ -806,7 +819,29 @@ void appendRuleInstances(vector<RulePtr> & rules)
     rules.push_back(RulePtr(new RS_PlanePlane()));    
 }
 
+void log(int iter, Symbol *  sym)
+{
+    if(sym->getNumPoints()==1)
+        return;
+        pcl::PointCloud<pcl::PointXYZRGBIndex> sceneOut;
+        sceneOut.points.resize(scene.size());
+        for(size_t i=0;i<scene.size();i++)
+        {
+            sceneOut.points[i].x=scene.points[i].x;
+            sceneOut.points[i].y=scene.points[i].y;
+            sceneOut.points[i].z=scene.points[i].z;
+            sceneOut.points[i].rgb=scene.points[i].rgb;
+        }
 
+        std::ofstream logFile;
+        NonTerminal *plane1=dynamic_cast<NonTerminal *>(sym);
+        for(size_t i=0;i<plane1->pointIndices.size();i++)
+        {
+            sceneOut.points[plane1->pointIndices[i]].index=1;
+        }
+    pcl::io::savePCDFile("fridge_out"+boost::lexical_cast<std::string>(iter)+".pcd",sceneOut,true);
+    
+}
 void runParse()
 {
     vector<RulePtr> rules;
@@ -840,6 +875,7 @@ void runParse()
         }
         if(min->finalize_if_not_duplicate(ancestors))
         {
+            log(count,min);
             set<Symbol*> combineCandidates;
             min->getValidSymbolsForCombination(ancestors,terminals,combineCandidates);
             cout<<combineCandidates.size()<<" candidates found and queue has "<<pq.size()<<" elements: \n------------"<<endl;
