@@ -547,7 +547,7 @@ void apply_segment_filter(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<Poin
        outcloud.points.clear ();
 }
 
-int MIN_SEG_SIZE=500;
+int MIN_SEG_SIZE=200;
 /** it also discards unlabeled segments
  */
 void apply_segment_filter_and_compute_HOG(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment,SpectralProfile & feats) {
