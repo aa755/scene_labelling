@@ -160,7 +160,8 @@ public:
         vector<int> pointIndicess;
         pointIndicess.reserve(getNumPoints());
         insertPoints(pointIndicess);
-        vector<int> nearPoints;
+        set<int> nearPoints;
+        set<int>::iterator npit;
         for(size_t i=0;i<pointIndicess.size();i++)
         {
         nearest_indices.resize(1,0);
@@ -169,11 +170,13 @@ public:
                 int nearest_index=indices[nearest_indices[0]];
                 cout<<"nearest index found was "<<nearest_index<<endl;
                 //get all it's ancestors which are not in common with ancesstors of this
-                nearPoints.push_back(nearest_index);
+                nearPoints.insert(nearest_index);
         }
-        for(size_t i=0;i<nearPoints.size();i++)
+        
+         cout<<nearPoints.size()<<"unique points found"<<endl;
+        for(npit=nearPoints.begin();npit!=nearPoints.end();npit++)
         {
-                combineNTCanditates.insert(allAncestors[nearPoints[i]].begin(),allAncestors[nearPoints[i]].end());
+                combineNTCanditates.insert(allAncestors[*npit].begin(),allAncestors[*npit].end());
         }
         cout<<combineNTCanditates.size()<<" ancestors found of nearest points to min"<<endl;
         
@@ -190,9 +193,9 @@ public:
         
         cout<<"ancestor canditates(set difference) "<<combineCanditates.size()<<endl;
         //add itself
-        for(size_t i=0;i<nearPoints.size();i++)
+        for(npit=nearPoints.begin();npit!=nearPoints.end();npit++)
         {
-                combineCanditates.insert((Symbol*)terminals[nearPoints[i]]);        
+                combineCanditates.insert((Symbol*)terminals[*npit]);        
         }
     }
     
@@ -774,14 +777,15 @@ public:
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
+                
                 if(typeid(*(*it))==typeid(Plane))
                 {
+                    if(sym->getNumPoints()+(*it)->getNumPoints()<scene.size())
+                        continue;
                     Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
                     Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
-                    cout<<"spp candidate: p1s"<<RHS_plane1->getNumPoints()<<",p1c"<<RHS_plane1->getCost()<<",p2s"<<RHS_plane2->getNumPoints()<<",p2c"<<RHS_plane2->getCost()<<",cop"<<RHS_plane1->coplanarity(RHS_plane2)<<endl;                    
+                 //   cout<<"spp candidate: p1s"<<RHS_plane1->getNumPoints()<<",p1c"<<RHS_plane1->getCost()<<",p2s"<<RHS_plane2->getNumPoints()<<",p2c"<<RHS_plane2->getCost()<<",cop"<<RHS_plane1->coplanarity(RHS_plane2)<<endl;                    
                     if(RHS_plane1->getNumPoints()<5 || RHS_plane2->getNumPoints()<5)
-                        continue;
-                    if(RHS_plane1->getNumPoints()+RHS_plane2->getNumPoints()<scene.size())
                         continue;
                     
                     vector<Symbol*> temp;
