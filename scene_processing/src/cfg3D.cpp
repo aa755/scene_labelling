@@ -154,19 +154,33 @@ public:
         centroidTT.x=centroidt.x;
         centroidTT.y=centroidt.y;
         centroidTT.z=centroidt.z;
-        nearest_indices.resize(1,0);
-        nearest_distances.resize(1,0.0);
-        nnFinder.nearestKSearch(centroidTT,1,nearest_indices,nearest_distances);
-        
-        int nearest_index=indices[nearest_indices[0]];
-        cout<<"nearest index found was "<<nearest_index<<endl;
-        //get all it's ancestors which are not in common with ancesstors of this
         set<NonTerminal*> thisAncestors;
         set<NonTerminal*> combineNTCanditates;
-        combineNTCanditates.insert(allAncestors[nearest_index].begin(),allAncestors[nearest_index].end());
+        
+        vector<int> pointIndicess;
+        pointIndicess.reserve(getNumPoints());
+        insertPoints(pointIndicess);
+        vector<int> nearPoints;
+        for(size_t i=0;i<pointIndicess.size();i++)
+        {
+        nearest_indices.resize(1,0);
+        nearest_distances.resize(1,0.0);
+                nnFinder.nearestKSearch(scene.points[pointIndicess[i]],1,nearest_indices,nearest_distances);
+                int nearest_index=indices[nearest_indices[0]];
+                cout<<"nearest index found was "<<nearest_index<<endl;
+                //get all it's ancestors which are not in common with ancesstors of this
+                nearPoints.push_back(nearest_index);
+        }
+        for(size_t i=0;i<nearPoints.size();i++)
+        {
+                combineNTCanditates.insert(allAncestors[nearPoints[i]].begin(),allAncestors[nearPoints[i]].end());
+        }
+        cout<<combineNTCanditates.size()<<" ancestors found of nearest points to min"<<endl;
+        
+        
         getSetOfAncestors(thisAncestors,allAncestors);
         cout<<thisAncestors.size()<<" ancestors found of min"<<endl;
-        cout<<allAncestors[nearest_index].size()<<" ancestors found of nearest pointto min"<<endl;
+        
         setDiffernce<NonTerminal*>(combineNTCanditates/*at this point, it only contains NT's*/,thisAncestors);
         set<NonTerminal*>::iterator it;
         for(it=combineNTCanditates.begin();it!=combineNTCanditates.end();it++)
@@ -176,7 +190,10 @@ public:
         
         cout<<"ancestor canditates(set difference) "<<combineCanditates.size()<<endl;
         //add itself
-        combineCanditates.insert((Symbol*)terminals[nearest_index]);        
+        for(size_t i=0;i<nearPoints.size();i++)
+        {
+                combineCanditates.insert((Symbol*)terminals[nearPoints[i]]);        
+        }
     }
     
 //    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)=0;
