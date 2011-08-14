@@ -280,7 +280,7 @@ public:
 
         virtual void printData()
         {
-            cout<<"Terminal: "<<index<<endl;
+            cout<<index<<endl;
         }
         
     virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors){return true;}
@@ -363,7 +363,7 @@ public:
     
         virtual void printData()
         {
-            cout<<"NonTerminal: ";
+            cout<<id<<"\t:";
             for(size_t i=0;i<pointIndices.size();i++)
                 cout<<pointIndices[i]<<",";
             cout<<endl;
@@ -883,11 +883,13 @@ void runParse()
     while(true)
     {
         min=pq.top();
+        
         cout<<"\n\n\niter: "<<count++<<" type of min was "<<typeid(*min).name()<<"id was "<<min->getId()<<endl;
+        min->printData();
+        
         if(typeid(*min)==typeid(Goal_S))
         {
             cout<<"goal reached!!"<<endl;
-            min->printData();
             return;
             
         }
