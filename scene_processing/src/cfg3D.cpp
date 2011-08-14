@@ -132,6 +132,8 @@ public:
     
     virtual void getComplementPointSet(vector<int> & indices /* = 0 */)=0;
     virtual void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)=0;
+    
+    virtual int getId()=0;
 
     void getValidSymbolsForCombination(vector<set<NonTerminal*> > & allAncestors,vector<Terminal*> & terminals,set<Symbol*> & combineCanditates)
     {
@@ -231,6 +233,11 @@ class Terminal : public Symbol
 protected:
     size_t index;
 public:
+    int getId()
+    {
+        return 0;
+    }
+    
     void insertPoints(vector<int> & points)
     {
         points.push_back(index);
@@ -313,6 +320,8 @@ class NonTerminal : public Symbol
 protected:
     vector<Symbol*> children;
     pcl::PointXYZ centroid;
+    int id;
+    static int id_counter;
     /** indices into the pointcloud
      */
     //will be populated only when extracted as min
@@ -339,10 +348,17 @@ protected:
      * leaves of children */
     bool costSet;
 public:
+        int getId()
+    {
+        return id;
+    }
+
     vector<int> pointIndices; // can be replaced with any sufficient statistic
     NonTerminal()
     {
         costSet=false;
+        id=id_counter++;
+        cout<<"new NT: "<<id<<endl;
     }
     
         virtual void printData()
@@ -491,6 +507,7 @@ public:
     
 };
 
+int NonTerminal::id_counter=0;
 class Rule
 {    
 public:
@@ -778,7 +795,8 @@ public:
         Plane * RHS_plane2=dynamic_cast<Plane *>(RHS.at(1));
         LHS->addChild(RHS_plane1);
         LHS->addChild(RHS_plane2);
-        LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)); // more coplanar => bad
+        int deficit=scene.size()-RHS_plane1->getNumPoints()-RHS_plane2->getNumPoints();
+        LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)+exp(10*deficit)); // more coplanar => bad
         cout<<"applied rule S->pp\n";        
         return LHS;
     }
@@ -865,7 +883,7 @@ void runParse()
     while(true)
     {
         min=pq.top();
-        cout<<"\n\n\niter: "<<count++<<" type of min was "<<typeid(*min).name()<<endl;
+        cout<<"\n\n\niter: "<<count++<<" type of min was "<<typeid(*min).name()<<"id was "<<min->getId()<<endl;
         if(typeid(*min)==typeid(Goal_S))
         {
             cout<<"goal reached!!"<<endl;
