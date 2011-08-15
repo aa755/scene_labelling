@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <boost//lexical_cast.hpp>
+#include <bitset>
+
 //sac_model_plane.h
  
 using namespace std;
@@ -318,6 +320,7 @@ Terminal * terminals;
 class NonTerminal : public Symbol
 {
 protected:
+//    vector<bool> setOfPoints;
     vector<Symbol*> children;
     pcl::PointXYZ centroid;
     int id;
@@ -811,7 +814,7 @@ public:
                 
                 if(typeid(*(*it))==typeid(Plane))
                 {
-                    if(sym->getNumPoints()+(*it)->getNumPoints()<0.9*scene.size())
+                    if(sym->getNumPoints()+(*it)->getNumPoints()<scene.size())
                         continue;
                     Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
                     Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
@@ -946,8 +949,15 @@ int main(int argc, char** argv)
 //    subsample(scene,temp);
 //    pcl::io::savePCDFile("fridge_sub500.pcd",temp,true);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
+  vector<bool> bitset1(2);  
+  vector<bool> bitset2(1);
+  cout<<(bitset1==bitset2)<<endl;
+  bitset1[1]=true;
+  bitset2.resize(2);
+  bitset2[1]=true;
+  cout<<(bitset1==bitset2)<<endl;
+  
     
-    
-   runParse();
+//   runParse();
     return 0;
 }
