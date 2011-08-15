@@ -280,7 +280,7 @@ public:
 
         virtual void printData()
         {
-            cout<<index<<endl;
+            cout<<"t\t:"<<index<<endl;
         }
         
     virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors){return true;}
@@ -811,7 +811,7 @@ public:
                 
                 if(typeid(*(*it))==typeid(Plane))
                 {
-                    if(sym->getNumPoints()+(*it)->getNumPoints()<scene.size())
+                    if(sym->getNumPoints()+(*it)->getNumPoints()<0.9*scene.size())
                         continue;
                     Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
                     Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
@@ -885,7 +885,6 @@ void runParse()
         min=pq.top();
         
         cout<<"\n\n\niter: "<<count++<<" type of min was "<<typeid(*min).name()<<"id was "<<min->getId()<<endl;
-        min->printData();
         
         if(typeid(*min)==typeid(Goal_S))
         {
@@ -895,7 +894,8 @@ void runParse()
         }
         if(min->finalize_if_not_duplicate(ancestors))
         {
-            log(count,min);
+        min->printData();
+           // log(count,min);
             set<Symbol*> combineCandidates;
             min->getValidSymbolsForCombination(ancestors,terminals,combineCandidates);
             cout<<combineCandidates.size()<<" candidates found and queue has "<<pq.size()<<" elements: \n------------"<<endl;
