@@ -297,8 +297,10 @@ def read_examples(filename,sparm):
                     class_counts[int(attr)-1]+=1
                     Yn[i*max_target+(int(attr)-1),0]=1
             else:
-                class_counts[target-1]+=1
-                Yn[i*max_target+(target-1),0]=1
+                if(target != -1): # if the segment is unlabeled all entries of Yn for the label will be 0
+                    class_counts[target-1]+=1
+                    Yn[i*max_target+(target-1),0]=1
+                    
             # get the segment number
             node_map[int(input[i+1][1])] = i
 
@@ -335,7 +337,8 @@ def read_examples(filename,sparm):
             else:
                 target1 = int(input[i+1][0]);
                 target2 = int(input[i+1][1]);
-                Ye[(i-N)*max_target*max_target + (target1-1)*max_target+(target2-1)]=1
+                if(target1 != -1 and target2 != -1): # both should be labeled to add to Ye
+                    Ye[(i-N)*max_target*max_target + (target1-1)*max_target+(target2-1)]=1
             # get the segment numbers
             edges[i-N,0]= node_map[int(input[i+1][2])]
             edges[i-N,1]= node_map[int(input[i+1][3])]
@@ -1162,7 +1165,8 @@ def lp_inference_sum1_IP(X,sm,sparm):
     for i in xrange(2*E*K*K,3*E*K*K):
         lp.rows[i].bounds = None,1
     for i in xrange(3*E*K*K,3*E*K*K + N):
-        lp.rows[i].bounds = 1,1
+        lp.rows[i].bounds = 1,1  ##SUM = 1
+        #lp.rows[i].bounds = None,1  ## SUM = 1 is changed to SUM<= 1
 
     t = []
     for e in xrange(0,edge.shape[0]):
@@ -1771,11 +1775,15 @@ def lp_training_qpbo(X,Y,sm,sparm):
     #print w_list
     ##print (asarray(w*x)[0]).tolist()
     coeff_list = (asarray((w_mat*x).todense())[0]).tolist()
-    for index in xrange(0,N*K):
-        if(y[index,0] == 1):
-            coeff_list[index] = coeff_list[index]-(1.0/(N*K))
-        else:
-            coeff_list[index] = coeff_list[index]+(1.0/(N*K))
+    for index_n in xrange(0,N):
+        flag = 0
+        if(y[index_n*K:(index_n+1)*K-1,0].sum() == 1):
+            flag = 1
+        for index_k in xrange(0,K):
+            if(y[index_n*K+index_k,0] == 1):
+                coeff_list[index_n*K+index_k] = coeff_list[index_n*K+index_k]-(1.0/(N*K))
+            elif(flag==1):
+                coeff_list[index_n*K+index_k] = coeff_list[index_n*K+index_k]+(1.0/(N*K))
     
 
     for index in xrange(0,N*K):
@@ -2145,11 +2153,13 @@ def loss_micro(Y, Ybar, sparm):
     sum=0.0;
     size=N*K
 
-    for index in xrange(0,size):
-        if yDiff[index,0]>0:
-            sum+=yDiff[index,0]
-        else:
-            sum-=yDiff[index,0]
+    for index_n in xrange(0,N):
+        for index_k in xrange(0,K):
+            if (y[index_n*K : index_n*K+K-1,0].sum() == 1):
+                if yDiff[index_n*K+index_k,0]>0:
+                    sum+=yDiff[index_n*K+index_k,0]
+                else:
+                    sum-=yDiff[index_n*K+index_k,0]
             
     return sum/size;
 
@@ -2292,7 +2302,8 @@ def evaluation_class_pr_sum1(Y,Ybar,K,N,sparm):
                 countMax=0
             if(maxYBar==ybar[node*K+label,0]):
                 countMax+=1
-
+        if(actualClass == -1):
+            continue;
         maxLabelList=[];
         for label in xrange(0,K):
             if(ybar[node*K+label,0] == maxYBar and maxYBar>0): #suboptimal way, but who cares!
