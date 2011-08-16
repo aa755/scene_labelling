@@ -1426,9 +1426,14 @@ void parseAndApplyLabels(std::ifstream  & file, pcl::PointCloud<pcl::PointXYZRGB
 }
 
 int counts[640*480];
+void lookForClass(int k)
+{
+    
+}
+
 int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr & cloud_ptr ,int scene_num) {
     std::ofstream  featfile;
-    pcl::PointCloud<pcl::PointXYZRGBCamSL> cloud=*cloud_ptr;
+    pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud=*cloud_ptr;
       originalFrame=new OriginalFrameInfo(cloud_ptr);
 
     //labelfile.open("data_labels.txt",ios::app);
