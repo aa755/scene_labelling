@@ -172,10 +172,10 @@ public:
         insertPoints(pointIndicess);
         
         set<int>::iterator npit;
+                nearest_indices.resize(1,0);
+                nearest_distances.resize(1,0.0);
         for(size_t i=0;i<pointIndicess.size();i++)
         {
-                //nearest_indices.resize(1,0);
-                //nearest_distances.resize(1,0.0);
                 nnFinder.nearestKSearch(scene.points[pointIndicess[i]],1,nearest_indices,nearest_distances);
                 int nearest_index=indices[nearest_indices[0]];
                 nearPoints.insert(nearest_index);
@@ -382,10 +382,7 @@ public:
     
         virtual void printData()
         {
-            cout<<id<<"\t:";
-            for(size_t i=0;i<pointIndices.size();i++)
-                cout<<pointIndices[i]<<",";
-            cout<<endl;
+            cout<<id<<"\t:"<<set_membership<<endl;
         }
         
     size_t getNumPoints()
@@ -437,7 +434,8 @@ public:
         assert(costSet); // cost must be set before adding it to pq
         if(checkDuplicate(planeSet))
             return false;
-        std::pair< set<NonTerminal*>::iterator , bool > resIns;
+        computePointIndices();
+   //     std::pair< set<NonTerminal*>::iterator , bool > resIns;
         
 /*        for(size_t i=0;i<pointIndices.size();i++)
         {
@@ -469,9 +467,9 @@ public:
         NTSet & bin=planeSet[numPoints];
         NTSet::iterator lb;
         lb=bin.lower_bound(this);
-        if((*lb)->set_membership==set_membership)
+        if(lb!=bin.end() && (*lb)->set_membership==set_membership)
         {
-            cout<<"duplicate:"<<set_membership<<","<<(*lb)->set_membership<<endl;
+           // cout<<"duplicate:"<<set_membership<<","<<(*lb)->set_membership<<endl;
             return true;
         }
         else
@@ -788,6 +786,7 @@ public:
         int deficit=scene.size()-RHS_plane1->getNumPoints()-RHS_plane2->getNumPoints();
         LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)+exp(10*deficit)); // more coplanar => bad
         cout<<"applied rule S->pp\n";        
+        cerr<<"applied rule S->pp: cost "<<LHS->cost<<"\n";        
         return LHS;
     }
     
@@ -867,7 +866,7 @@ void runParse()
     int numPoints=scene.size();
 //    vector<set<NonTerminal*> > ancestors(numPoints,set<NonTerminal*>());
     
-    vector<NTSet> planeSet;
+    vector<NTSet> planeSet(numPoints,NTSet());
     
     vector<Terminal *> terminals;
    
@@ -947,8 +946,8 @@ int main(int argc, char** argv)
 //    subsample(scene,temp);
 //    pcl::io::savePCDFile("fridge_sub500.pcd",temp,true);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
-  
     
-//   runParse();
+    
+   runParse();
     return 0;
 }
