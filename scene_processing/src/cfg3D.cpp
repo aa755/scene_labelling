@@ -100,6 +100,8 @@ boost::shared_ptr<X> createStaticShared(X * x)
 
 class NonTerminal;
 class Terminal;
+
+
 pcl::PointCloud<PointT> scene;
 class Symbol
 {
@@ -115,7 +117,10 @@ public:
         {
             
         }
-    virtual void insertPoints(boost::dynamic_bitset<> & set_membership)=0;
+        
+    virtual void insertPoints(vector<int> & points)=0;
+    
+    virtual void unionMembersip(boost::dynamic_bitset<> & set_membership)=0;
     bool operator < (const Symbol &  rhs)
     {
         return cost <rhs.cost;
@@ -226,8 +231,12 @@ public:
   }
 };
 
+class NTSetComparison;
+
+typedef set<NonTerminal *,NTSetComparison> NTSet;
 
 typedef priority_queue<Symbol *,vector<Symbol *>,SymbolComparison> SymbolPriorityQueue;
+
 
 class Terminal : public Symbol
 {
@@ -239,7 +248,7 @@ public:
         return 0;
     }
     
-    void insertPoints(boost::dynamic_bitset<> & set_membership)
+    void unionMembersip(boost::dynamic_bitset<> & set_membership)
     {
         set_membership.set(index,true);
     }
@@ -269,6 +278,11 @@ public:
     const PointT & getPoint()
     {
         return scene.points[index];
+    }
+    
+    void insertPoints(vector<int> & points)
+    {
+        points.push_back(index);
     }
     
     void getCentroid(pcl::PointXYZ & centroid)
@@ -328,7 +342,7 @@ protected:
     /** indices into the pointcloud
      */
     //will be populated only when extracted as min
-    void computeCentroid()
+/*    void computeCentroid()
     {
         PointT point;
         centroid.x=0;
@@ -345,25 +359,49 @@ protected:
             centroid.y /=pointIndices.size();
             centroid.z /=pointIndices.size();                
     }
+  */
     
-    /** 
+   void computePointIndices()
+    {
+       pointIndices.clear();
+       pointIndices.reserve(set_membership.count());
+
+       for(size_t i=0;i<scene.size();i++)
+       {
+           if(set_membership.test(i))
+               pointIndices.push_back(i);
+       }
+    }
+   
+   void insertPoints(vector<int> & points)
+    {
+       points.reserve(points.size()+set_membership.count());
+
+       for(size_t i=0;i<scene.size();i++)
+       {
+           if(set_membership.test(i))
+               points.push_back(i);
+       }
+    }
+   
+   /** 
      * compute leaves by concatenating 
      * leaves of children */
     bool costSet;
 public:
+    vector<int> pointIndices; // can be replaced with any sufficient statistic
         int getId()
     {
         return id;
     }
 
-    vector<int> pointIndices; // can be replaced with any sufficient statistic
     NonTerminal()
     {
         costSet=false;
         id=id_counter++;
         cout<<"new NT: "<<id<<endl;
     }
-    
+
     unsigned long getHashValue()
     {
         return set_membership.to_ulong();
@@ -398,15 +436,15 @@ public:
         assert(!costSet);
         children.push_back(child);
     }
-    void computePointIndices()
+    void computeSetMembership()
     {
         for(size_t i=0;i<children.size();i++)
         {
-            children[i]->insertPoints(set_membership);
+            children[i]->unionMembersip(set_membership);
         }
     }
 
-    void insertPoints(boost::dynamic_bitset<> & set_membership)
+    void unionMembersip(boost::dynamic_bitset<> & set_membership)
     {
 //        assert(pointIndices.size()>0);
         set_membership|=this->set_membership;
@@ -421,7 +459,7 @@ public:
     bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)
     {
         assert(costSet); // cost must be set before adding it to pq
-        computePointIndices();
+        computeSetMembership();
         if(checkDuplicate(ancestors))
             return false;
         std::pair< set<NonTerminal*>::iterator , bool > resIns;
@@ -432,7 +470,7 @@ public:
             assert(resIns.second);
         }   
                                 
-        computeCentroid();
+      //  computeCentroid();
         additionalFinalize();
         return true;
     }
@@ -513,6 +551,14 @@ public:
         }
     }
     
+};
+class NTSetComparison
+{
+public:
+  bool operator() (NonTerminal * & lhs, NonTerminal * & rhs) const
+  {
+      return lhs->getHashValue()>rhs->getHashValue();
+  }
 };
 
 int NonTerminal::id_counter=0;
@@ -875,6 +921,7 @@ void runParse()
     SymbolPriorityQueue pq;
     int numPoints=scene.size();
     vector<set<NonTerminal*> > ancestors(numPoints,set<NonTerminal*>());
+    NTSet planeSet;
     
     vector<Terminal *> terminals;
    
