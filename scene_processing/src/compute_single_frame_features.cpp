@@ -264,6 +264,11 @@ public:
      return sqrt(pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2));    
   }
   
+  float getDistanceSqrBwCentroids(const SpectralProfile & other) const
+  {
+     return pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2)+ pow(centroid.z - other.centroid.z, 2);    
+  }
+  
   float getVertDispCentroids(const SpectralProfile & other)
   {
      return (centroid.z - other.centroid.z);    
@@ -547,7 +552,7 @@ void apply_segment_filter(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<Poin
        outcloud.points.clear ();
 }
 
-int MIN_SEG_SIZE=1500;
+int MIN_SEG_SIZE=500;
 /** it also discards unlabeled segments
  */
 void apply_segment_filter_and_compute_HOG(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment,SpectralProfile & feats) {
@@ -566,7 +571,7 @@ void apply_segment_filter_and_compute_HOG(pcl::PointCloud<PointT> &incloud, pcl:
     int j = -1;
     for (size_t i = 0; i < incloud.points.size(); ++i) {
 
-        if (incloud.points[i].segment == segment && incloud.points[i].label>0) {
+        if (incloud.points[i].segment == segment) {
           j++;
           outcloud.points[j].x = incloud.points[i].x;
           outcloud.points[j].y = incloud.points[i].y;
@@ -1307,7 +1312,9 @@ void get_pair_features( int segment_id, vector<int>  &neighbor_list,
         //cerr << "edge feature for edge (" << seg1_id << "," << seg2_id << ")  = " << centroid_z_diff << endl;
         
         // distance between closest points
-        edge_features[seg2_id].push_back(distance_matrix[make_pair(segment_id,seg2_id)]);addToEdgeHeader ("dist_closest");
+        //edge_features[seg2_id].push_back(distance_matrix[make_pair(segment_id,seg2_id)]);addToEdgeHeader ("dist_closest");
+
+        edge_features[seg2_id].push_back(segment1Spectral.getDistanceSqrBwCentroids (segment2Spectral));addToEdgeHeader ("dist_cent_sqr");
 
         // difference of angles with vertical
         edge_features[seg2_id].push_back(segment1Spectral.getAngleDiffInRadians (segment2Spectral));addToEdgeHeader ("AngleDiff");
@@ -1457,7 +1464,7 @@ int main(int argc, char** argv) {
         apply_segment_filter_and_compute_HOG (*cloud_ptr,*cloud_seg,seg,temp);
         
         //if (label!=0) cout << "segment: "<< seg << " label: " << label << " size: " << cloud_seg->points.size() << endl;
-        if (!cloud_seg->points.empty () && cloud_seg->points.size() > MIN_SEG_SIZE  && cloud_seg->points[1].label != 0) {
+        if (!cloud_seg->points.empty () ) {
          //std::cout << seg << ". Cloud size after extracting : " << cloud_seg->points.size() << std::endl;
 			segment_clouds.push_back(*cloud_seg);
                         pcl::PointCloud<PointT>::Ptr tempPtr(new pcl::PointCloud<PointT > (segment_clouds[segment_clouds.size()-1]));

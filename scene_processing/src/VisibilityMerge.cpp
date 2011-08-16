@@ -95,7 +95,7 @@ main(int argc, char** argv)
   std::vector<float> k_distances;
 
     pcl_ros::BAGReader reader;
-    if (!reader.open(argv[1], "/rgbdslam/my_clouds"))
+    if (!reader.open(argv[1], "/rgbdslam/batch_clouds"))
     {
         ROS_ERROR("Couldn't read file ");
         return (-1);
