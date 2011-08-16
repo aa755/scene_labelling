@@ -19,7 +19,7 @@
 #include "pcl/sample_consensus/model_types.h"
 #include "pcl/segmentation/sac_segmentation.h"
 
-typedef pcl::PointXYGRGBCam PointT;
+typedef pcl::PointXYZRGBCamSL PointT;
 typedef pcl::PointXYZRGBCamSL PointOutT;
 
 typedef  pcl::KdTree<PointT> KdTree;
@@ -196,7 +196,7 @@ void extractEuclideanClusters (
 
 
 
-/** 
+/* 
 Extract the clusters based on location and normals
 */
 void extractEuclideanClusters (
@@ -243,8 +243,8 @@ void extractEuclideanClusters (
          //ROS_INFO ("i = %d, cnt = %d", i , cnt);
 
         // Search for sq_idx
-        adjTolerance = cloud.points[seed_queue[sq_idx]].distance * tolerance;
-        //adjTolerance = tolerance;
+        //adjTolerance = cloud.points[seed_queue[sq_idx]].distance * tolerance;
+        adjTolerance = tolerance;
         if (!tree->radiusSearch (seed_queue[sq_idx], adjTolerance, nn_indices, nn_distances))
         {
           sq_idx++;
@@ -338,7 +338,8 @@ void extractEuclideanClusters (
          //ROS_INFO ("i = %d, cnt = %d", i , cnt);
 
         // Search for sq_idx
-        adjTolerance = cloud.points[seed_queue[sq_idx]].distance * tolerance;
+        //adjTolerance = cloud.points[seed_queue[sq_idx]].distance * tolerance;
+        adjTolerance =  tolerance;
         if (!tree->radiusSearch (seed_queue[sq_idx], adjTolerance, nn_indices, nn_distances))
         {
           sq_idx++;
@@ -413,7 +414,7 @@ void getClustersFromPointCloud2 (const pcl::PointCloud<PointT> &cloud_objects,
       clusters[i].points[j].cameraIndex = cloud_objects.points[clusters2[i].indices[j]].cameraIndex;
       clusters[i].points[j].distance = cloud_objects.points[clusters2[i].indices[j]].distance;
       clusters[i].points[j].segment = i;
-      clusters[i].points[j].label = 0;
+      clusters[i].points[j].label = cloud_objects.points[clusters2[i].indices[j]].label;
     }
     
     if(i == 0) {combined_cloud = clusters[i];}
@@ -431,7 +432,7 @@ int
   int min_pts_per_cluster = 0;
   int max_pts_per_cluster = 3000000;
   int number_neighbours = 50;
-  float radius = 0.01;// 0.025 
+  float radius = 1.2;// 0.025 
   float angle = 0.52;
   float hue_tolerance = 50;
 

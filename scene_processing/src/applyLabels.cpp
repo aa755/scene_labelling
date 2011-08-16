@@ -34,11 +34,17 @@ using namespace pcl;
 int main(int argc, char** argv) {
     pcl::PCDWriter writer;
 
-  if(argc!=3)
+  if(argc!=3&&argc!=4)
     {
-    cerr<<"usage: "<<argv[1]<<" pointCloudFile segment2labelMappingFile"<<endl;
+    cerr<<"usage: "<<argv[1]<<" pointCloudFile segment2labelMappingFile [evaluate]"<<endl;
     exit(-1);
     }
+
+bool evaluate=false;
+
+if(argc==4)
+	evaluate=true;
+
   std::map<int,int> label_mapping; 
 
     sensor_msgs::PointCloud2 cloud_blob;
@@ -52,9 +58,9 @@ int main(int argc, char** argv) {
         int count=1;
         while(labelFile.good())
         {
-            label=0;
+            label=-1;
             labelFile>>segNo>>label;
-            if(label==0)
+            if(label==-1)
                 break;
             cout<<"adding seg "<<segNo<<" with label:"<<label<<endl;
             label_mapping[segNo]=label;
@@ -80,17 +86,64 @@ int main(int argc, char** argv) {
 
 
   pcl::PointCloud<PointT> labeled_cloud;
+if(!evaluate)
+{
   labeled_cloud.header = cloud.header;
   labeled_cloud.points = cloud.points;
-  for (size_t i = 0; i< labeled_cloud.points.size(); i++)
+}
+
+  int NUM_CLASSES=5;
+  int tp[NUM_CLASSES];
+  int tc[NUM_CLASSES];
+  int pc[NUM_CLASSES];
+  
+  for(int i=0;i<5;i++)
+  {
+      tp[i]=0;
+      tc[i]=0;
+      pc[i]=0;
+  }
+  
+  int countTrue=0;
+  int countFalse=0;
+  for (size_t i = 0; i< cloud.points.size(); i++)
   {
      //if(label_mapping[labeled_cloud.points[i].segment]!=0)
-        labeled_cloud.points[i].label = label_mapping[labeled_cloud.points[i].segment];
+	if(evaluate&&cloud.points[i].label>0)
+	{
+            tc[cloud.points[i].label-1]++;
+            if(label_mapping[cloud.points[i].segment]>0)
+            {
+                pc[label_mapping[cloud.points[i].segment]-1]++;
+            }
+		if(cloud.points[i].label == label_mapping[cloud.points[i].segment])
+                {
+			countTrue++;
+                        tp[cloud.points[i].label-1]++;
+                }
+		else
+			countFalse++;
+	}
+	else if(!evaluate)
+        	labeled_cloud.points[i].label = label_mapping[labeled_cloud.points[i].segment];
 
   }
-std::string      fn = "pred_labeled_"  + std::string(argv[1]);
 
-  writer.write ( fn,labeled_cloud, true);
+if(evaluate)
+{
+
+    std::ofstream nfeatfile, efeatfile;
+    nfeatfile.open("res.txt",ios::app);
+    nfeatfile<<countTrue<<" "<<countFalse<<" "<<cloud.size();//<<endl;
+    for(int i=0;i<NUM_CLASSES;i++)
+        nfeatfile<<" "<<tp[i]<<" "<<tc[i]<<" "<<pc[i];
+    nfeatfile<<endl;
+}
+else
+{
+std::string      fn = "pred_labeled_"  + std::string(argv[1]);
+writer.write ( fn,labeled_cloud, true);
+}
 }
 
 

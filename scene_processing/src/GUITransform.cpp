@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2010, Abhishek Anand
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,12 @@
 
 /**
 
-\author Radu Bogdan Rusu
+\author Abhishek Anand
 
-@b segmentation_plane exemplifies how to run a Sample Consensus segmentation for planar models.
+ * can be used to estimate camera transforms. If no input is given ,uses live kinect feed
+ * it was used to determine Z floor level
+ * if argument(PCD) is given, it uses that
+ * in this case, it also prints the transformed PCD
 
  **/
 #include <iostream>
@@ -117,6 +120,28 @@ scene_processing::pcmergerConfig InitialTransformConfig;
 bool noMoreUndo=false;
 bool updatePC=false;
 bool ready=false;
+
+void filterInPlace(pcl::PointCloud<PointT> & cloud, float minx,float miny,float minz, float maxx,float maxy,float maxz)
+{
+    vector<int> indices;
+    for(int i=0;i<cloud.size();i++)
+    {
+       if (cloud.points[i].x>=minx && cloud.points[i].x<=maxx 
+       && cloud.points[i].y>=miny && cloud.points[i].y<=maxy
+       && cloud.points[i].z>=minz && cloud.points[i].z<=maxz)
+       {
+           indices.push_back(i);
+       }
+    }
+    
+       for(int i=0;i<indices.size();i++)
+       {
+           if(i!=indices[i])
+                cloud.points[i]=cloud.points[indices[i]];
+       }
+       cloud.points.resize(indices.size());
+}
+
 void updateUI() {
     if(!ready)
         return;
@@ -126,9 +151,10 @@ void updateUI() {
 
     //transform the new point cloud
     transformXYZYPR(*cloud_ptr, *cloud_mod_ptr, conf.x, conf.y, conf.z, conf.yaw/180.0*PI, conf.pitch/180.0*PI, conf.roll/180.0*PI);
+    filterInPlace(*cloud_mod_ptr,conf.minx,conf.miny,conf.minz, conf.maxx,conf.maxy,conf.maxz);
     viewer.removePointCloud("new");
     pcl::toROSMsg(*cloud_mod_ptr, cloud_blobc_mod);
-//    color_handler_new.reset(new pcl_visualization::PointCloudColorHandlerRGBField<sensor_msgs::PointCloud2 > (cloud_blobc_mod));
+    color_handler_new.reset(new pcl_visualization::PointCloudColorHandlerRGBField<sensor_msgs::PointCloud2 > (cloud_blobc_mod));
     viewer.addPointCloud(*cloud_mod_ptr, color_handler_new, "new", viewportOrig);
     
    // viewer.spinOnce();
@@ -280,13 +306,13 @@ main(int argc, char** argv) {
 ros::Subscriber cloud_sub_;
 
 
-       // = "transformed_"  + std::string(argv[1]);
    viewer.createViewPort(0.0, 0.0, 1.0, 1.0, viewportOrig);
    viewer.addCoordinateSystem (1);
      sensor_msgs::PointCloud2 cloud_blob;
         viewer.setBackgroundColor (1.0,1.0,1.0);
   if(argc>1)
   {
+       fn = "transformed_"  + std::string(argv[1]);
   if (pcl::io::loadPCDFile (argv[1], cloud_blob) == -1)
     {
       ROS_ERROR ("Couldn't read file ");
@@ -296,8 +322,11 @@ ros::Subscriber cloud_sub_;
 
   // Convert to the templated message type
   pcl::fromROSMsg (cloud_blob, *cloud_ptr);
+  cloud_ptr->width=0;
+  cloud_ptr->height=0;
+  
   ready=true;
-          
+      color_handler_new.reset(new pcl_visualization::PointCloudColorHandlerRGBField<sensor_msgs::PointCloud2 > (cloud_blob));        
   }
   else
   {
@@ -334,7 +363,10 @@ ros::Subscriber cloud_sub_;
     }
     
     pcl::PCDWriter writer;
-    //  writer.write ( fn,*cloud_mod_ptr, true);
+    if(argc>1)
+    {
+      writer.write ( fn,*cloud_mod_ptr, true);
+    }
     transformFile.close();
 
     
