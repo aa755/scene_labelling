@@ -251,12 +251,12 @@ void extractEuclideanClusters (
           continue;
         }
 
-        for (size_t j = 1; j < nn_indices.size (); ++j)             // nn_indices[0] should be sq_idx
+        for (size_t j = 1; j < nn_indices.size (); j++)             // nn_indices[0] should be sq_idx
         {
           if (processed[nn_indices[j]])                             // Has this point been processed before ?
             continue;
 
-          processed[nn_indices[j]] = true;
+          //processed[nn_indices[j]] = true;
           // [-1;1]
           double dot_p =
             normals.points[i].normal[0] * normals.points[nn_indices[j]].normal[0] +
@@ -277,7 +277,7 @@ void extractEuclideanClusters (
       {
         pcl::PointIndices r;
         r.indices.resize (seed_queue.size ());
-        for (size_t j = 0; j < seed_queue.size (); ++j)
+        for (size_t j = 0; j < seed_queue.size (); j++)
           r.indices[j] = seed_queue[j];
 
         sort (r.indices.begin (), r.indices.end ());
@@ -350,7 +350,7 @@ void extractEuclideanClusters (
           if (processed[nn_indices[j]])                             // Has this point been processed before ?
             continue;
 
-          processed[nn_indices[j]] = true;
+      //    processed[nn_indices[j]] = true;
           // [-1;1]
           double dot_p =
             normals.points[i].normal[0] * normals.points[nn_indices[j]].normal[0] +
@@ -399,12 +399,12 @@ void getClustersFromPointCloud2 (const pcl::PointCloud<PointT> &cloud_objects,
                 pcl::PointCloud<PointOutT> &combined_cloud )
 {
   clusters.resize (clusters2.size ());
-  for (size_t i = 0; i < clusters2.size (); ++i)
+  for (size_t i = 0; i < clusters2.size (); i++)
   {
     clusters[i].header.frame_id = cloud_objects.header.frame_id;
   //  clusters[i].header.stamp = ros::Time(0);
     clusters[i].points.resize (clusters2[i].indices.size ());
-    for (size_t j = 0; j < clusters[i].points.size (); ++j)
+    for (size_t j = 0; j < clusters[i].points.size (); j++)
     {
       clusters[i].points[j].x = cloud_objects.points[clusters2[i].indices[j]].x;
       clusters[i].points[j].y = cloud_objects.points[clusters2[i].indices[j]].y;
@@ -416,7 +416,7 @@ void getClustersFromPointCloud2 (const pcl::PointCloud<PointT> &cloud_objects,
       clusters[i].points[j].label = 0;
     }
     
-    if(i == 1) {combined_cloud = clusters[i];}
+    if(i == 0) {combined_cloud = clusters[i];}
     else { combined_cloud += clusters[i]; }
   }
 }
