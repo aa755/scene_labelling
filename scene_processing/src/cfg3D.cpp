@@ -811,10 +811,10 @@ public:
                 NTSet::iterator it;
                     Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
 //                    Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
-                
+                assert(!RHS_plane1->set_membership.intersects(neighbors));
                 for(it=bin.begin();it!=bin.end();it++)
                 {
-                    if(  (!RHS_plane1->intersects((*it)))   && RHS_plane1->set_membership.intersects(neighbors)  )
+                    if(  (!RHS_plane1->intersects((*it)))   && (*it)->set_membership.intersects(neighbors)  )
                     {
                         vector<Symbol*> temp;
                         temp.push_back(*it); // must be pushed in order
