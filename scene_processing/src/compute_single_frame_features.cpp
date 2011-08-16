@@ -264,6 +264,11 @@ public:
      return sqrt(pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2));    
   }
   
+  float getDistanceSqrBwCentroids(const SpectralProfile & other) const
+  {
+     return pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2)+ pow(centroid.z - other.centroid.z, 2);    
+  }
+  
   float getVertDispCentroids(const SpectralProfile & other)
   {
      return (centroid.z - other.centroid.z);    
@@ -1307,7 +1312,9 @@ void get_pair_features( int segment_id, vector<int>  &neighbor_list,
         //cerr << "edge feature for edge (" << seg1_id << "," << seg2_id << ")  = " << centroid_z_diff << endl;
         
         // distance between closest points
-        edge_features[seg2_id].push_back(distance_matrix[make_pair(segment_id,seg2_id)]);addToEdgeHeader ("dist_closest");
+        //edge_features[seg2_id].push_back(distance_matrix[make_pair(segment_id,seg2_id)]);addToEdgeHeader ("dist_closest");
+
+        edge_features[seg2_id].push_back(segment1Spectral.getDistanceSqrBwCentroids (segment2Spectral));addToEdgeHeader ("dist_cent_sqr");
 
         // difference of angles with vertical
         edge_features[seg2_id].push_back(segment1Spectral.getAngleDiffInRadians (segment2Spectral));addToEdgeHeader ("AngleDiff");
