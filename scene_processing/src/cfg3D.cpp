@@ -20,8 +20,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <boost//lexical_cast.hpp>
-#include <bitset>
-
+#include <boost/dynamic_bitset.hpp>
 //sac_model_plane.h
  
 using namespace std;
@@ -116,7 +115,7 @@ public:
         {
             
         }
-    virtual void insertPoints(vector<int> & points)=0;
+    virtual void insertPoints(boost::dynamic_bitset<> & set_membership)=0;
     bool operator < (const Symbol &  rhs)
     {
         return cost <rhs.cost;
@@ -240,9 +239,9 @@ public:
         return 0;
     }
     
-    void insertPoints(vector<int> & points)
+    void insertPoints(boost::dynamic_bitset<> & set_membership)
     {
-        points.push_back(index);
+        set_membership.set(index,true);
     }
     
     Terminal()
@@ -321,6 +320,7 @@ class NonTerminal : public Symbol
 {
 protected:
 //    vector<bool> setOfPoints;
+    boost::dynamic_bitset<> set_membership;
     vector<Symbol*> children;
     pcl::PointXYZ centroid;
     int id;
@@ -364,6 +364,11 @@ public:
         cout<<"new NT: "<<id<<endl;
     }
     
+    unsigned long getHashValue()
+    {
+        return set_membership.to_ulong();
+    }
+    
         virtual void printData()
         {
             cout<<id<<"\t:";
@@ -397,14 +402,14 @@ public:
     {
         for(size_t i=0;i<children.size();i++)
         {
-            children[i]->insertPoints(pointIndices);
+            children[i]->insertPoints(set_membership);
         }
     }
 
-    void insertPoints(vector<int> & points)
+    void insertPoints(boost::dynamic_bitset<> & set_membership)
     {
-        assert(pointIndices.size()>0);
-        points.insert(points.end(),pointIndices.begin(),pointIndices.end());
+//        assert(pointIndices.size()>0);
+        set_membership|=this->set_membership;
     }
     
     /**
@@ -423,7 +428,7 @@ public:
         
         for(size_t i=0;i<pointIndices.size();i++)
         {
-            resIns=ancestors[pointIndices[i]].insert(this);
+            resIns=ancestors[pointIndices[i]].insert(this); // too many duplicate inserts
             assert(resIns.second);
         }   
                                 
@@ -949,13 +954,6 @@ int main(int argc, char** argv)
 //    subsample(scene,temp);
 //    pcl::io::savePCDFile("fridge_sub500.pcd",temp,true);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
-  vector<bool> bitset1(2);  
-  vector<bool> bitset2(1);
-  cout<<(bitset1==bitset2)<<endl;
-  bitset1[1]=true;
-  bitset2.resize(2);
-  bitset2[1]=true;
-  cout<<(bitset1==bitset2)<<endl;
   
     
 //   runParse();
