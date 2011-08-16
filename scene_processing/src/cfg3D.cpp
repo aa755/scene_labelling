@@ -541,7 +541,7 @@ public:
     }
     
     virtual void combineAndPush(Symbol * sym, set<int> & combineCandidates , SymbolPriorityQueue & pqueue, vector<NTSet> & planeSet /* = 0 */, vector<Terminal*> & terminals /* = 0 */)=0;
-    void addToPqueueIfNotDuplicate(NonTerminal * newNT, vector<NTSet> & planeSet, SymbolPriorityQueue & pqueue)
+    virtual void addToPqueueIfNotDuplicate(NonTerminal * newNT, vector<NTSet> & planeSet, SymbolPriorityQueue & pqueue)
     {
         newNT->computeSetMembership();
         if(!newNT->checkDuplicate(planeSet))
@@ -587,7 +587,7 @@ public:
     
     double coplanarity(Plane * plane2)
     {
-        return exp( 100*fabs(planeParams[0]*plane2->planeParams[0]  +  planeParams[1]*plane2->planeParams[1]  +  planeParams[2]*plane2->planeParams[2]) )-1;
+        return  fabs(planeParams[0]*plane2->planeParams[0]  +  planeParams[1]*plane2->planeParams[1]  +  planeParams[2]*plane2->planeParams[2]) ;
     }
     
     double costOfAddingPoint(PointT p)
@@ -607,7 +607,7 @@ public:
         {
             assert(planeParamsComputed);
 //            return exp(100*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
-            return getNumPoints()*pcl::pointToPlaneDistance<PointT>(p,planeParams);
+            return getNumPoints()*(exp(pcl::pointToPlaneDistance<PointT>(p,planeParams))-1);
         }
         else
             assert(1==2);
@@ -765,6 +765,13 @@ public:
 class RS_PlanePlane : public Rule
 {
 public:
+    void addToPqueueIfNotDuplicate(NonTerminal * newNT, vector<NTSet> & planeSet, SymbolPriorityQueue & pqueue)
+    {
+        newNT->computeSetMembership();
+   //     if(!newNT->checkDuplicate(planeSet)) // no need to check for duplicates
+            pqueue.push(newNT);
+    }
+    
     int get_Nof_RHS_symbols()
     {
         return 2;
@@ -783,10 +790,12 @@ public:
         Plane * RHS_plane2=dynamic_cast<Plane *>(RHS.at(1));
         LHS->addChild(RHS_plane1);
         LHS->addChild(RHS_plane2);
-        int deficit=scene.size()-RHS_plane1->getNumPoints()-RHS_plane2->getNumPoints();
-        LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)+exp(10*deficit)); // more coplanar => bad
+        //int deficit=scene.size()-RHS_plane1->getNumPoints()-RHS_plane2->getNumPoints();
+        LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)/*+exp(10*deficit)*/); // more coplanar => bad
         cout<<"applied rule S->pp\n";        
         cerr<<"applied rule S->pp: cost "<<LHS->cost<<"\n";        
+        cerr<<RHS_plane1->set_membership<<"\n";        
+        cerr<<RHS_plane2->set_membership<<"\n";        
         return LHS;
     }
     
@@ -884,11 +893,12 @@ void runParse()
     {
         min=pq.top();
         
-        cout<<"\n\n\niter: "<<count++<<" type of min was "<<typeid(*min).name()<<"id was "<<min->getId()<<endl;
+        cout<<"\n\n\niter: "<<count++<<" cost was:"<<min->getCost()<<" id was "<<min->getId()<<endl;
         
         if(typeid(*min)==typeid(Goal_S))
         {
             cout<<"goal reached!!"<<endl;
+            min->printData();
             return;
             
         }
