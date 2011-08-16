@@ -134,14 +134,14 @@ public:
 
     virtual void getCentroid(pcl::PointXYZ & centroid)=0;
     
-    virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)=0;
+    virtual bool finalize_if_not_duplicate(vector<NTSet> & planeSet)=0;
     
     virtual void getComplementPointSet(vector<int> & indices /* = 0 */)=0;
     virtual void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)=0;
     
     virtual int getId()=0;
 
-    void getValidSymbolsForCombination(vector<set<NonTerminal*> > & allAncestors,vector<Terminal*> & terminals,set<Symbol*> & combineCanditates)
+    void getValidSymbolsForCombination(vector<Terminal*> & terminals,set<int> & nearPoints)
     {
         // find the nearest point not in this segment
         pcl::KdTreeFLANN<PointT> nnFinder;
@@ -157,66 +157,25 @@ public:
         nnFinder.setInputCloud(createStaticShared<pcl::PointCloud<PointT> >(&scene),createStaticShared<vector<int> >(&indices));
         vector<int> nearest_indices;
         vector<float> nearest_distances;
-        pcl::PointXYZ centroidt;
-        getCentroid(centroidt);
-        PointT centroidTT;
-        centroidTT.x=centroidt.x;
-        centroidTT.y=centroidt.y;
-        centroidTT.z=centroidt.z;
-        set<NonTerminal*> thisAncestors;
-        set<NonTerminal*> combineNTCanditates;
+        
         
         vector<int> pointIndicess;
         pointIndicess.reserve(getNumPoints());
         insertPoints(pointIndicess);
-        //set<int> nearPoints;
+        set<int> nearPoints;
         set<int>::iterator npit;
-        double minDist=DBL_MAX;
-        double minDistIndex=-1;
         for(size_t i=0;i<pointIndicess.size();i++)
         {
-        nearest_indices.resize(1,0);
-        nearest_distances.resize(1,0.0);
+                //nearest_indices.resize(1,0);
+                //nearest_distances.resize(1,0.0);
                 nnFinder.nearestKSearch(scene.points[pointIndicess[i]],1,nearest_indices,nearest_distances);
                 int nearest_index=indices[nearest_indices[0]];
-                if(nearest_distances[0]<minDist)
-                {
-                    minDist=nearest_distances[0];
-                    minDistIndex=nearest_index;
-                }
-                //get all it's ancestors which are not in common with ancesstors of this
-                //nearPoints.insert(nearest_index);
+                nearPoints.insert(nearest_index);
         }
         
-                cout<<"nearest index found was "<<minDistIndex<<endl;
-                combineNTCanditates.insert(allAncestors[minDistIndex].begin(),allAncestors[minDistIndex].end());
-/*         cout<<nearPoints.size()<<"unique points found"<<endl;
-        for(npit=nearPoints.begin();npit!=nearPoints.end();npit++)
-        {
-                combineNTCanditates.insert(allAncestors[*npit].begin(),allAncestors[*npit].end());
-        }
-        cout<<combineNTCanditates.size()<<" ancestors found of nearest points to min"<<endl;
-  */      
-        
-        getSetOfAncestors(thisAncestors,allAncestors);
-        cout<<thisAncestors.size()<<" ancestors found of min"<<endl;
-        
-        setDiffernce<NonTerminal*>(combineNTCanditates/*at this point, it only contains NT's*/,thisAncestors);
-        set<NonTerminal*>::iterator it;
-        for(it=combineNTCanditates.begin();it!=combineNTCanditates.end();it++)
-        {
-            combineCanditates.insert(combineCanditates.end(),(Symbol*)*it);
-        }
-        
-        cout<<"ancestor canditates(set difference) "<<combineCanditates.size()<<endl;
-        //add itself
-/*        for(npit=nearPoints.begin();npit!=nearPoints.end();npit++)
-        {
-                combineCanditates.insert((Symbol*)terminals[*npit]);        
-        }
- */
-                combineCanditates.insert((Symbol*)terminals[minDistIndex]);        
-        
+//                combineNTCanditates.insert(allAncestors[minDistIndex].begin(),allAncestors[minDistIndex].end());
+         cout<<nearPoints.size()<<"unique points found"<<endl;
+                
     }
     
 //    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)=0;
@@ -298,7 +257,7 @@ public:
             cout<<"t\t:"<<index<<endl;
         }
         
-    virtual bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors){return true;}
+    virtual bool finalize_if_not_duplicate(vector<NTSet> & planeSet){return true;}
     
     //bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)    {
 //        return false; // each terminal can be derived in only 1 way
@@ -333,6 +292,7 @@ Terminal * terminals;
 class NonTerminal : public Symbol
 {
 protected:
+    size_t numPoints;
 //    vector<bool> setOfPoints;
     boost::dynamic_bitset<> set_membership;
     vector<Symbol*> children;
@@ -364,7 +324,7 @@ protected:
    void computePointIndices()
     {
        pointIndices.clear();
-       pointIndices.reserve(set_membership.count());
+       pointIndices.reserve(getNumPoints());
 
        for(size_t i=0;i<scene.size();i++)
        {
@@ -375,7 +335,7 @@ protected:
    
    void insertPoints(vector<int> & points)
     {
-       points.reserve(points.size()+set_membership.count());
+       points.reserve(points.size()+getNumPoints());
 
        for(size_t i=0;i<scene.size();i++)
        {
@@ -400,6 +360,7 @@ public:
         costSet=false;
         id=id_counter++;
         cout<<"new NT: "<<id<<endl;
+        numPoints=0;
     }
 
     unsigned long getHashValue()
@@ -417,7 +378,8 @@ public:
         
     size_t getNumPoints()
     {
-        return pointIndices.size();
+        assert(costSet);
+        return numPoints;
     }
 
     void setAdditionalCost(double additionalCost)
@@ -438,10 +400,12 @@ public:
     }
     void computeSetMembership()
     {
+        set_membership.resize(scene.size(),false);
         for(size_t i=0;i<children.size();i++)
         {
             children[i]->unionMembersip(set_membership);
         }
+        numPoints=set_membership.count();
     }
 
     void unionMembersip(boost::dynamic_bitset<> & set_membership)
@@ -456,19 +420,21 @@ public:
      * 2) add itself to the list of ancestors of all those points
      * @param ancestors: list of ancestor-sets for all points in scene 
      */
-    bool finalize_if_not_duplicate(vector<set<NonTerminal*> > & ancestors)
+    bool finalize_if_not_duplicate(vector<NTSet> & planeSet)
     {
         assert(costSet); // cost must be set before adding it to pq
-        computeSetMembership();
-        if(checkDuplicate(ancestors))
+        if(checkDuplicate(planeSet))
             return false;
         std::pair< set<NonTerminal*>::iterator , bool > resIns;
         
-        for(size_t i=0;i<pointIndices.size();i++)
+/*        for(size_t i=0;i<pointIndices.size();i++)
         {
             resIns=ancestors[pointIndices[i]].insert(this); // too many duplicate inserts
             assert(resIns.second);
-        }   
+        }   */
+        
+        planeSet[pointIndices.size()].insert(this);// indexed by size 
+        // S wont ever be finalized , ... so it will only contain planes
                                 
       //  computeCentroid();
         additionalFinalize();
@@ -485,63 +451,36 @@ public:
         
     }
     
-    bool checkDuplicate(vector<set<NonTerminal*> > & ancestors)
+    bool checkDuplicate(vector<NTSet> & planeSet)
     {
-        set<NonTerminal*> intersect=ancestors[pointIndices[0]];
-        for(size_t i=1;i<pointIndices.size();i++)
+        assert(numPoints>0);
+        NTSet & bin=planeSet[numPoints];
+        NTSet::iterator it;
+        for(it=bin.begin();it!=bin.end();it++)
         {
-            setIntersection<NonTerminal *>(intersect,ancestors[pointIndices[i]]);
+            if(*it->set_membership==set_membership)
+                return true;
         }
-        
-        if(intersect.size()==0)
-            return false;
-        else
-        {
-            set<NonTerminal*>::iterator it;
-            for ( it=intersect.begin() ; it != intersect.end(); it++ )
-            {
-                if(typeid(*this)==typeid(*(*it)) && pointIndices.size()==(*it)->pointIndices.size())
-                    return true;
-            }
-            return false;
-        }
+        return false;
     }
+    
+    
 
     void getComplementPointSet(vector<int>& indices /* = 0 */)
     {
         int it1=0;
         int numPoints=scene.size();
         indices.clear();
-        sort(pointIndices.begin(),pointIndices.end());
-        vector<int>::iterator it2=pointIndices.begin();
-        while ((it1 < numPoints ) && (it2 != pointIndices.end()))
-        {
-            if (it1 < *it2)
-            {
-                indices.push_back(it1);
-                it1++;
-            }
-            else if (it1==*it2)
-            { 
-                ++it1; //skip this point
-                ++it2;
-            }
-            else
-            {
-                assert(1==2);
-            }
-
+        indices.reserve(numPoints-getNumPoints());
+       for(size_t i=0;i<scene.size();i++)
+       {
+           if(!set_membership.test(i))
+               indices.push_back(i);
+       }
         
-        }
-        
-        while (it1 < numPoints )
-        {
-            indices.push_back(it1);
-            it1++;
-        }
     }
     
-    void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)
+/*    void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)
     {
         thisAncestors=allAncestors[pointIndices[0]];
         for(size_t i=1;i<getNumPoints();i++)
@@ -550,7 +489,7 @@ public:
              thisAncestors.insert(temp.begin(),temp.end());
         }
     }
-    
+  */  
 };
 class NTSetComparison
 {
@@ -594,7 +533,7 @@ public:
         return true;
     }
     
-    virtual void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)=0;
+    virtual void combineAndPush(Symbol * sym, set<int> & combineCandidates , SymbolPriorityQueue & pqueue, vector<NTSet> & planeSet /* = 0 */, vector<Terminal*> & terminals /* = 0 */)=0;
 };
 
 double sqr(double d)
@@ -698,37 +637,22 @@ public:
         return LHS;
     }
     
-     void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
+     void combineAndPush(Symbol * sym, set<int> & combineCandidates , SymbolPriorityQueue & pqueue, vector<NTSet> & planeSet /* = 0 */, vector<Terminal*> & terminals /* = 0 */)
     {
-        set<Symbol*>::iterator it;
-        if(typeid(*sym)==typeid(Terminal))
+        set<int>::iterator it;
+            //all terminals have cost=0, all NT's have cost>0,
+            //so when a terminal is extracted, no non-terminal(plane)
+            //has been extracted yet
+            //so, if sym is of type Terminal, it cannot be combined with a plane
+        if (typeid(*sym)==typeid(Plane ))
         {
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
-                if(typeid(*(*it))==typeid(Plane))
-                {
-                    vector<Symbol*> temp;
-                    temp.push_back(*it); // must be pushed in order
-                    temp.push_back(sym);
-                    pqueue.push(applyRule(temp));
-                    cout<<"applied rule p->pt\n";
-                    
-                }
-            }
-        }
-        else if (typeid(*sym)==typeid(Plane ))
-        {
-            for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
-            {
-                if(typeid(*(*it))==typeid(Terminal))
-                {
                     vector<Symbol*> temp;
                     temp.push_back(sym);
-                    temp.push_back(*it); // must be pushed in order
+                    temp.push_back(terminals.at(*it)); // must be pushed in order
                     pqueue.push(applyRule(temp));
                     cout<<"applied rule p->pt\n";
-                    
-                }
             }
             
         }
@@ -763,9 +687,9 @@ public:
         return LHS;
     }
     
-     void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
+     void combineAndPush(Symbol * sym, set<int> & combineCandidates , SymbolPriorityQueue & pqueue, vector<NTSet> & planeSet /* = 0 */, vector<Terminal*> & terminals /* = 0 */)
     {
-        set<Symbol*>::iterator it;
+        set<int>::iterator it;
      //   cout<<"my type:"<<typeid(*sym).name()<<endl;
      //   cout<<"my type:"<<typeid(Terminal).name()<<endl;
         if(typeid(*sym)==typeid(Terminal))
@@ -773,14 +697,11 @@ public:
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
               //  cout<<"cand type:"<<typeid(**it).name()<<endl;
-                if(typeid(*(*it))==typeid(Terminal))
-                {
                     vector<Symbol*> temp;
-                    temp.push_back(*it); // must be pushed in order
+                    temp.push_back(terminals.at(*it)); 
                     temp.push_back(sym);
                     pqueue.push(applyRule(temp));
                     cout<<"applied rule p->tt\n";
-                }
             }
         }
     }    
@@ -855,11 +776,19 @@ public:
         return LHS;
     }
     
-     void combineAndPush(Symbol * sym, set<Symbol*> & combineCandidates , SymbolPriorityQueue & pqueue)
+     void combineAndPush(Symbol * sym, set<int> & combineCandidates , SymbolPriorityQueue & pqueue, vector<NTSet> & planeSet /* = 0 */, vector<Terminal*> & terminals /* = 0 */)
     {
-        set<Symbol*>::iterator it;
+        
         if(typeid(*sym)==typeid(Plane))
         {
+            size_t targetSize=scene.size()-sym->getNumPoints();
+                NTSet & bin=planeSet[targetSize];
+                NTSet::iterator it;
+                for(it=bin.begin();it!=bin.end();it++)
+                {
+                        if(*it->set_membership==set_membership)
+                                return true;
+                }
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
                 
@@ -920,8 +849,9 @@ void runParse()
     appendRuleInstances(rules);
     SymbolPriorityQueue pq;
     int numPoints=scene.size();
-    vector<set<NonTerminal*> > ancestors(numPoints,set<NonTerminal*>());
-    NTSet planeSet;
+//    vector<set<NonTerminal*> > ancestors(numPoints,set<NonTerminal*>());
+    
+    vector<NTSet> planeSet;
     
     vector<Terminal *> terminals;
    
@@ -947,23 +877,23 @@ void runParse()
             return;
             
         }
-        if(min->finalize_if_not_duplicate(ancestors))
+        if(min->finalize_if_not_duplicate(planeSet))
         {
         min->printData();
            // log(count,min);
-            set<Symbol*> combineCandidates;
+            set<int> combineCandidates;
             min->getValidSymbolsForCombination(ancestors,terminals,combineCandidates);
             cout<<combineCandidates.size()<<" candidates found and queue has "<<pq.size()<<" elements: \n------------"<<endl;
-            set<Symbol*>::iterator it;
+            set<int>::iterator it;
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
             {
-                (*it)->printData();
+                cout<<*it<<",";
             }
             cout<<"--------\n";
             
             for(size_t i=0;i<rules.size();i++)
             {
-                rules[i]->combineAndPush(min,combineCandidates,pq);
+                rules[i]->combineAndPush(min, combineCandidates, pq, planeSet, 0);
             }
             
         }
