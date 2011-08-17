@@ -316,7 +316,7 @@ public:
   float avgH;
   float avgS;
   float avgV;
-  
+ 
   geometry_msgs::Point32 centroid;
   Eigen::Vector3d normal;
   void setEigValues(Eigen::Vector3d eigenValues_)
@@ -1456,6 +1456,10 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
             {
                 vector<int> neighbors;
                 // get neighbors
+                
+                //compute feats
+                // all feats can be computed using SpectralProfile
+                // wall distance will take time
                 
             }
         
