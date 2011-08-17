@@ -1603,8 +1603,8 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                     {
                         edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
                     }
-                    cost+=edgeFeatsB.dot(edgeWeights[k]->row(nbrIndex));
-                    cost+=edgeFeatsB.dot(edgeWeights[nbrIndex]->row(k));
+                    cost+=edgeFeatsB.dot(edgeWeights[k]->row(nbrLabel));
+                    cost+=edgeFeatsB.dot(edgeWeights[nbrLabel]->row(k));
                 }
                 
                 
