@@ -63,6 +63,13 @@ bool BinFeatures=true;
 
 map<int,int> invLabelMap;
     pcl::PCDWriter writer;
+#define NUM_CLASSES 17
+
+using namespace Eigen;
+Matrix<float, Dynamic,Dynamic> *nodeWeights;
+Matrix<float, Dynamic,Dynamic> *edgeWeights[NUM_CLASSES];
+vector<int> nodeFeatIndices;
+vector<int> edgeFeatIndices;
     
     class BinStumps
 {
@@ -94,6 +101,19 @@ void    writeBinnedValues(double value, std::ofstream & file, int featIndex)
                 binv=1;
             bindex=featIndex*NUM_BINS+i+1;
             file<<" "<<bindex<<":"<<binv;
+        }
+    }
+
+void    storeBinnedValues(double value, Matrix<float, Dynamic,Dynamic> & mat, int featIndex)
+    {
+        int binv,bindex;
+        for(int i=0;i<NUM_BINS;i++)
+        {
+            binv=0;
+            if(value<=binStumps[i])
+                binv=1;
+            bindex=featIndex*NUM_BINS+i+1;
+            mat(0,bindex)=binv;
         }
     }
 };
@@ -190,13 +210,6 @@ void readStumpValues(vector<BinStumps> & featBins,const string & file) {
     myfile.close();
 
 }
-#define NUM_CLASSES 17
-
-using namespace Eigen;
-Matrix<float, Dynamic,Dynamic> *nodeWeights;
-Matrix<float, Dynamic,Dynamic> *edgeWeights[NUM_CLASSES];
-vector<int> nodeFeatIndices;
-vector<int> edgeFeatIndices;
 
 void readWeightVectors() {
     nodeFeatIndices.push_back(5);
@@ -1543,14 +1556,35 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
         }
     }
     
+    Matrix<float, Dynamic,Dynamic> nodeFeatsB(1,nodeFeatIndices.size()*10);
+    Matrix<float, Dynamic,Dynamic> edgeFeatsB(1,edgeFeatIndices.size()*10);
+    vector<float> nodeFeats(nodeFeatIndices.size(),0.0);
+    vector<float> edgeFeats(edgeFeatIndices.size(),0.0);
+    double cost;
     for(float x=min.x;x<max.x;x+=steps.x)
         for(float y=min.y;y<max.y;y+=steps.y)
             for(float z=min.z;z<max.z;z+=steps.z)
             {
                 vector<int> neighbors;
                 // get neighbors
-                
+                cost=0.0;
                 //compute feats
+                nodeFeats.at(0)=z;
+                nodeFeats.at(1)=0.0;//dummy for now
+                
+                //cost+=nodeFeatsB*nodeWeights(k,:)
+                
+                for(size_t i=0;i<nodeFeatIndices.size();i++)
+                {
+                    nodeFeatStumps[i].storeBinnedValues(nodeFeats[i],nodeFeatsB,i)
+                }
+                
+                for(size_t i=0;i<neighbors.size();i++)
+                {
+                    
+                }
+                
+                
                 // all feats can be computed using SpectralProfile
                 // wall distance will take time
                 
