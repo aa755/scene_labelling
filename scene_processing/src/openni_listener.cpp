@@ -1538,10 +1538,12 @@ void parseAndApplyLabels(std::ifstream  & file, pcl::PointCloud<pcl::PointXYZRGB
         }
 }
 
-void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int,int> & segIndex2label )
+void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int,int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds )
 {
     pcl::PointXYZ steps(0.1,0.1,0.1);
-
+    std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
+    
+    createTrees(segment_clouds,   trees);
     /* find bounding box and discretize
      */
     pcl::PointXYZ max;
@@ -1575,6 +1577,11 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
             for(float z=min.z;z<max.z;z+=steps.z)
             {
                 vector<int> neighbors;
+                PointT centroid;
+                centroid.x=x;
+                centroid.y=y;
+                centroid.z=z;
+                findNeighbors( centroid, segment_clouds, trees, neighbors );
                 // get neighbors
                 cost=0.0;
                 //compute feats
@@ -1846,6 +1853,7 @@ int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr 
     predLabels.open(("pred."+featfilename).data()); // open the file containing predictions
     map<int, int> segIndex2Label;
     parseAndApplyLabels(predLabels,cloud,segment_clouds,segIndex2Label);
+    lookForClass(1,cloud,spectralProfiles,segIndex2Label,segment_clouds);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename+".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
@@ -1914,7 +1922,6 @@ void cameraCallback (/*const sensor_msgs::ImageConstPtr& visual_img_msg,
 int main(int argc, char** argv)
 {
     readWeightVectors();
-    exit(0);
   ros::init(argc, argv,"hi");
 //  unsigned int step = 10;
   environment="office";
