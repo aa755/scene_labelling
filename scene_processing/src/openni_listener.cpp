@@ -4,6 +4,7 @@
 #include <fstream>
 #include "pcl/io/pcd_io.h"
 #include "includes/point_types.h"
+#include "includes/genericUtils.h"
 #include "pcl/filters/passthrough.h"
 #include "pcl/filters/extract_indices.h"
 #include "pcl/features/intensity_spin.h"
@@ -36,7 +37,7 @@ typedef ColorHandler::Ptr ColorHandlerPtr;
 #include "time.h"
 typedef  pcl::KdTree<PointT> KdTree;
 typedef  pcl::KdTree<PointT>::Ptr KdTreePtr;
-
+using namespace boost;
 #include "segmentAndLabel.h"
 #include "openni_listener.h"
 #include <octomap/octomap.h>
@@ -62,6 +63,13 @@ bool BinFeatures=true;
 
 map<int,int> invLabelMap;
     pcl::PCDWriter writer;
+#define NUM_CLASSES 17
+
+using namespace Eigen;
+Matrix<float, Dynamic,Dynamic> *nodeWeights;
+Matrix<float, Dynamic,Dynamic> *edgeWeights[NUM_CLASSES];
+vector<int> nodeFeatIndices;
+vector<int> edgeFeatIndices;
     
     class BinStumps
 {
@@ -93,6 +101,19 @@ void    writeBinnedValues(double value, std::ofstream & file, int featIndex)
                 binv=1;
             bindex=featIndex*NUM_BINS+i+1;
             file<<" "<<bindex<<":"<<binv;
+        }
+    }
+
+void    storeBinnedValues(double value, Matrix<float, Dynamic,1> & mat, int featIndex)
+    {
+        int binv,bindex;
+        for(int i=0;i<NUM_BINS;i++)
+        {
+            binv=0;
+            if(value<=binStumps[i])
+                binv=1;
+            bindex=featIndex*NUM_BINS+i+1;
+            mat(bindex)=binv;
         }
     }
 };
@@ -190,6 +211,23 @@ void readStumpValues(vector<BinStumps> & featBins,const string & file) {
 
 }
 
+void readWeightVectors() {
+    nodeFeatIndices.push_back(5);
+    nodeFeatIndices.push_back(51);
+    edgeFeatIndices.push_back(5);
+    edgeFeatIndices.push_back(6);
+    edgeFeatIndices.push_back(7);
+    nodeWeights=new Matrix<float, Dynamic,Dynamic>(NUM_CLASSES,10*nodeFeatIndices.size());
+        readCSV("weights/node_weights.csv",NUM_CLASSES,10*nodeFeatIndices.size(),",",*nodeWeights);
+  //      readCSV("weights/node_weights.csv",nodeWeights->rows(),10*nodeFeatIndices.size()," ",*nodeWeights);
+    //    char lineBuf[1000]; // assuming a line is less than 
+    for(size_t i=0;i<NUM_CLASSES;i++)
+    {
+        edgeWeights[i]=new Matrix<float, Dynamic,Dynamic>(NUM_CLASSES,10*edgeFeatIndices.size());
+        readCSV("weights/edge_weights_"+boost::lexical_cast<std::string>(i)+".csv",NUM_CLASSES,10*edgeFeatIndices.size(),",",*edgeWeights[i]);        
+    }
+        
+}
 
 void readInvLabelMap(map<int,int> & invLabelMap,const string & file) {
     //    char lineBuf[1000]; // assuming a line is less than 
@@ -384,7 +422,7 @@ public:
   float avgH;
   float avgS;
   float avgV;
-  
+ 
   geometry_msgs::Point32 centroid;
   Eigen::Vector3d normal;
   void setEigValues(Eigen::Vector3d eigenValues_)
@@ -432,6 +470,11 @@ public:
   float getHorzDistanceBwCentroids(const SpectralProfile & other) const
   {
      return sqrt(pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2));    
+  }
+
+  float getDistanceSqrBwCentroids(const SpectralProfile & other) const
+  {
+     return pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2)+ pow(centroid.z - other.centroid.z, 2);    
   }
   
   float getVertDispCentroids(const SpectralProfile & other)
@@ -1461,7 +1504,7 @@ void get_pair_features( int segment_id, vector<int>  &neighbor_list,
     
 }
 
-void parseAndApplyLabels(std::ifstream  & file, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud,std::vector<pcl::PointCloud<PointT> > & segment_clouds )
+void parseAndApplyLabels(std::ifstream  & file, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud,std::vector<pcl::PointCloud<PointT> > & segment_clouds, map<int,int> & segIndex2label )
 {
         string tokens[3];
         char_separator<char> sep1(" ");
@@ -1483,7 +1526,9 @@ void parseAndApplyLabels(std::ifstream  & file, pcl::PointCloud<pcl::PointXYZRGB
             }
             int segmentIndex=(lexical_cast<int>(tokens[0]))-1;
             int segmentId=segment_clouds[segmentIndex].points[1].segment;
-            segId2label[segmentId]=lexical_cast<int>(tokens[1]);
+            int label=lexical_cast<int>(tokens[1]);
+            segId2label[segmentId]=label;
+            segIndex2label[segmentIndex]=label;
             
         }
         
@@ -1493,10 +1538,89 @@ void parseAndApplyLabels(std::ifstream  & file, pcl::PointCloud<pcl::PointXYZRGB
         }
 }
 
+void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int,int> & segIndex2label )
+{
+    pcl::PointXYZ steps(0.1,0.1,0.1);
+
+    /* find bounding box and discretize
+     */
+    pcl::PointXYZ max;
+    pcl::PointXYZ min;
+    for (int i = 0; i < 3; i++)
+    {
+        max.data[i] = FLT_MIN;
+        min.data[i] = FLT_MAX;
+    }
+    for (size_t i = 0; i < cloud.size(); i++)
+    {
+        for (int j = 0; j < 3; i++)
+        {
+            if(max.data[j]<cloud.points[i].data[j])
+                max.data[j]=cloud.points[i].data[j];
+             
+            if(min.data[j]>cloud.points[i].data[j])
+                min.data[j]=cloud.points[i].data[j];
+        }
+    }
+    
+    Matrix<float, Dynamic,1> nodeFeatsB(nodeFeatIndices.size()*10);
+    Matrix<float, Dynamic,1> edgeFeatsB(edgeFeatIndices.size()*10);
+    vector<float> nodeFeats(nodeFeatIndices.size(),0.0);
+    vector<float> edgeFeats(edgeFeatIndices.size(),0.0);
+    double cost;
+    for(float x=min.x;x<max.x;x+=steps.x)
+        for(float y=min.y;y<max.y;y+=steps.y)
+            for(float z=min.z;z<max.z;z+=steps.z)
+            {
+                vector<int> neighbors;
+                // get neighbors
+                cost=0.0;
+                //compute feats
+                nodeFeats.at(0)=z;
+                nodeFeats.at(1)=0.0;//dummy for now
+                
+                SpectralProfile target;
+                target.centroid.x=x;
+                target.centroid.y=y;
+                target.centroid.z=z;
+                        
+                for(size_t i=0;i<nodeFeatIndices.size();i++)
+                {
+                    nodeFeatStumps[nodeFeatIndices.at(i)].storeBinnedValues(nodeFeats[i],nodeFeatsB,i);
+                }
+                
+                cost+=nodeFeatsB.dot(nodeWeights->row(k));
+
+                for (size_t i = 0; i < neighbors.size(); i++)
+                {
+                    int nbrIndex=neighbors.at(i);
+                    edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
+                    edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
+                    edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles[nbrIndex]);
+                    int nbrLabel=segIndex2label[nbrIndex];
+
+                    for (size_t j = 0; j < edgeFeatIndices.size(); j++)
+                    {
+                        edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
+                    }
+                    cost+=edgeFeatsB.dot(edgeWeights[k]->row(nbrIndex));
+                    cost+=edgeFeatsB.dot(edgeWeights[nbrIndex]->row(k));
+                }
+                
+                
+                // all feats can be computed using SpectralProfile
+                // wall distance will take time
+                //use octomap to filter out occluded regions
+                
+            }
+        
+    
+}
+
 int counts[640*480];
 int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr & cloud_ptr ,int scene_num) {
     std::ofstream  featfile;
-    pcl::PointCloud<pcl::PointXYZRGBCamSL> cloud=*cloud_ptr;
+    pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud=*cloud_ptr;
       originalFrame=new OriginalFrameInfo(cloud_ptr);
 
     //labelfile.open("data_labels.txt",ios::app);
@@ -1714,7 +1838,8 @@ int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr 
     
     std:: ifstream predLabels;
     predLabels.open(("pred."+featfilename).data()); // open the file containing predictions
-    parseAndApplyLabels(predLabels,cloud,segment_clouds);
+    map<int, int> segIndex2Label;
+    parseAndApplyLabels(predLabels,cloud,segment_clouds,segIndex2Label);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename+".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
@@ -1782,6 +1907,8 @@ void cameraCallback (/*const sensor_msgs::ImageConstPtr& visual_img_msg,
 
 int main(int argc, char** argv)
 {
+    readWeightVectors();
+    exit(0);
   ros::init(argc, argv,"hi");
 //  unsigned int step = 10;
   environment="office";
