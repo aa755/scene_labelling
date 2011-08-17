@@ -4,6 +4,7 @@
 #include <fstream>
 #include "pcl/io/pcd_io.h"
 #include "includes/point_types.h"
+#include "includes/genericUtils.h"
 #include "pcl/filters/passthrough.h"
 #include "pcl/filters/extract_indices.h"
 #include "pcl/features/intensity_spin.h"
@@ -36,7 +37,7 @@ typedef ColorHandler::Ptr ColorHandlerPtr;
 #include "time.h"
 typedef  pcl::KdTree<PointT> KdTree;
 typedef  pcl::KdTree<PointT>::Ptr KdTreePtr;
-
+using namespace boost;
 #include "segmentAndLabel.h"
 #include "openni_listener.h"
 #include <octomap/octomap.h>
@@ -121,7 +122,31 @@ void readStumpValues(vector<BinStumps> & featBins,const string & file) {
     myfile.close();
 
 }
+#define NUM_CLASSES 17
 
+using namespace Eigen;
+Matrix<float, Dynamic,Dynamic> *nodeWeights;
+Matrix<float, Dynamic,Dynamic> *edgeWeights[NUM_CLASSES];
+vector<int> nodeFeatIndices;
+vector<int> edgeFeatIndices;
+
+void readWeightVectors() {
+    nodeFeatIndices.push_back(5);
+    nodeFeatIndices.push_back(51);
+    edgeFeatIndices.push_back(5);
+    edgeFeatIndices.push_back(6);
+    edgeFeatIndices.push_back(7);
+    nodeWeights=new Matrix<float, Dynamic,Dynamic>(NUM_CLASSES,10*nodeFeatIndices.size());
+        readCSV("weights/node_weights.csv",NUM_CLASSES,10*nodeFeatIndices.size(),",",*nodeWeights);
+  //      readCSV("weights/node_weights.csv",nodeWeights->rows(),10*nodeFeatIndices.size()," ",*nodeWeights);
+    //    char lineBuf[1000]; // assuming a line is less than 
+    for(size_t i=0;i<NUM_CLASSES;i++)
+    {
+        edgeWeights[i]=new Matrix<float, Dynamic,Dynamic>(NUM_CLASSES,10*edgeFeatIndices.size());
+        readCSV("weights/edge_weights_"+boost::lexical_cast<std::string>(i)+".csv",NUM_CLASSES,10*edgeFeatIndices.size(),",",*edgeWeights[i]);        
+    }
+        
+}
 
 void readInvLabelMap(map<int,int> & invLabelMap,const string & file) {
     //    char lineBuf[1000]; // assuming a line is less than 
@@ -1755,6 +1780,8 @@ void cameraCallback (/*const sensor_msgs::ImageConstPtr& visual_img_msg,
 
 int main(int argc, char** argv)
 {
+    readWeightVectors();
+    exit(0);
   ros::init(argc, argv,"hi");
 //  unsigned int step = 10;
   environment="office";

@@ -13,7 +13,7 @@
 #include <opencv/highgui.h>
 int IM_WIDTH=320;
 int IM_HEIGHT=240;
-
+#include "includes/genericUtils.h"
 #include <Eigen/Dense>
 #include <point_cloud_mapping/kdtree/kdtree_ann.h>
 #include <vector>
@@ -139,28 +139,6 @@ public:
   
 };
 
-template<typename _Scalar>
-void readCSV(string filename, int height,int width, string separator,Matrix<_Scalar, Dynamic,  Dynamic> & mat)
-{
-   
-    std::ifstream file;
-    file.open(filename.data(),ios::in);
-    string line;
-    char_separator<char> sep(separator.data());
-    for(int r=0;r<height;r++)
-    {
-        getline(file, line);
-        tokenizer<char_separator<char> > tokens1(line, sep);        
-        map<int,int> segId2label;
-        int c=0;
-        BOOST_FOREACH(string t, tokens1) 
-        {
-            mat(r,c)=lexical_cast<_Scalar>(t);
-            c++;            
-        }
-        assert(c==width);
-    }
-}
 
 OriginalFrameInfo * originalFrame;
 
