@@ -97,6 +97,74 @@ void    writeBinnedValues(double value, std::ofstream & file, int featIndex)
     }
 };
 
+
+void createTrees(const std::vector<pcl::PointCloud<PointT> > &segment_clouds,  std::vector< pcl::KdTreeFLANN<PointT>::Ptr > &trees)
+{
+        
+    for (size_t i = 0; i< segment_clouds.size(); i++)
+    {
+        pcl::PointCloud<PointT>::Ptr cloud_ptr(new pcl::PointCloud<PointT > (segment_clouds[i]));
+        pcl::KdTreeFLANN<PointT>::Ptr tree (new pcl::KdTreeFLANN<PointT>); //= boost::make_shared<pcl::KdTreeFLANN<PointT> > ();
+    //initTree (0, tree);
+        tree->setInputCloud(cloud_ptr); 
+        trees.push_back(tree);
+    }
+}
+
+pair<float,int>  getSmallestDistance (PointT centroid, pcl::KdTreeFLANN<PointT>::Ptr tree)
+{
+    float min_distance = FLT_MAX;
+    int min_index = 0;
+
+
+    std::vector<int> nn_indices;
+    nn_indices.resize(2);
+    std::vector<float> nn_distances;
+    nn_distances.resize(2);
+    //float tolerance = 0.3;
+
+    tree->nearestKSearch(centroid, 2, nn_indices, nn_distances);
+
+    for (size_t j = 0; j < nn_indices.size(); ++j) // nn_indices[0] should be sq_idx
+    {
+        if (min_distance > nn_distances[j]) {
+            min_distance = nn_distances[j];
+            min_index = nn_indices[j];
+            //   cout << "changing min_distance to "  << min_distance<< endl;
+
+        }
+    }
+
+    return make_pair(sqrt(min_distance), min_index);
+}
+
+int findNeighbors(PointT centroid, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, const std::vector< pcl::KdTreeFLANN<PointT>::Ptr > &trees, vector <int>  &neighbor_map )
+{
+    float tolerance =0.6;
+    map< int , float > distance_matrix;
+    // get distance matrix
+    for (size_t i = 0; i< segment_clouds.size(); i++)
+    {
+       
+         pair<float,int> dist_pair = getSmallestDistance(centroid,trees[i]);
+         distance_matrix[i] = dist_pair.first;
+     
+    }
+    // get neighbour map
+    int num_neighbors=0;
+    for ( map< int , float >::iterator it=distance_matrix.begin() ; it != distance_matrix.end(); it++ )
+    {   
+      if((*it).second < tolerance)
+      {
+          neighbor_map.push_back((*it).first);
+          num_neighbors++;
+      }
+    }
+    return num_neighbors;
+}
+    
+
+
 vector<BinStumps> nodeFeatStumps;
 vector<BinStumps> edgeFeatStumps;
 
