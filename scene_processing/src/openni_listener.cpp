@@ -1567,7 +1567,9 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
     Matrix<float, Dynamic,1> edgeFeatsB(edgeFeatIndices.size()*10);
     vector<float> nodeFeats(nodeFeatIndices.size(),0.0);
     vector<float> edgeFeats(edgeFeatIndices.size(),0.0);
-    double cost;
+    double cost,minCost;
+    minCost=FLT_MAX;
+    SpectralProfile minS;
     for(float x=min.x;x<max.x;x+=steps.x)
         for(float y=min.y;y<max.y;y+=steps.y)
             for(float z=min.z;z<max.z;z+=steps.z)
@@ -1606,7 +1608,11 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                     cost+=edgeFeatsB.dot(edgeWeights[k]->row(nbrLabel));
                     cost+=edgeFeatsB.dot(edgeWeights[nbrLabel]->row(k));
                 }
-                
+                if(minCost>cost)
+                {
+                    minCost=cost;
+                    minS=target;
+                }
                 
                 // all feats can be computed using SpectralProfile
                 // wall distance will take time
