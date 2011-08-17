@@ -1425,12 +1425,44 @@ void parseAndApplyLabels(std::ifstream  & file, pcl::PointCloud<pcl::PointXYZRGB
         }
 }
 
-int counts[640*480];
-void lookForClass(int k)
+void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles)
 {
+    pcl::PointXYZ steps(0.1,0.1,0.1);
+
+    /* find bounding box and discretize
+     */
+    pcl::PointXYZ max;
+    pcl::PointXYZ min;
+    for (int i = 0; i < 3; i++)
+    {
+        max.data[i] = FLT_MIN;
+        min.data[i] = FLT_MAX;
+    }
+    for (size_t i = 0; i < cloud.size(); i++)
+    {
+        for (int j = 0; j < 3; i++)
+        {
+            if(max.data[j]<cloud.points[i].data[j])
+                max.data[j]=cloud.points[i].data[j];
+             
+            if(min.data[j]>cloud.points[i].data[j])
+                min.data[j]=cloud.points[i].data[j];
+        }
+    }
+    
+    for(float x=min.x;x<max.x;x+=steps.x)
+        for(float y=min.y;y<max.y;y+=steps.y)
+            for(float z=min.z;z<max.z;z+=steps.z)
+            {
+                vector<int> neighbors;
+                // get neighbors
+                
+            }
+        
     
 }
 
+int counts[640*480];
 int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr & cloud_ptr ,int scene_num) {
     std::ofstream  featfile;
     pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud=*cloud_ptr;

@@ -58,7 +58,7 @@ rosbuild_add_executable (compute_single_frame_features src/compute_single_frame_
 #rosbuild_add_executable (genImagePairs src/genImagePairs.cpp)
 #rosbuild_add_executable (multiFramePCD2Bag src/pcd2bag.cpp)
 #rosbuild_add_executable (colorImage src/colorImage.cpp)
-#rosbuild_add_executable (live_segment_computeFeats src/openni_listener.cpp)
+rosbuild_add_executable (live_segment_computeFeats src/openni_listener.cpp)
 #rosbuild_add_executable (combineVisibility src/VisibilityMerge.cpp)
 #rosbuild_add_executable (bag2pcd src/bag2pcd.cpp)
 #rosbuild_add_executable (image_and_label src/genImageAndLabelFile.cpp)
