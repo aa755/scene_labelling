@@ -1581,7 +1581,8 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
     cout<<"min:"<<min<<endl;
         double maxDist[360];
      getMaxRanges(maxDist,cloud);
-    double cost,maxCost;
+    double cost,maxCost,minCost;
+    minCost=FLT_MAX;
     maxCost=FLT_MIN;
     cout<<"max costf:"<<maxCost<<endl;
     maxCost=-DBL_MAX;
@@ -1595,19 +1596,22 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
     int numBins[3];
     for (int i = 0; i < 3; i++)
     {
-        numBins[i] = ceil((max.data[i]-min.data[i])/steps.data[i]);
+        numBins[i] = (int)((max.data[i]-min.data[i])/steps.data[i])+1;
+        cout<<"numBins: "<< numBins[i] <<","<< ((max.data[i]-min.data[i])/steps.data[i])<<endl;
     }
    
-  CvSize size;
-  size.height=numBins[1];
-  size.width=numBins[0];
-  IplImage * topImageOriginal = cvCreateImage ( size, IPL_DEPTH_32F, 3 );
-  IplImage * topImageHeat = cvCreateImage ( size, IPL_DEPTH_32F, 3 );
+Matrix<float, Dynamic,Dynamic> heatMapTop;
+Matrix<float, Dynamic,Dynamic> heatMapFront;
     
-    
-    for(float x=min.x;x<max.x;x+=steps.x)
-        for(float y=min.y;y<max.y;y+=steps.y)
-            for(float z=min.z;z<max.z;z+=steps.z)
+heatMapTop.setConstant(numBins[0],numBins[1],-FLT_MAX);
+heatMapFront.setConstant(numBins[2],numBins[1],-FLT_MAX);
+
+int countx=0;
+int county=0;
+int countz=0;
+    for(float x=min.x,int countx=0;x<max.x;countx++,x+=steps.x)
+        for(float y=min.y,int county=0;y<max.y;county++,y+=steps.y)
+            for(float z=min.z,int countz=0;z<max.z;countz++,z+=steps.z)
             {
                 vector<int> neighbors;
                 PointT centroid;
@@ -1666,13 +1670,27 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                     cost+=edgeFeatsB.dot(edgeWeights[nbrLabel]->row(k));
                 }
                 
-                cout<<x<<","<<y<<","<<z<<","<<dist<<","<<cost<<endl;
+               cout<<x<<","<<y<<","<<z<<","<<dist<<","<<cost<<endl;
                 if(maxCost<cost)
                 {
                     maxCost=cost;
                     maxS=target;
-                    cout<<"nodeFeats \n"<<nodeFeatsB<<endl;
-                    
+                    cout<<"nodeFeats \n"<<nodeFeatsB<<endl;                    
+                }
+
+                if(minCost>cost)
+                {
+                    minCost=cost;
+                }
+                
+                if(heatMapTop(countx,county)<cost)
+                {
+                    heatMapTop(countx,county)=cost;
+                }
+                
+                if(heatMapFront(countz,county)<cost)
+                {
+                    heatMapFront(countz,county)=cost;
                 }
                 
                 // all feats can be computed using SpectralProfile
@@ -1680,9 +1698,14 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 //use octomap to filter out occluded regions
                 
             }
+
+replace<float>(heatMapTop,-FLT_MAX,minCost);
+replace<float>(heatMapFront,-FLT_MAX,minCost);
+writeHeatMap<float>("heatMapTop.png",heatMapTop,maxCost,minCost);
+writeHeatMap<float>("heatMapFront.png",heatMapFront,maxCost,minCost);
                 cout<<"optimal point"<<maxS.centroid.x<<","<<maxS.centroid.y<<","<<maxS.centroid.z<<endl;
         
-    
+             
 }
 
 int counts[640*480];
