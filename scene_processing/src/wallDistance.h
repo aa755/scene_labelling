@@ -84,13 +84,8 @@ pair<int,double> get2DAngleDegreesAndDistance(PointT  point/*, TransformG & came
     return pair<int,double>((int)ray2D.angle(),ray2D.norm());
 }
 
-void getSegmentDistanceToBoundaryOptimized( const pcl::PointCloud<PointT> &cloud , map<int,float> &segment_boundary_distance,std::vector<pcl::PointCloud<PointT> > & segment_clouds)
+void getMaxRanges(double * maxDist, const pcl::PointCloud<PointT> &cloud)
 {
-    //assuming the camera is in the centre of the room and Z is aligned vertical
-    
-    //bin points based on azimuthal angle 
-//    vector<int> directionBins[360];
-    double maxDist[360];
     for(int angle=0;angle<360;angle++)
     {
         maxDist[angle]=0;            
@@ -108,7 +103,27 @@ void getSegmentDistanceToBoundaryOptimized( const pcl::PointCloud<PointT> &cloud
         if(maxDist[angle]<distance)
             maxDist[angle]=distance;
     }
+    
+}
 
+double getWallDistanceCent(double * maxDist,PointT  p)
+{
+                pair<int,double>angDist= get2DAngleDegreesAndDistance(p/*,camera*/);
+                int angle=angDist.first;
+                double dist=maxDist[angle]-angDist.second;
+                //assert(dist>=0);
+                return dist;
+    
+}
+
+void getSegmentDistanceToBoundaryOptimized( const pcl::PointCloud<PointT> &cloud , map<int,float> &segment_boundary_distance,std::vector<pcl::PointCloud<PointT> > & segment_clouds)
+{
+    //assuming the camera is in the centre of the room and Z is aligned vertical
+    
+    //bin points based on azimuthal angle 
+//    vector<int> directionBins[360];
+    double maxDist[360];
+    getMaxRanges(maxDist,cloud);
     
     for(int i=0;i<segment_clouds.size();i++)
     {
