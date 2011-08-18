@@ -112,7 +112,7 @@ void    storeBinnedValues(double value, Matrix<float, Dynamic,1> & mat, int feat
             binv=0;
             if(value<=binStumps[i])
                 binv=1;
-            bindex=featIndex*NUM_BINS+i+1;
+            bindex=featIndex*NUM_BINS+i;
             mat(bindex)=binv;
         }
     }
@@ -161,6 +161,7 @@ pair<float,int>  getSmallestDistance (PointT centroid, pcl::KdTreeFLANN<PointT>:
 
 int findNeighbors(PointT centroid, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, const std::vector< pcl::KdTreeFLANN<PointT>::Ptr > &trees, vector <int>  &neighbor_map )
 {
+    neighbor_map.clear();
     float tolerance =0.6;
     map< int , float > distance_matrix;
     // get distance matrix
@@ -1555,7 +1556,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
     }
     for (size_t i = 0; i < cloud.size(); i++)
     {
-        for (int j = 0; j < 3; i++)
+        for (int j = 0; j < 3; j++)
         {
             if(max.data[j]<cloud.points[i].data[j])
                 max.data[j]=cloud.points[i].data[j];
@@ -1569,6 +1570,9 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
     Matrix<float, Dynamic,1> edgeFeatsB(edgeFeatIndices.size()*10);
     vector<float> nodeFeats(nodeFeatIndices.size(),0.0);
     vector<float> edgeFeats(edgeFeatIndices.size(),0.0);
+    cout<<"max:"<<max<<endl;
+    cout<<"min:"<<min<<endl;
+    
     double cost,minCost;
     minCost=FLT_MAX;
     SpectralProfile minS;
@@ -1576,6 +1580,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
         for(float y=min.y;y<max.y;y+=steps.y)
             for(float z=min.z;z<max.z;z+=steps.z)
             {
+                cout<<x<<","<<y<<","<<z<<endl;
                 vector<int> neighbors;
                 PointT centroid;
                 centroid.x=x;
@@ -1606,6 +1611,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                     edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles[nbrIndex]);
+                cout<<"edge feats "<<edgeFeats[0]<<","<<edgeFeats[1]<<","<<edgeFeats[2]<<endl;
                     int nbrLabel=segIndex2label[nbrIndex];
 
                     for (size_t j = 0; j < edgeFeatIndices.size(); j++)
@@ -1626,6 +1632,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 //use octomap to filter out occluded regions
                 
             }
+                cout<<"optimal point"<<minS.centroid.x<<","<<minS.centroid.y<<","<<minS.centroid.z<<endl;
         
     
 }
@@ -1938,7 +1945,7 @@ int main(int argc, char** argv)
    pub = n.advertise<sensor_msgs::PointCloud2>("/scene_labler/labeled_cloud", 10);
 //    std_msgs::String str;
 //    str.data = "hello world";
-    ros::Subscriber cloud_sub_=n.subscribe("/camera/rgb/points",2,cameraCallback);
+    ros::Subscriber cloud_sub_=n.subscribe("/rgbdslam/my_clouds",2,cameraCallback);
 								 
    ros::spin();
   
