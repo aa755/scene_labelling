@@ -224,6 +224,7 @@ void readWeightVectors() {
     edgeFeatIndices.push_back(5);
     edgeFeatIndices.push_back(6);
     edgeFeatIndices.push_back(7);
+    edgeFeatIndices.push_back(10);
     nodeWeights=new Matrix<float, Dynamic,Dynamic>(NUM_CLASSES,10*nodeFeatIndices.size());
         readCSV("weights/node_weights.csv",NUM_CLASSES,10*nodeFeatIndices.size(),",",*nodeWeights);
   //      readCSV("weights/node_weights.csv",nodeWeights->rows(),10*nodeFeatIndices.size()," ",*nodeWeights);
@@ -1626,19 +1627,32 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 for (size_t i = 0; i < neighbors.size(); i++)
                 {
                     int nbrIndex=neighbors.at(i);
+                    int nbrLabel=segIndex2label[nbrIndex];
                     edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles[nbrIndex]);
+                    edgeFeats.at(3) = target.getInnerness(spectralProfiles[nbrIndex]);
               //  cout<<"edge feats "<<edgeFeats[0]<<","<<edgeFeats[1]<<","<<edgeFeats[2]<<endl;
-                    int nbrLabel=segIndex2label[nbrIndex];
 
                     for (size_t j = 0; j < edgeFeatIndices.size(); j++)
                     {
                         edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
                     }
                     cost+=edgeFeatsB.dot(edgeWeights[k]->row(nbrLabel));
+
+                    edgeFeats.at(0) = spectralProfiles[nbrIndex].getHorzDistanceBwCentroids(target);
+                    edgeFeats.at(1) = spectralProfiles[nbrIndex].getVertDispCentroids(target);
+                    edgeFeats.at(2) = spectralProfiles[nbrIndex].getDistanceSqrBwCentroids(target);
+                    edgeFeats.at(3) = spectralProfiles[nbrIndex].getInnerness(target);
+                    
+                    for (size_t j = 0; j < edgeFeatIndices.size(); j++)
+                    {
+                        edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
+                    }
+                    
                     cost+=edgeFeatsB.dot(edgeWeights[nbrLabel]->row(k));
                 }
+                
                 cout<<x<<","<<y<<","<<z<<","<<dist<<","<<cost<<endl;
                 if(maxCost<cost)
                 {
