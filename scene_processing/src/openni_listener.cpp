@@ -1572,7 +1572,8 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
     vector<float> edgeFeats(edgeFeatIndices.size(),0.0);
     cout<<"max:"<<max<<endl;
     cout<<"min:"<<min<<endl;
-    
+        double maxDist[360];
+     getMaxRanges(maxDist,cloud);
     double cost,minCost;
     minCost=FLT_MAX;
     SpectralProfile minS;
@@ -1586,12 +1587,15 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 centroid.x=x;
                 centroid.y=y;
                 centroid.z=z;
+                double dist=getWallDistanceCent(maxDist,centroid);
+                if(dist<0)
+                    continue;
                 findNeighbors( centroid, segment_clouds, trees, neighbors );
                 // get neighbors
                 cost=0.0;
                 //compute feats
                 nodeFeats.at(0)=z;
-                nodeFeats.at(1)=0.0;//dummy for now
+                nodeFeats.at(1)=dist;//dummy for now
                 
                 SpectralProfile target;
                 target.centroid.x=x;
@@ -1853,7 +1857,7 @@ int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr 
     featfile.open(("temp."+featfilename).data());
     featfile<<featfilename;
     featfile.close();
-    string command="../svm-python-v204/svm_python_classify --m svmstruct_mrf --l micro --lm objassoc --cm sum1.IP --omf ../svm-python-v204/"+environment+"_objectMap.txt temp."+featfilename+" ../svm-python-v204/"+environment+"Model pred."+featfilename+" > out."+featfilename;
+    string command="../svm-python-v204/svm_python_classify --m svmstruct_mrf --l micro --lm nonassoc --cm sum1.IP --omf ../svm-python-v204/"+environment+"_objectMap.txt temp."+featfilename+" ../svm-python-v204/"+environment+"Model pred."+featfilename+" > out."+featfilename;
     system(command.data());
     
     std:: ifstream predLabels;
@@ -1918,7 +1922,7 @@ void cameraCallback (/*const sensor_msgs::ImageConstPtr& visual_img_msg,
        convertType(cloud,*cloud_seg_ptr,globalTransform.getOrigin(),0);
        assert(cloud_seg_ptr->size()==640*480);
        segmentInPlace(*cloud_seg_ptr);
-       globalTransform.transformPointCloudInPlaceAndSetOrigin(*cloud_seg_ptr);
+     //  globalTransform.transformPointCloudInPlaceAndSetOrigin(*cloud_seg_ptr);
        write_feats(globalTransform,cloud_seg_ptr,callback_counter_);
        
    }
