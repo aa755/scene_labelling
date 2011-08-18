@@ -116,6 +116,12 @@ void    storeBinnedValues(double value, Matrix<float, Dynamic,1> & mat, int feat
             mat(bindex)=binv;
         }
     }
+void print()
+{
+    for(int i=0;i<NUM_BINS;i++)
+        cout<<","<<binStumps[i];
+    cout<<endl;
+}
 };
 
 
@@ -213,7 +219,7 @@ void readStumpValues(vector<BinStumps> & featBins,const string & file) {
 }
 
 void readWeightVectors() {
-    nodeFeatIndices.push_back(5);
+    nodeFeatIndices.push_back(15);
     nodeFeatIndices.push_back(51);
     edgeFeatIndices.push_back(5);
     edgeFeatIndices.push_back(6);
@@ -1574,14 +1580,21 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
     cout<<"min:"<<min<<endl;
         double maxDist[360];
      getMaxRanges(maxDist,cloud);
-    double cost,minCost;
-    minCost=FLT_MAX;
-    SpectralProfile minS;
+    double cost,maxCost;
+    maxCost=FLT_MIN;
+    cout<<"max costf:"<<maxCost<<endl;
+    maxCost=-DBL_MAX;
+    cout<<"max costd:"<<maxCost<<endl;
+    SpectralProfile maxS;
+    cout<<"node weights :\n"<<*nodeWeights<<endl;
+    cout<<"target row :\n"<<nodeWeights->row(k)<<endl;
+    cout<<"binning :\n";
+    nodeFeatStumps[nodeFeatIndices.at(1)].print();
+    
     for(float x=min.x;x<max.x;x+=steps.x)
         for(float y=min.y;y<max.y;y+=steps.y)
             for(float z=min.z;z<max.z;z+=steps.z)
             {
-                cout<<x<<","<<y<<","<<z<<endl;
                 vector<int> neighbors;
                 PointT centroid;
                 centroid.x=x;
@@ -1595,7 +1608,8 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 cost=0.0;
                 //compute feats
                 nodeFeats.at(0)=z;
-                nodeFeats.at(1)=dist;//dummy for now
+                nodeFeats.at(1)=dist;
+//                nodeFeats.at(1)=0;//dummy for now
                 
                 SpectralProfile target;
                 target.centroid.x=x;
@@ -1615,7 +1629,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                     edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles[nbrIndex]);
-                cout<<"edge feats "<<edgeFeats[0]<<","<<edgeFeats[1]<<","<<edgeFeats[2]<<endl;
+              //  cout<<"edge feats "<<edgeFeats[0]<<","<<edgeFeats[1]<<","<<edgeFeats[2]<<endl;
                     int nbrLabel=segIndex2label[nbrIndex];
 
                     for (size_t j = 0; j < edgeFeatIndices.size(); j++)
@@ -1625,10 +1639,13 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                     cost+=edgeFeatsB.dot(edgeWeights[k]->row(nbrLabel));
                     cost+=edgeFeatsB.dot(edgeWeights[nbrLabel]->row(k));
                 }
-                if(minCost>cost)
+                cout<<x<<","<<y<<","<<z<<","<<dist<<","<<cost<<endl;
+                if(maxCost<cost)
                 {
-                    minCost=cost;
-                    minS=target;
+                    maxCost=cost;
+                    maxS=target;
+                    cout<<"nodeFeats \n"<<nodeFeatsB<<endl;
+                    
                 }
                 
                 // all feats can be computed using SpectralProfile
@@ -1636,7 +1653,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 //use octomap to filter out occluded regions
                 
             }
-                cout<<"optimal point"<<minS.centroid.x<<","<<minS.centroid.y<<","<<minS.centroid.z<<endl;
+                cout<<"optimal point"<<maxS.centroid.x<<","<<maxS.centroid.y<<","<<maxS.centroid.z<<endl;
         
     
 }
@@ -1864,7 +1881,7 @@ int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr 
     predLabels.open(("pred."+featfilename).data()); // open the file containing predictions
     map<int, int> segIndex2Label;
     parseAndApplyLabels(predLabels,cloud,segment_clouds,segIndex2Label);
-    lookForClass(1,cloud,spectralProfiles,segIndex2Label,segment_clouds);
+    lookForClass(7,cloud,spectralProfiles,segIndex2Label,segment_clouds);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename+".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
