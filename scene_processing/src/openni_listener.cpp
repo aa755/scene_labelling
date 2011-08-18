@@ -1627,7 +1627,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 for (size_t i = 0; i < neighbors.size(); i++)
                 {
                     int nbrIndex=neighbors.at(i);
-                    int nbrLabel=segIndex2label[nbrIndex];
+                    int nbrLabel=segIndex2label[nbrIndex]-1;
                     edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles[nbrIndex]);
@@ -1895,7 +1895,7 @@ int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr 
     predLabels.open(("pred."+featfilename).data()); // open the file containing predictions
     map<int, int> segIndex2Label;
     parseAndApplyLabels(predLabels,cloud,segment_clouds,segIndex2Label);
-    lookForClass(7,cloud,spectralProfiles,segIndex2Label,segment_clouds);
+    lookForClass(9,cloud,spectralProfiles,segIndex2Label,segment_clouds);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename+".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
