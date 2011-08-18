@@ -1592,6 +1592,19 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
     cout<<"binning :\n";
     nodeFeatStumps[nodeFeatIndices.at(1)].print();
     
+    int numBins[3];
+    for (int i = 0; i < 3; i++)
+    {
+        numBins[i] = ceil((max.data[i]-min.data[i])/steps.data[i]);
+    }
+   
+  CvSize size;
+  size.height=numBins[1];
+  size.width=numBins[0];
+  IplImage * topImageOriginal = cvCreateImage ( size, IPL_DEPTH_32F, 3 );
+  IplImage * topImageHeat = cvCreateImage ( size, IPL_DEPTH_32F, 3 );
+    
+    
     for(float x=min.x;x<max.x;x+=steps.x)
         for(float y=min.y;y<max.y;y+=steps.y)
             for(float z=min.z;z<max.z;z+=steps.z)
