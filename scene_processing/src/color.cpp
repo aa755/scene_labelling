@@ -57,7 +57,23 @@ class ColorRGB{
        g=gi/255.0;
        b=bi/255.0;
    }
-
+   void assignColor(float r_, float g_, float b_)
+   {
+       r=r_;
+       g=g_;
+       b=b_;
+       assert(r<=1&&r>=0);
+       assert(g<=1&&g>=0);
+       assert(b<=1&&b>=0);
+       convertToHSV();
+   }
+   
+   void assignColor(float rgb){
+       int rgbi=*reinterpret_cast<int*>(&rgb);
+       parseColorRGB(rgbi);
+       convertToHSV();
+   }
+   
    void convertToHSV()
    {
     double maxC = b;
