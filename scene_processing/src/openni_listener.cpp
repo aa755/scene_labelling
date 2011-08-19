@@ -1577,6 +1577,7 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud,  pc
         }
     
     for (size_t i =0 ; i<cloud.points.size(); i++) {
+        if ( isnan(cloud.points[i].x) || isnan(cloud.points[i].y) || isnan(cloud.points[i].z) ) {continue;}
         int xbin = int((cloud.points[i].x - min.data[0])/steps.data[0]);
         int ybin = int((cloud.points[i].y - min.data[1])/steps.data[1]);
         int zbin = int((cloud.points[i].z - min.data[2])/steps.data[2]);
