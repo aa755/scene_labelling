@@ -1603,7 +1603,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
 Matrix<float, Dynamic,Dynamic> heatMapTop;
 Matrix<float, Dynamic,Dynamic> heatMapFront;
     
-heatMapTop.setConstant(numBins[0],numBins[1],-FLT_MAX);
+heatMapTop.setConstant(numBins[1],numBins[0],-FLT_MAX);
 heatMapFront.setConstant(numBins[2],numBins[1],-FLT_MAX);
 
 int countx=0;
@@ -1686,14 +1686,14 @@ float z;
                     minCost=cost;
                 }
                 
-                if(heatMapTop(countx,county)<cost)
+                if(heatMapTop(numBins[1]-1-county,countx)<cost)
                 {
-                    heatMapTop(countx,county)=cost;
+                    heatMapTop(numBins[1]-1-county,countx)=cost;
                 }
                 
-                if(heatMapFront(countz,county)<cost)
+                if(heatMapFront(numBins[2]-1-countz,county)<cost)
                 {
-                    heatMapFront(countz,county)=cost;
+                    heatMapFront(numBins[2]-1-countz,county)=cost;
                 }
                 
                 // all feats can be computed using SpectralProfile
@@ -1704,8 +1704,8 @@ float z;
 
 replace<float>(heatMapTop,-FLT_MAX,minCost);
 replace<float>(heatMapFront,-FLT_MAX,minCost);
-writeHeatMap<float>("heatMapTop.png",heatMapTop,maxCost,minCost);
-writeHeatMap<float>("heatMapFront.png",heatMapFront,maxCost,minCost);
+writeHeatMap<float>("topHeat.png",heatMapTop,maxCost,minCost);
+writeHeatMap<float>("frontHeat.png",heatMapFront,maxCost,minCost);
                 cout<<"optimal point"<<maxS.centroid.x<<","<<maxS.centroid.y<<","<<maxS.centroid.z<<endl;
                 exit(1);
         
