@@ -102,6 +102,13 @@ boost::shared_ptr<X> createStaticShared(X * x)
 class NonTerminal;
 class Terminal;
 
+class NTSetComparison
+{
+public:
+  bool operator() (NonTerminal * const & lhs, NonTerminal * const &  rhs);
+};
+
+typedef set<NonTerminal *,NTSetComparison> NTSet;
 
 pcl::PointCloud<PointT> scene;
 class Symbol
@@ -138,7 +145,7 @@ public:
     virtual bool finalize_if_not_duplicate(vector<NTSet> & planeSet)=0;
     
     virtual void getComplementPointSet(vector<int> & indices /* = 0 */)=0;
-    virtual void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)=0;
+//    virtual void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)=0;
     
     virtual int getId()=0;
 
@@ -147,10 +154,11 @@ public:
         // find the nearest point not in this segment
         pcl::KdTreeFLANN<PointT> nnFinder;
         vector<int> indices;
-        indices.reserve(scene.size()-getNumPoints()+1); // +1 is not required
-        combineCanditates.clear();
-
-        if(scene.size()==getNumPoints())
+        indices.reserve(scene.size()-getNumPoints()); // +1 is not required
+        
+        nearPoints.clear();
+        
+        if(scene.size()==getNumPoints()) // cannot be combined further
 		return;
 
         getComplementPointSet(indices);
@@ -163,12 +171,12 @@ public:
         vector<int> pointIndicess;
         pointIndicess.reserve(getNumPoints());
         insertPoints(pointIndicess);
-        set<int> nearPoints;
+        
         set<int>::iterator npit;
+                nearest_indices.resize(1,0);
+                nearest_distances.resize(1,0.0);
         for(size_t i=0;i<pointIndicess.size();i++)
         {
-                //nearest_indices.resize(1,0);
-                //nearest_distances.resize(1,0.0);
                 nnFinder.nearestKSearch(scene.points[pointIndicess[i]],1,nearest_indices,nearest_distances);
                 int nearest_index=indices[nearest_indices[0]];
                 nearPoints.insert(nearest_index);
@@ -191,9 +199,6 @@ public:
   }
 };
 
-class NTSetComparison;
-
-typedef set<NonTerminal *,NTSetComparison> NTSet;
 
 typedef priority_queue<Symbol *,vector<Symbol *>,SymbolComparison> SymbolPriorityQueue;
 
@@ -283,10 +288,11 @@ public:
         return 1;
     }
     
-    void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)
+ /*   void getSetOfAncestors(set<NonTerminal*> & thisAncestors , vector<set<NonTerminal*> > & allAncestors)
     {
         thisAncestors=allAncestors[index];
     }
+  */
 };
 Terminal * terminals;
 
@@ -350,7 +356,13 @@ protected:
      * leaves of children */
     bool costSet;
 public:
+    friend class RS_PlanePlane;
     vector<int> pointIndices; // can be replaced with any sufficient statistic
+    
+    bool intersects(NonTerminal * other)
+    {
+        return set_membership.intersects(other->set_membership);
+    }
         int getId()
     {
         return id;
@@ -371,15 +383,12 @@ public:
     
         virtual void printData()
         {
-            cout<<id<<"\t:";
-            for(size_t i=0;i<pointIndices.size();i++)
-                cout<<pointIndices[i]<<",";
-            cout<<endl;
+            cout<<id<<"\t:"<<set_membership<<endl;
         }
         
     size_t getNumPoints()
     {
-        assert(costSet);
+        assert(numPoints>0);
         return numPoints;
     }
 
@@ -426,7 +435,8 @@ public:
         assert(costSet); // cost must be set before adding it to pq
         if(checkDuplicate(planeSet))
             return false;
-        std::pair< set<NonTerminal*>::iterator , bool > resIns;
+        computePointIndices();
+   //     std::pair< set<NonTerminal*>::iterator , bool > resIns;
         
 /*        for(size_t i=0;i<pointIndices.size();i++)
         {
@@ -456,23 +466,24 @@ public:
     {
         assert(numPoints>0);
         NTSet & bin=planeSet[numPoints];
-        NTSet::iterator it;
-        for(it=bin.begin();it!=bin.end();it++)
+        NTSet::iterator lb;
+        lb=bin.lower_bound(this);
+        if(lb!=bin.end() && (*lb)->set_membership==set_membership)
         {
-            if(*it->set_membership==set_membership)
-                return true;
+           // cout<<"duplicate:"<<set_membership<<","<<(*lb)->set_membership<<endl;
+            return true;
         }
-        return false;
+        else
+            return false;
     }
     
     
 
     void getComplementPointSet(vector<int>& indices /* = 0 */)
     {
-        int it1=0;
-        int numPoints=scene.size();
+        int numSPoints=scene.size();
         indices.clear();
-        indices.reserve(numPoints-getNumPoints());
+        indices.reserve(numSPoints-getNumPoints());
        for(size_t i=0;i<scene.size();i++)
        {
            if(!set_membership.test(i))
@@ -492,14 +503,10 @@ public:
     }
   */  
 };
-class NTSetComparison
-{
-public:
-  bool operator() (NonTerminal * & lhs, NonTerminal * & rhs) const
+  bool NTSetComparison::operator() (NonTerminal * const & lhs, NonTerminal * const &  rhs)
   {
       return lhs->getHashValue()>rhs->getHashValue();
   }
-};
 
 int NonTerminal::id_counter=0;
 class Rule
@@ -535,6 +542,12 @@ public:
     }
     
     virtual void combineAndPush(Symbol * sym, set<int> & combineCandidates , SymbolPriorityQueue & pqueue, vector<NTSet> & planeSet /* = 0 */, vector<Terminal*> & terminals /* = 0 */)=0;
+    virtual void addToPqueueIfNotDuplicate(NonTerminal * newNT, vector<NTSet> & planeSet, SymbolPriorityQueue & pqueue)
+    {
+        newNT->computeSetMembership();
+        if(!newNT->checkDuplicate(planeSet))
+            pqueue.push(newNT);
+    }
 };
 
 double sqr(double d)
@@ -575,7 +588,7 @@ public:
     
     double coplanarity(Plane * plane2)
     {
-        return exp( 100*fabs(planeParams[0]*plane2->planeParams[0]  +  planeParams[1]*plane2->planeParams[1]  +  planeParams[2]*plane2->planeParams[2]) )-1;
+        return  fabs(planeParams[0]*plane2->planeParams[0]  +  planeParams[1]*plane2->planeParams[1]  +  planeParams[2]*plane2->planeParams[2]) ;
     }
     
     double costOfAddingPoint(PointT p)
@@ -595,7 +608,7 @@ public:
         {
             assert(planeParamsComputed);
 //            return exp(100*pcl::pointToPlaneDistance<PointT>(p,planeParams))-1;
-            return getNumPoints()*pcl::pointToPlaneDistance<PointT>(p,planeParams);
+            return getNumPoints()*(exp(pcl::pointToPlaneDistance<PointT>(p,planeParams))-1);
         }
         else
             assert(1==2);
@@ -652,7 +665,7 @@ public:
                     vector<Symbol*> temp;
                     temp.push_back(sym);
                     temp.push_back(terminals.at(*it)); // must be pushed in order
-                    pqueue.push(applyRule(temp));
+                    addToPqueueIfNotDuplicate(applyRule(temp),planeSet,pqueue);
                     cout<<"applied rule p->pt\n";
             }
             
@@ -701,7 +714,7 @@ public:
                     vector<Symbol*> temp;
                     temp.push_back(terminals.at(*it)); 
                     temp.push_back(sym);
-                    pqueue.push(applyRule(temp));
+                    addToPqueueIfNotDuplicate(applyRule(temp),planeSet,pqueue);
                     cout<<"applied rule p->tt\n";
             }
         }
@@ -753,6 +766,13 @@ public:
 class RS_PlanePlane : public Rule
 {
 public:
+    void addToPqueueIfNotDuplicate(NonTerminal * newNT, vector<NTSet> & planeSet, SymbolPriorityQueue & pqueue)
+    {
+        newNT->computeSetMembership();
+   //     if(!newNT->checkDuplicate(planeSet)) // no need to check for duplicates
+            pqueue.push(newNT);
+    }
+    
     int get_Nof_RHS_symbols()
     {
         return 2;
@@ -771,9 +791,12 @@ public:
         Plane * RHS_plane2=dynamic_cast<Plane *>(RHS.at(1));
         LHS->addChild(RHS_plane1);
         LHS->addChild(RHS_plane2);
-        int deficit=scene.size()-RHS_plane1->getNumPoints()-RHS_plane2->getNumPoints();
-        LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)+exp(10*deficit)); // more coplanar => bad
+        //int deficit=scene.size()-RHS_plane1->getNumPoints()-RHS_plane2->getNumPoints();
+        LHS->setAdditionalCost(RHS_plane1->coplanarity(RHS_plane2)/*+exp(10*deficit)*/); // more coplanar => bad
         cout<<"applied rule S->pp\n";        
+        cerr<<"applied rule S->pp: cost "<<LHS->cost<<"\n";        
+        cerr<<RHS_plane1->set_membership<<"\n";        
+        cerr<<RHS_plane2->set_membership<<"\n";        
         return LHS;
     }
     
@@ -784,31 +807,32 @@ public:
         {
             size_t targetSize=scene.size()-sym->getNumPoints();
                 NTSet & bin=planeSet[targetSize];
+                if(bin.size()==0)
+                    return;
+                
+            boost::dynamic_bitset<> neighbors(scene.size());
+            set<int>::iterator nit;
+            
+            for(nit=combineCandidates.begin();nit!=combineCandidates.end();nit++)
+            {
+                neighbors.set(*nit,true);
+            }
+            
                 NTSet::iterator it;
+                    Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
+//                    Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
+                assert(!RHS_plane1->set_membership.intersects(neighbors));
                 for(it=bin.begin();it!=bin.end();it++)
                 {
-                        if(*it->set_membership==set_membership)
-                                return true;
+                    if(  (!RHS_plane1->intersects((*it)))   && (*it)->set_membership.intersects(neighbors)  )
+                    {
+                        vector<Symbol*> temp;
+                        temp.push_back(*it); // must be pushed in order
+                        temp.push_back(sym);
+                        addToPqueueIfNotDuplicate(applyRule(temp),planeSet,pqueue);
+                    }
                 }
-            for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
-            {
-                
-                if(typeid(*(*it))==typeid(Plane))
-                {
-                    if(sym->getNumPoints()+(*it)->getNumPoints()<scene.size())
-                        continue;
-                    Plane * RHS_plane1=dynamic_cast<Plane *>(sym);
-                    Plane * RHS_plane2=dynamic_cast<Plane *>(*it);
-                 //   cout<<"spp candidate: p1s"<<RHS_plane1->getNumPoints()<<",p1c"<<RHS_plane1->getCost()<<",p2s"<<RHS_plane2->getNumPoints()<<",p2c"<<RHS_plane2->getCost()<<",cop"<<RHS_plane1->coplanarity(RHS_plane2)<<endl;                    
-                    if(RHS_plane1->getNumPoints()<5 || RHS_plane2->getNumPoints()<5)
-                        continue;
                     
-                    vector<Symbol*> temp;
-                    temp.push_back(*it); // must be pushed in order
-                    temp.push_back(sym);
-                    pqueue.push(applyRule(temp));
-                }
-            }
         }
     }    
 };
@@ -852,7 +876,7 @@ void runParse()
     int numPoints=scene.size();
 //    vector<set<NonTerminal*> > ancestors(numPoints,set<NonTerminal*>());
     
-    vector<NTSet> planeSet;
+    vector<NTSet> planeSet(numPoints,NTSet());
     
     vector<Terminal *> terminals;
    
@@ -870,11 +894,12 @@ void runParse()
     {
         min=pq.top();
         
-        cout<<"\n\n\niter: "<<count++<<" type of min was "<<typeid(*min).name()<<"id was "<<min->getId()<<endl;
+        cout<<"\n\n\niter: "<<count++<<" cost was:"<<min->getCost()<<" id was "<<min->getId()<<endl;
         
         if(typeid(*min)==typeid(Goal_S))
         {
             cout<<"goal reached!!"<<endl;
+            min->printData();
             return;
             
         }
@@ -883,7 +908,7 @@ void runParse()
         min->printData();
            // log(count,min);
             set<int> combineCandidates;
-            min->getValidSymbolsForCombination(ancestors,terminals,combineCandidates);
+            min->getValidSymbolsForCombination(terminals,combineCandidates);
             cout<<combineCandidates.size()<<" candidates found and queue has "<<pq.size()<<" elements: \n------------"<<endl;
             set<int>::iterator it;
             for(it=combineCandidates.begin();it!=combineCandidates.end();it++)
@@ -894,7 +919,7 @@ void runParse()
             
             for(size_t i=0;i<rules.size();i++)
             {
-                rules[i]->combineAndPush(min, combineCandidates, pq, planeSet, 0);
+                rules[i]->combineAndPush(min, combineCandidates, pq, planeSet, terminals);
             }
             
         }
@@ -932,8 +957,8 @@ int main(int argc, char** argv)
 //    subsample(scene,temp);
 //    pcl::io::savePCDFile("fridge_sub500.pcd",temp,true);
     cout<<"scene has "<<scene.size()<<" points"<<endl;
-  
     
-//   runParse();
+    
+   runParse();
     return 0;
 }
