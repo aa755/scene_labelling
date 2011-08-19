@@ -1601,17 +1601,21 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud,  pc
        
         
     }
+    ColorRGB tmpColor;
     for (size_t i= 0; i< numBins[0]; i++ )
         for (size_t j = 0; j < numBins[1]; j++)
         {
             int x = numBins[1] - j -1;
             int y = i;
             if(indexMatrix[x][y] != -1){
-            ColorRGB tmpColor(cloud.points[indexMatrix[x][y]].rgb);
+                tmpColor.assignColor(cloud.points[indexMatrix[x][y]].rgb);
+            }else {
+                tmpColor.assignColor( 0,0,0 );
+            }
             CV_IMAGE_ELEM ( topImageOriginal, float, j, 3 * i ) = tmpColor.b;
             CV_IMAGE_ELEM ( topImageOriginal, float, j, 3 * i + 1 ) = tmpColor.g;
             CV_IMAGE_ELEM ( topImageOriginal, float, j, 3 * i + 2 ) = tmpColor.r;
-            }
+            
         }
     char filename[30];
     sprintf(filename,"topOriginal.png");
@@ -1623,11 +1627,14 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud,  pc
             int x = numBins[2] - 1 - j;
             int y = i;
             if(frontIndexMatrix[x][y] != -1){
-            ColorRGB tmpColor(cloud.points[frontIndexMatrix[x][y]].rgb);
+                tmpColor.assignColor(cloud.points[frontIndexMatrix[x][y]].rgb);
+            } else{
+                tmpColor.assignColor( 0,0,0 );
+            }
             CV_IMAGE_ELEM ( frontImageOriginal, float, j, 3 * i ) = tmpColor.b;
             CV_IMAGE_ELEM ( frontImageOriginal, float, j, 3 * i + 1 ) = tmpColor.g;
             CV_IMAGE_ELEM ( frontImageOriginal, float, j, 3 * i + 2 ) = tmpColor.r;
-            }
+            
         }
    // char filename[30];
     sprintf(filename,"frontOriginal.png");

@@ -122,8 +122,8 @@ def print_weight_vector( sm, sparm):
             c += 1
     filename="node_weights.csv" 
     savetxt(filename,node_coeff,fmt='%f',delimiter=',');
-    edge_feats_list = [5,6,7]
-    edge_coeff = zeros((K,K,30))
+    edge_feats_list = [5,6,7,10]
+    edge_coeff = zeros((K,K,40))
     for n1 in xrange(0,K):
         for n2 in xrange(0,K):
             c = 0;
