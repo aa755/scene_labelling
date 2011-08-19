@@ -376,10 +376,7 @@ public:
         numPoints=0;
     }
 
-    unsigned long getHashValue()
-    {
-        return set_membership.to_ulong();
-    }
+    friend class NTSetComparison;
     
         virtual void printData()
         {
@@ -505,7 +502,17 @@ public:
 };
   bool NTSetComparison::operator() (NonTerminal * const & lhs, NonTerminal * const &  rhs)
   {
-      return lhs->getHashValue()>rhs->getHashValue();
+      //start with MSBs
+      for(int i=lhs->set_membership.num_blocks()-1;i>=0;i--)
+      {
+          if(lhs->set_membership.m_bits[i] > rhs->set_membership.m_bits[i])
+              return true;
+          else if(lhs->set_membership.m_bits[i]  <  rhs->set_membership.m_bits[i])
+              return false;
+          // else look the lower significant block
+                      
+      }
+      return false; // actually they are equal
   }
 
 int NonTerminal::id_counter=0;
