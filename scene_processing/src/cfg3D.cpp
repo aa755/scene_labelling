@@ -467,7 +467,7 @@ public:
         lb=bin.lower_bound(this);
         if(lb!=bin.end() && (*lb)->set_membership==set_membership)
         {
-           // cout<<"duplicate:"<<set_membership<<","<<(*lb)->set_membership<<endl;
+         //   cout<<"duplicate:\n"<<set_membership<<"\n"<<(*lb)->set_membership<<endl;
             return true;
         }
         else
