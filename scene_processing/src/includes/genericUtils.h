@@ -71,7 +71,7 @@ void writeHeatMap(const char* filename,Eigen::Matrix<_Scalar,Eigen::Dynamic,  Ei
     for(int y=0;y<size.height;y++)
       {
         float scaledCost=(mat(y,x)-min)/(max-min);
-        CV_IMAGE_ELEM ( image, float, y, 3 * x ) = 0;
+        CV_IMAGE_ELEM ( image, float, y, 3 * x ) = 1.0-scaledCost;
         CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 ) = 0;
         CV_IMAGE_ELEM ( image, float, y, 3 * x + 2 ) = scaledCost;
       }

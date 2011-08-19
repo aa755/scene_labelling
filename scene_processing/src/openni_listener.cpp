@@ -1548,7 +1548,7 @@ void parseAndApplyLabels(std::ifstream  & file, pcl::PointCloud<pcl::PointXYZRGB
 
 void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int,int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds )
 {
-    pcl::PointXYZ steps(0.1,0.1,0.1);
+    pcl::PointXYZ steps(0.01,0.01,0.01);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
     
     createTrees(segment_clouds,   trees);
@@ -1609,9 +1609,12 @@ heatMapFront.setConstant(numBins[2],numBins[1],-FLT_MAX);
 int countx=0;
 int county=0;
 int countz=0;
-    for(float x=min.x,int countx=0;x<max.x;countx++,x+=steps.x)
-        for(float y=min.y,int county=0;y<max.y;county++,y+=steps.y)
-            for(float z=min.z,int countz=0;z<max.z;countz++,z+=steps.z)
+float x;
+float y;
+float z;
+    for(x=min.x,countx=0;x<max.x;countx++,x+=steps.x)
+        for(y=min.y,county=0;y<max.y;county++,y+=steps.y)
+            for(z=min.z,countz=0;z<max.z;countz++,z+=steps.z)
             {
                 vector<int> neighbors;
                 PointT centroid;
@@ -1670,12 +1673,12 @@ int countz=0;
                     cost+=edgeFeatsB.dot(edgeWeights[nbrLabel]->row(k));
                 }
                 
-               cout<<x<<","<<y<<","<<z<<","<<dist<<","<<cost<<endl;
+          //     cout<<x<<","<<y<<","<<z<<","<<dist<<","<<cost<<endl;
                 if(maxCost<cost)
                 {
                     maxCost=cost;
                     maxS=target;
-                    cout<<"nodeFeats \n"<<nodeFeatsB<<endl;                    
+                 //   cout<<"nodeFeats \n"<<nodeFeatsB<<endl;                    
                 }
 
                 if(minCost>cost)
@@ -1704,6 +1707,7 @@ replace<float>(heatMapFront,-FLT_MAX,minCost);
 writeHeatMap<float>("heatMapTop.png",heatMapTop,maxCost,minCost);
 writeHeatMap<float>("heatMapFront.png",heatMapFront,maxCost,minCost);
                 cout<<"optimal point"<<maxS.centroid.x<<","<<maxS.centroid.y<<","<<maxS.centroid.z<<endl;
+                exit(1);
         
              
 }
