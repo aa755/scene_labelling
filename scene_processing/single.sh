@@ -14,7 +14,7 @@ mv pred.* $file.pred/
 mv *data_scene* $file.pred/
 mv topHeat.png $file.pred/
 mv frontHeat.png $file.pred/
-mv topOriginal.png $file.pred/
-mv frontOriginal.png $file.pred/
+mv top0riginal.png $file.pred/
+mv front0riginal.png $file.pred/
 done
 
