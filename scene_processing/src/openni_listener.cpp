@@ -1618,7 +1618,7 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud,  pc
             
         }
     char filename[30];
-    sprintf(filename,"topOriginal.png");
+    sprintf(filename,"top0riginal.png");
     HOG::saveFloatImage ( filename, topImageOriginal );
     
     for (size_t i= 0; i< numBins[1]; i++ )
@@ -1637,7 +1637,7 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud,  pc
             
         }
    // char filename[30];
-    sprintf(filename,"frontOriginal.png");
+    sprintf(filename,"front0riginal.png");
     HOG::saveFloatImage ( filename, frontImageOriginal );
     
 }
