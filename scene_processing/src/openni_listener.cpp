@@ -1545,6 +1545,94 @@ void parseAndApplyLabels(std::ifstream  & file, pcl::PointCloud<pcl::PointXYZRGB
             cloud.points[i].label=invLabelMap[segId2label[cloud.points[i].segment]];
         }
 }
+void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud,  pcl::PointXYZ max, pcl::PointXYZ min,  pcl::PointXYZ steps) {
+    int numBins[3];
+    for (int i = 0; i < 3; i++) {
+        numBins[i] = int((max.data[i] - min.data[i]) / steps.data[i]) + 1;
+        cout << i << " " << max.data[i] << " " <<   min.data[i] << " " << steps.data[i] << " " <<  numBins[i] << endl;
+    }
+    CvSize size;
+
+    size.height = numBins[1];
+    size.width = numBins[0];
+    IplImage * topImageOriginal = cvCreateImage(size, IPL_DEPTH_32F, 3);
+    cout << "size of image " << numBins[0] << "x" << numBins[1] << endl;
+    
+    size.height = numBins[2];
+    size.width = numBins[1];
+    IplImage * frontImageOriginal = cvCreateImage(size, IPL_DEPTH_32F, 3);
+    
+    int indexMatrix[numBins[1]][numBins[0]];
+    for (size_t i= 0; i< numBins[1]; i++ )
+        for (size_t j = 0; j < numBins[0]; j++)
+        {
+            indexMatrix[i][j]= -1;
+        }
+    
+    int frontIndexMatrix[numBins[2]][numBins[1]];
+    for (size_t i= 0; i< numBins[2]; i++ )
+        for (size_t j = 0; j < numBins[1]; j++)
+        {
+            frontIndexMatrix[i][j]= -1;
+        }
+    
+    for (size_t i =0 ; i<cloud.points.size(); i++) {
+        int xbin = int((cloud.points[i].x - min.data[0])/steps.data[0]);
+        int ybin = int((cloud.points[i].y - min.data[1])/steps.data[1]);
+        int zbin = int((cloud.points[i].z - min.data[2])/steps.data[2]);
+       // cout << "x:" << xbin << " y:" << ybin <<endl;
+        if(indexMatrix[ybin][xbin] != -1) {
+         //   cout << "indexMatrix[xbin][ybin]= " << indexMatrix[xbin][ybin] << endl;
+            if(cloud.points[indexMatrix[ybin][xbin]].z > cloud.points[i].z ){
+                indexMatrix[ybin][xbin] = i;
+            }
+        }else {
+            indexMatrix[ybin][xbin] = i;
+        }
+        if(frontIndexMatrix[zbin][ybin] != -1) {
+         //   cout << "indexMatrix[xbin][ybin]= " << indexMatrix[xbin][ybin] << endl;
+            if(cloud.points[frontIndexMatrix[zbin][ybin]].x < cloud.points[i].x ){
+                frontIndexMatrix[zbin][ybin] = i;
+            }
+        }else {
+            frontIndexMatrix[zbin][ybin] = i;
+        }
+       
+        
+    }
+    for (size_t i= 0; i< numBins[0]; i++ )
+        for (size_t j = 0; j < numBins[1]; j++)
+        {
+            int x = numBins[1] - j -1;
+            int y = i;
+            if(indexMatrix[x][y] != -1){
+            ColorRGB tmpColor(cloud.points[indexMatrix[x][y]].rgb);
+            CV_IMAGE_ELEM ( topImageOriginal, float, j, 3 * i ) = tmpColor.b;
+            CV_IMAGE_ELEM ( topImageOriginal, float, j, 3 * i + 1 ) = tmpColor.g;
+            CV_IMAGE_ELEM ( topImageOriginal, float, j, 3 * i + 2 ) = tmpColor.r;
+            }
+        }
+    char filename[30];
+    sprintf(filename,"topOriginal.png");
+    HOG::saveFloatImage ( filename, topImageOriginal );
+    
+    for (size_t i= 0; i< numBins[1]; i++ )
+        for (size_t j = 0; j < numBins[2]; j++)
+        {
+            int x = numBins[2] - 1 - j;
+            int y = i;
+            if(frontIndexMatrix[x][y] != -1){
+            ColorRGB tmpColor(cloud.points[frontIndexMatrix[x][y]].rgb);
+            CV_IMAGE_ELEM ( frontImageOriginal, float, j, 3 * i ) = tmpColor.b;
+            CV_IMAGE_ELEM ( frontImageOriginal, float, j, 3 * i + 1 ) = tmpColor.g;
+            CV_IMAGE_ELEM ( frontImageOriginal, float, j, 3 * i + 2 ) = tmpColor.r;
+            }
+        }
+   // char filename[30];
+    sprintf(filename,"frontOriginal.png");
+    HOG::saveFloatImage ( filename, frontImageOriginal );
+    
+}
 
 void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int,int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds )
 {
@@ -1572,6 +1660,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 min.data[j]=cloud.points[i].data[j];
         }
     }
+    saveOriginalImages(cloud, max, min, steps);
     
     Matrix<float, Dynamic,1> nodeFeatsB(nodeFeatIndices.size()*10);
     Matrix<float, Dynamic,1> edgeFeatsB(edgeFeatIndices.size()*10);
