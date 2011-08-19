@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <boost//lexical_cast.hpp>
+#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 #include <boost/dynamic_bitset.hpp>
 //sac_model_plane.h
  
