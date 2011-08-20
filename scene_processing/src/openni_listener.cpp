@@ -85,7 +85,7 @@ public:
         BOOST_FOREACH(string t, tokens) 
         {
             binStumps[count]=(lexical_cast<double>(t.data()));
-            cout<<t<<":"<<count <<endl;
+        //    cout<<t<<":"<<count <<endl;
             count++;            
         }
         assert(count==NUM_BINS);        
@@ -448,6 +448,15 @@ public:
   float getDescendingLambda(int index) const
   {
     return eigenValues[2-index];
+  }
+  
+  pcl::PointXYZ getCentroid()
+  {
+      pcl::PointXYZ ret;
+      ret.x=centroid.x;
+      ret.y=centroid.y;
+      ret.z=centroid.z;
+      return ret;
   }
   
   float getScatter() const
@@ -1642,6 +1651,16 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud,  pc
     
 }
 
+int getBinIndex(double value, double min, double step)
+{
+    return (value-min)/step;
+}
+
+int getBinIndex(pcl::PointXYZ  value, pcl::PointXYZ  min, pcl::PointXYZ  step, int index)
+{
+    return (value.data[index]-min.data[index])/step.data[index];
+}
+
 void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int,int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds )
 {
     pcl::PointXYZ steps(0.01,0.01,0.01);
@@ -1801,9 +1820,9 @@ float z;
 
 replace<float>(heatMapTop,-FLT_MAX,minCost);
 replace<float>(heatMapFront,-FLT_MAX,minCost);
-writeHeatMap<float>("topHeat.png",heatMapTop,maxCost,minCost);
-writeHeatMap<float>("frontHeat.png",heatMapFront,maxCost,minCost);
-                cout<<"optimal point"<<maxS.centroid.x<<","<<maxS.centroid.y<<","<<maxS.centroid.z<<endl;
+writeHeatMap<float>("topHeat.png",heatMapTop,maxCost,minCost,getBinIndex(maxS.getCentroid(),min,steps,1),getBinIndex(maxS.getCentroid(),min,steps,0));
+writeHeatMap<float>("frontHeat.png",heatMapFront,maxCost,minCost,getBinIndex(maxS.getCentroid(),min,steps,2),getBinIndex(maxS.getCentroid(),min,steps,1));
+                cout<<"optimal point"<<maxS.centroid.x<<","<<maxS.centroid.y<<","<<maxS.centroid.z<<" with cost:"<<minCost<<endl;
                 exit(1);
         
              
