@@ -1764,6 +1764,7 @@ float z;
                 {
                     int nbrIndex=neighbors.at(i);
                     int nbrLabel=segIndex2label[nbrIndex]-1;
+                    assert(nbrLabel!=k);
                     edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles[nbrIndex]);
@@ -1820,8 +1821,8 @@ float z;
 
 replace<float>(heatMapTop,-FLT_MAX,minCost);
 replace<float>(heatMapFront,-FLT_MAX,minCost);
-writeHeatMap<float>("topHeat.png",heatMapTop,maxCost,minCost,getBinIndex(maxS.getCentroid(),min,steps,1),getBinIndex(maxS.getCentroid(),min,steps,0));
-writeHeatMap<float>("frontHeat.png",heatMapFront,maxCost,minCost,getBinIndex(maxS.getCentroid(),min,steps,2),getBinIndex(maxS.getCentroid(),min,steps,1));
+writeHeatMap<float>("topHeat.png",heatMapTop,maxCost,minCost,numBins[1]-1-getBinIndex(maxS.getCentroid(),min,steps,1),getBinIndex(maxS.getCentroid(),min,steps,0));
+writeHeatMap<float>("frontHeat.png",heatMapFront,maxCost,minCost,numBins[2]-1-getBinIndex(maxS.getCentroid(),min,steps,2),getBinIndex(maxS.getCentroid(),min,steps,1));
                 cout<<"optimal point"<<maxS.centroid.x<<","<<maxS.centroid.y<<","<<maxS.centroid.z<<" with cost:"<<minCost<<endl;
                 exit(1);
         

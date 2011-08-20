@@ -79,7 +79,7 @@ void writeHeatMap(const char* filename,Eigen::Matrix<_Scalar,Eigen::Dynamic,  Ei
 }
 
 template<typename _Scalar>
-void writeHeatMap(const char* filename,Eigen::Matrix<_Scalar,Eigen::Dynamic,  Eigen::Dynamic> & mat,_Scalar max,_Scalar min, int maxX, int maxY, int rad=3)
+void writeHeatMap(const char* filename,Eigen::Matrix<_Scalar,Eigen::Dynamic,  Eigen::Dynamic> & mat,_Scalar max,_Scalar min, int maxY, int maxX, int rad=3)
 {
   CvSize size;
   size.height=mat.rows();
