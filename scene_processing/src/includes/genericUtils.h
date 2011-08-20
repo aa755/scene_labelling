@@ -77,5 +77,33 @@ void writeHeatMap(const char* filename,Eigen::Matrix<_Scalar,Eigen::Dynamic,  Ei
       }
           saveFloatImage(filename,  image);
 }
+
+template<typename _Scalar>
+void writeHeatMap(const char* filename,Eigen::Matrix<_Scalar,Eigen::Dynamic,  Eigen::Dynamic> & mat,_Scalar max,_Scalar min, int maxX, int maxY, int rad=3)
+{
+  CvSize size;
+  size.height=mat.rows();
+  size.width=mat.cols();
+  IplImage * image = cvCreateImage ( size, IPL_DEPTH_32F, 3 );
+  
+  for(int x=0;x<size.width;x++)
+    for(int y=0;y<size.height;y++)
+      {
+        float scaledCost=(mat(y,x)-min)/(max-min);
+        if(std::abs(x-maxX)<rad && std::abs(y-maxY)<rad)
+        {
+                CV_IMAGE_ELEM ( image, float, y, 3 * x ) = 0;
+                CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 ) = 1.0;
+                CV_IMAGE_ELEM ( image, float, y, 3 * x + 2 ) = 0;            
+        }
+        else
+        {
+                CV_IMAGE_ELEM ( image, float, y, 3 * x ) = 1.0-scaledCost;
+                CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 ) = 0;
+                CV_IMAGE_ELEM ( image, float, y, 3 * x + 2 ) = scaledCost;
+        }
+      }
+          saveFloatImage(filename,  image);
+}
 #endif	/* GENERICUTILS_H */
 
