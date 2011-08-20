@@ -3,12 +3,12 @@
 num=0
 for file in `dir -d *.bag` ; do
 num=`expr $num + 1`
-if [ $num -gt 6 ]
- then
+#if [ $num -gt 6 ]
+# then
 cp $file globalTransform.bag
 #echo "$file $num" >> scene_mapping.txt 
-rosbag play -d 20 globalTransform.bag &
-rosrun scene_processing live_segment_computeFeats 
+rosbag play -d 10 globalTransform.bag &
+rosrun scene_processing live_segment_computeFeats > log.txt
 
 mkdir $file.pred
 mv *.pcd $file.pred/
@@ -18,7 +18,9 @@ mv topHeat.png $file.pred/
 mv frontHeat.png $file.pred/
 mv top0riginal.png $file.pred/
 mv front0riginal.png $file.pred/
-fi
+mv log.txt $file.pred/
+
+#fi
 
 done
 
