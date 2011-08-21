@@ -59,6 +59,18 @@ namespace pcl
        float distance;
        uint32_t segment;
        uint32_t label;
+       
+       void clone(const struct PointXYZRGB &rhs)
+       {
+           for(int i=0;i<4;i++)
+               data[i]=rhs.data[i];
+           rgb=rhs.rgb;
+           segment=0;
+           label=0;
+           cameraIndex=0;
+           distance=0.0;
+           
+       }
          EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN16;
 }

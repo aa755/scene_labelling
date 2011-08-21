@@ -12,7 +12,7 @@
 //#include "descriptors_3d/all_descriptors.h"
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-
+#include "moveRobot.h"
 #include <point_cloud_mapping/kdtree/kdtree_ann.h>
 #include <vector>
 #include "sensor_msgs/point_cloud_conversion.h"
@@ -2052,7 +2052,7 @@ int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr 
     predLabels.open(("pred."+featfilename).data()); // open the file containing predictions
     map<int, int> segIndex2Label;
     parseAndApplyLabels(predLabels,cloud,segment_clouds,segIndex2Label);
-    lookForClass(3,cloud,spectralProfiles,segIndex2Label,segment_clouds);
+    lookForClass(13,cloud,spectralProfiles,segIndex2Label,segment_clouds);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename+".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
