@@ -38,7 +38,7 @@ public:
           angularSpeedDegreePerSeg=0.1;
     }
     
-    bool moveForward(double distanceMeter)
+    bool moveForward(double distanceMeter, int secsToSleepAtFinish=0)
     {
         int rate=30;
         int time_to_move=(int)round(fabs(distanceMeter*rate/linearSpeedMetresPerSec));
@@ -61,15 +61,44 @@ public:
     			}
                         
                                 cout<<base_cmd.linear<<endl;
+                                cout<<base_cmd.angular<<endl;
       			cmd_vel_pub_.publish(base_cmd);
       			j++;
-			if(j>2+time_to_move)break;
+			if(j>2+time_to_move+rate*secsToSleepAtFinish) break;
 		}
         
     }
     
-    bool turnLeft(double angleDegree)
+//    double toRadians(float)
+    bool turnLeft(double angleDegree, int secsToSleepAtFinish=0)
     {
+        int rate=30;
+        int time_to_move=(int)round(fabs(angleDegree*rate/angularSpeedDegreePerSeg));
+		ros::Rate r(rate);
+ 		int j=0;
+                setAllZero();
+                
+		while(nh_.ok()){
+			r.sleep();
+			if(j==1){
+     				if(angleDegree>=0.0)
+		      			base_cmd.angular.z= angularSpeedDegreePerSeg;
+				else
+					base_cmd.angular.z= -angularSpeedDegreePerSeg;
+      			}
+                        
+                        if(j==1+time_to_move)
+      			{
+                            setAllZero();
+    			}
+                        
+                                cout<<base_cmd.linear<<endl;
+                                cout<<base_cmd.angular<<endl;
+      			cmd_vel_pub_.publish(base_cmd);
+      			j++;
+			if(j>2+time_to_move+rate*secsToSleepAtFinish)break;
+		}
+        
         
     }
     
