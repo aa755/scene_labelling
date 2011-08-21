@@ -2120,14 +2120,14 @@ void cameraCallback (/*const sensor_msgs::ImageConstPtr& visual_img_msg,
 
 int main(int argc, char** argv)
 {
-    readWeightVectors();
   ros::init(argc, argv,"hi");
 //  unsigned int step = 10;
+  ros::NodeHandle n;
+  //Instantiate the kinect image listener
+    readWeightVectors();
   environment="office";
   if(argc > 1)  environment = argv[1];
   cout<<"using evv= "<<environment<<endl;
-  ros::NodeHandle n;
-  //Instantiate the kinect image listener
   if(BinFeatures)
   {
      readAllStumpValues();

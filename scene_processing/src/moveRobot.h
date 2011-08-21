@@ -43,21 +43,21 @@ class MoveRobot
 		ros::Rate r(30);
  		int j=0;
                 setAllZero();
-                base_cmd.linear.x= linearSpeedMetresPerSec;
                 
 		while(nh_.ok()){
 			r.sleep();
-			if(j>1 && j<=(1+time_to_move)){
-	      			base_cmd.linear.x = 0.0;
-	      			base_cmd.linear.y = 0.0;
+			if(j==1){
      				if(distanceMeter>=0.0)
-		      			base_cmd.angular.z= linearSpeedMetresPerSec;
+		      			base_cmd.linear.x= linearSpeedMetresPerSec;
 				else
-					base_cmd.angular.z= linearSpeedMetresPerSec;
+					base_cmd.linear.x= -linearSpeedMetresPerSec;
       			}
-      			else{
+                        
+                        if(j==1+time_to_move)
+      			{
                             setAllZero();
     			}
+                        
       			cmd_vel_pub_.publish(base_cmd);
       			j++;
 			if(j>2+time_to_move)break;
