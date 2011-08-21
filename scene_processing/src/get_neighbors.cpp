@@ -10,7 +10,7 @@
 #include "descriptors_3d/all_descriptors.h"
 #include <point_cloud_mapping/kdtree/kdtree_ann.h>
 #include "sensor_msgs/point_cloud_conversion.h"
-#include "color.cpp"
+#include "includes/color.cpp"
 //typedef pcl::PointXYGRGBCam PointT;
 typedef pcl::PointXYZRGBCamSL PointT;
 

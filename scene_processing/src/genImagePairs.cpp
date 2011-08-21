@@ -27,7 +27,7 @@
 #include "transformation.h"
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include "color.cpp"
+#include "includes/color.cpp"
 #include "HOG.cpp"
 
 typedef pcl::PointXYZRGBCamSL PointT;

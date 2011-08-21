@@ -15,7 +15,7 @@
 #include <point_cloud_mapping/kdtree/kdtree_ann.h>
 #include <vector>
 #include "sensor_msgs/point_cloud_conversion.h"
-#include "color.cpp"
+#include "includes/color.cpp"
 #include "pcl/kdtree/kdtree.h"
 #include "pcl/kdtree/tree_types.h"
 #include <point_cloud_mapping/geometry/nearest.h>

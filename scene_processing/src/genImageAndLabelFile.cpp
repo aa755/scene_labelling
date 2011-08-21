@@ -21,7 +21,7 @@
 #include "includes/point_types.h"
 
 #include "sensor_msgs/point_cloud_conversion.h"
-#include "color.cpp"
+#include "includes/color.cpp"
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>

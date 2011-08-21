@@ -34,7 +34,7 @@ gencfg()
 #target_link_libraries(example ${PROJECT_NAME})
 
 #rosbuild_add_executable (seg_size src/compute_num_points.cpp)
-#rosbuild_add_executable (scene_segmentation src/segmentation.cpp)
+rosbuild_add_executable (scene_segmentation src/segmentation.cpp)
 rosbuild_add_executable (lidar_scene_segmentation src/segmentation_lidar.cpp)
 #rosbuild_add_executable (cleaning src/cleaning.cpp)
 #rosbuild_add_executable (scene_labler src/labeler.cpp)
