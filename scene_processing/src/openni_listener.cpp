@@ -2052,7 +2052,7 @@ int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr 
     predLabels.open(("pred."+featfilename).data()); // open the file containing predictions
     map<int, int> segIndex2Label;
     parseAndApplyLabels(predLabels,cloud,segment_clouds,segIndex2Label);
-    lookForClass(9,cloud,spectralProfiles,segIndex2Label,segment_clouds);
+    lookForClass(7,cloud,spectralProfiles,segIndex2Label,segment_clouds);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename+".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
