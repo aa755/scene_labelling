@@ -2071,7 +2071,7 @@ void processPointCloud(/*const sensor_msgs::ImageConstPtr& visual_img_msg,
         ROS_INFO("rejected it");
 }
 
-<<<<<<< HEAD
+
 void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     
     if(turnCount < MAX_TURNS && labelsFound.flip().any() )
