@@ -24,7 +24,7 @@ class MoveRobot
     double angularconversion;
     
     double linearSpeedMetresPerSec;
-    double angularSpeedDegreePerSeg;
+    double angularSpeedRadiansPerSeg;
     ros::NodeHandle nh_;
 //    double speedDevice;
     
@@ -35,7 +35,7 @@ public:
           cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);        
           
           linearSpeedMetresPerSec=0.1;
-          angularSpeedDegreePerSeg=0.1;
+          angularSpeedRadiansPerSeg=0.1;
     }
     
     bool moveForward(double distanceMeter, int secsToSleepAtFinish=0)
@@ -69,11 +69,12 @@ public:
         
     }
     
-//    double toRadians(float)
+    //double toRadians(float)
     bool turnLeft(double angleDegree, int secsToSleepAtFinish=0)
     {
+      //  DEG2RAD
         int rate=30;
-        int time_to_move=(int)round(fabs(angleDegree*rate/angularSpeedDegreePerSeg));
+        int time_to_move=(int)round(fabs(DEG2RAD(angleDegree)*rate/angularSpeedRadiansPerSeg));
 		ros::Rate r(rate);
  		int j=0;
                 setAllZero();
@@ -82,9 +83,9 @@ public:
 			r.sleep();
 			if(j==1){
      				if(angleDegree>=0.0)
-		      			base_cmd.angular.z= angularSpeedDegreePerSeg;
+		      			base_cmd.angular.z= angularSpeedRadiansPerSeg;
 				else
-					base_cmd.angular.z= -angularSpeedDegreePerSeg;
+					base_cmd.angular.z= -angularSpeedRadiansPerSeg;
       			}
                         
                         if(j==1+time_to_move)
