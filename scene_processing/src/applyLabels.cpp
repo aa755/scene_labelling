@@ -17,7 +17,7 @@
 #include "pcl/features/normal_3d.h"
 
 #include "sensor_msgs/point_cloud_conversion.h"
-#include "color.cpp"
+#include "includes/color.cpp"
 #include "pcl/kdtree/kdtree.h"
 #include "pcl/kdtree/tree_types.h"
 

@@ -72,7 +72,7 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <scene_processing/labelviewerConfig.h>
-#include "color.cpp"
+#include "includes/color.cpp"
 
 //typedef pcl::PointXYZRGB PointT;
 //std::string initLabels[]={"wall","floor","table","shelf","chair","cpu","monitor","clutter"};

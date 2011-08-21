@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "color.cpp"
+#include "includes/color.cpp"
 #include "pcl/ModelCoefficients.h"
 #include "pcl/kdtree/kdtree.h"
 #include "pcl/kdtree/tree_types.h"
