@@ -28,6 +28,7 @@ class MoveRobot
     ros::NodeHandle nh_;
 //    double speedDevice;
     
+public:
     MoveRobot(ros::NodeHandle &nh)
     {
         nh_=nh;
@@ -39,8 +40,9 @@ class MoveRobot
     
     bool moveForward(double distanceMeter)
     {
-        int time_to_move=(int)round(fabs(distanceMeter/linearSpeedMetresPerSec));
-		ros::Rate r(30);
+        int rate=30;
+        int time_to_move=(int)round(fabs(distanceMeter*rate/linearSpeedMetresPerSec));
+		ros::Rate r(rate);
  		int j=0;
                 setAllZero();
                 
@@ -58,6 +60,7 @@ class MoveRobot
                             setAllZero();
     			}
                         
+                                cout<<base_cmd.linear<<endl;
       			cmd_vel_pub_.publish(base_cmd);
       			j++;
 			if(j>2+time_to_move)break;

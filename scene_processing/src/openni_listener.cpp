@@ -2123,6 +2123,12 @@ int main(int argc, char** argv)
   ros::init(argc, argv,"hi");
 //  unsigned int step = 10;
   ros::NodeHandle n;
+    MoveRobot robot(n);
+    sleep(5);
+    robot.moveForward(1);
+    exit(0);
+    
+  
   //Instantiate the kinect image listener
     readWeightVectors();
   environment="office";
