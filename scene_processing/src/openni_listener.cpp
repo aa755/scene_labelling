@@ -66,7 +66,10 @@ map<int, int> invLabelMap;
 pcl::PCDWriter writer;
 #define NUM_CLASSES 17
 
-// glocal variables related to moving the robot and finding the lables
+ros::NodeHandle n;
+MoveRobot robot(n);
+
+// global variables related to moving the robot and finding the lables
 #define MAX_TURNS 3
 #define NUM_MAX_TRY 6
 int turnCount = 0;
@@ -2080,6 +2083,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         
     
     // turn robot
+        robot.turnLeft(40,2);
     
     } 
 }
@@ -2094,7 +2098,7 @@ int main(int argc, char** argv) {
     environment = "office";
     if (argc > 1) environment = argv[1];
     cout << "using evv= " << environment << endl;
-    ros::NodeHandle n;
+    
     //Instantiate the kinect image listener
     if (BinFeatures) {
         readAllStumpValues();
@@ -2114,35 +2118,6 @@ int main(int argc, char** argv) {
     ros::Subscriber cloud_sub_ = n.subscribe("/rgbdslam/my_clouds", 2, robotMovementControl);
 
     ros::spin();
-
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv,"hi");
-//  unsigned int step = 10;
-  ros::NodeHandle n;
-    MoveRobot robot(n);
-    sleep(5);
-    robot.moveForward(1);
-    exit(0);
-    
-  
-  //Instantiate the kinect image listener
-    readWeightVectors();
-  environment="office";
-  if(argc > 1)  environment = argv[1];
-  cout<<"using evv= "<<environment<<endl;
-  if(BinFeatures)
-  {
-     readAllStumpValues();
-  }
-  readInvLabelMap(invLabelMap,"../svm-python-v204/"+environment+"_labelmap.txt");
-  globalTransform=readTranform("globalTransform.bag");
-   pub = n.advertise<sensor_msgs::PointCloud2>("/scene_labler/labeled_cloud", 10);
-//    std_msgs::String str;
-//    str.data = "hello world";
-    ros::Subscriber cloud_sub_=n.subscribe("/rgbdslam/my_clouds",2,cameraCallback);
-								 
-   ros::spin();
   
 
 }
