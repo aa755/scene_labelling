@@ -9,7 +9,7 @@
 #include <pcl/features/normal_3d.h>
 
 #include "pcl/io/pcd_io.h"
-#include "includes/point_types.h"
+#include "point_types.h"
 #include <pcl/point_types.h>
 
 #include <pcl/filters/extract_indices.h>
@@ -18,14 +18,14 @@
 #include "pcl/sample_consensus/method_types.h"
 #include "pcl/sample_consensus/model_types.h"
 #include "pcl/segmentation/sac_segmentation.h"
-#include "includes/CombineUtils.h"
+#include "CombineUtils.h"
 
 typedef pcl::PointXYZRGBCamSL PointT;
 typedef pcl::PointXYGRGBCam PointCamT;
 typedef pcl::PointXYZRGB PointFrameT;
 
-//typedef  pcl::KdTree<PointT> KdTree;
-//typedef  pcl::KdTree<PointT>::Ptr KdTreePtr;
+typedef  pcl::KdTree<PointT> KdTree;
+typedef  pcl::KdTree<PointT>::Ptr KdTreePtr;
 
 void apply_segment_filter_frame(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment) {
     //ROS_INFO("applying filter");
