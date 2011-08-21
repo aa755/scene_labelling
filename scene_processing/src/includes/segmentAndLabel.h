@@ -24,8 +24,8 @@ typedef pcl::PointXYZRGBCamSL PointT;
 typedef pcl::PointXYGRGBCam PointCamT;
 typedef pcl::PointXYZRGB PointFrameT;
 
-//typedef  pcl::KdTree<PointT> KdTree;
-//typedef  pcl::KdTree<PointT>::Ptr KdTreePtr;
+typedef  pcl::KdTree<PointT> KdTree;
+typedef  pcl::KdTree<PointT>::Ptr KdTreePtr;
 
 void apply_segment_filter_frame(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment) {
     //ROS_INFO("applying filter");
