@@ -16,7 +16,7 @@
 #include <point_cloud_mapping/kdtree/kdtree_ann.h>
 #include <vector>
 #include "sensor_msgs/point_cloud_conversion.h"
-#include "color.cpp"
+#include "includes/color.cpp"
 #include "pcl/kdtree/kdtree.h"
 #include "pcl/kdtree/tree_types.h"
 #include <point_cloud_mapping/geometry/nearest.h>
@@ -38,7 +38,7 @@ typedef ColorHandler::Ptr ColorHandlerPtr;
 typedef  pcl::KdTree<PointT> KdTree;
 typedef  pcl::KdTree<PointT>::Ptr KdTreePtr;
 using namespace boost;
-#include "segmentAndLabel.h"
+#include "includes/segmentAndLabel.h"
 #include "openni_listener.h"
 #include <octomap/octomap.h>
 #include <octomap_ros/OctomapROS.h>
@@ -2052,7 +2052,7 @@ int write_feats(TransformG transG,  pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr 
     predLabels.open(("pred."+featfilename).data()); // open the file containing predictions
     map<int, int> segIndex2Label;
     parseAndApplyLabels(predLabels,cloud,segment_clouds,segIndex2Label);
-    lookForClass(9,cloud,spectralProfiles,segIndex2Label,segment_clouds);
+    lookForClass(3,cloud,spectralProfiles,segIndex2Label,segment_clouds);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename+".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
