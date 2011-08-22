@@ -29,15 +29,27 @@ class MoveRobot
 //    double speedDevice;
     
 public:
+    MoveRobot()
+    {
+       
+    }
+    
     MoveRobot(ros::NodeHandle &nh)
     {
-        nh_=nh;
+          nh_=nh;
           cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);        
           
           linearSpeedMetresPerSec=0.1;
           angularSpeedRadiansPerSeg=0.1;
     }
-    
+    void setNodeHandle (ros::NodeHandle &nh)
+    {
+          nh_=nh;
+          cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);        
+          
+          linearSpeedMetresPerSec=0.1;
+          angularSpeedRadiansPerSeg=0.1;
+    }
     bool moveForward(double distanceMeter, int secsToSleepAtFinish=0)
     {
         int rate=30;
