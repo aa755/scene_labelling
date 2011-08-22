@@ -1123,7 +1123,7 @@ def lp_inference_sum1(X,sm,sparm):
       assert (round(lp.obj.value,2) ==  round(score,2))
     return ymax
 
-def lp_inference_sum1_IP(X,sm,sparm):
+def lp_inference_sum1_IP(X,sm,sparm,LE):
     start = time.clock() 
 
     K = sm.num_classes
@@ -1165,8 +1165,10 @@ def lp_inference_sum1_IP(X,sm,sparm):
     for i in xrange(2*E*K*K,3*E*K*K):
         lp.rows[i].bounds = None,1
     for i in xrange(3*E*K*K,3*E*K*K + N):
-        lp.rows[i].bounds = 1,1  ##SUM = 1
-        #lp.rows[i].bounds = None,1  ## SUM = 1 is changed to SUM<= 1
+		if (LE == False) :
+			lp.rows[i].bounds = 1,1  ##SUM = 1
+		else:
+			lp.rows[i].bounds = None,1  ## SUM = 1 is changed to SUM<= 1
 
     t = []
     for e in xrange(0,edge.shape[0]):
@@ -2083,7 +2085,9 @@ def classify_example(x, sm, sparm):
     #l = lp_inference(x,sm,sparm)
     
     if(CLASSIFY_METHOD == "sum1.IP"):
-        l = lp_inference_sum1_IP(x,sm,sparm)
+        l = lp_inference_sum1_IP(x,sm,sparm,False)
+    elif(CLASSIFY_METHOD == "sumLE1.IP"):
+        l = lp_inference_sum1_IP(x,sm,sparm,True)
     elif(CLASSIFY_METHOD == "sum1"):
         l = lp_inference_sum1(x,sm,sparm)
     elif(CLASSIFY_METHOD == "qbpo.sum1.IP"):
