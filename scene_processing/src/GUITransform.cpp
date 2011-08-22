@@ -153,6 +153,8 @@ void updateUI() {
     transformXYZYPR(*cloud_ptr, *cloud_mod_ptr, conf.x, conf.y, conf.z, conf.yaw/180.0*PI, conf.pitch/180.0*PI, conf.roll/180.0*PI);
     filterInPlace(*cloud_mod_ptr,conf.minx,conf.miny,conf.minz, conf.maxx,conf.maxy,conf.maxz);
     viewer.removePointCloud("new");
+    cloud_mod_ptr->width=0;
+    cloud_mod_ptr->height=0;
     pcl::toROSMsg(*cloud_mod_ptr, cloud_blobc_mod);
     color_handler_new.reset(new pcl_visualization::PointCloudColorHandlerRGBField<sensor_msgs::PointCloud2 > (cloud_blobc_mod));
     viewer.addPointCloud(*cloud_mod_ptr, color_handler_new, "new", viewportOrig);
