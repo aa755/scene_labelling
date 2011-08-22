@@ -1616,7 +1616,7 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
     pcl::PointXYZ steps(0.01, 0.01, 0.01);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
-    assert(maximas.size()==classes.size());
+    maximas.resize(classes.size());
     createTrees(segment_clouds, trees);
     /* find bounding box and discretize
      */
@@ -1992,7 +1992,12 @@ int write_feats(TransformG transG, pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr &
     predLabels.open(("pred." + featfilename).data()); // open the file containing predictions
     map<int, int> segIndex2Label;
     parseAndApplyLabels(predLabels, cloud, segment_clouds, segIndex2Label);
-    //lookForClass(7, cloud, spectralProfiles, segIndex2Label, segment_clouds);
+/*    vector<int> classes;
+    classes.push_back(7);
+    classes.push_back(13);
+    vector<PointXYZI> maximas;
+    lookForClass(classes, cloud, spectralProfiles, segIndex2Label, segment_clouds, scene_num, maximas);
+ */ 
     cloudVector.push_back(cloud);
     spectralProfilesVector.push_back(spectralProfiles);
     segIndex2LabelVector.push_back(segIndex2Label);
