@@ -66,6 +66,140 @@ map<int, int> invLabelMap;
 pcl::PCDWriter writer;
 #define NUM_CLASSES 17
 
+using namespace Eigen;
+Matrix<float, Dynamic, Dynamic> *nodeWeights;
+Matrix<float, Dynamic, Dynamic> *edgeWeights[NUM_CLASSES];
+vector<int> nodeFeatIndices;
+vector<int> edgeFeatIndices;
+
+
+class SpectralProfile {
+    vector<float> eigenValues; // sorted in ascending order
+public:
+    pcl::PointCloud<PointT>::Ptr cloudPtr;
+    HOGFeaturesOfBlock avgHOGFeatsOfSegment;
+    float avgH;
+    float avgS;
+    float avgV;
+
+    geometry_msgs::Point32 centroid;
+    Eigen::Vector3d normal;
+
+    void setEigValues(Eigen::Vector3d eigenValues_) {
+        eigenValues.clear();
+        //Assuming the values are sorted
+        assert(eigenValues_(0) <= eigenValues_(1));
+        assert(eigenValues_(1) <= eigenValues_(2));
+
+        for (int i = 0; i < 3; i++)
+            eigenValues.push_back(eigenValues_(i));
+        //  std::sort (eigenValues.begin (),eigenValues.end ()); // sorted in ascending order
+    }
+
+    float getDescendingLambda(int index) const {
+        return eigenValues[2 - index];
+    }
+
+    pcl::PointXYZ getCentroid() {
+        pcl::PointXYZ ret;
+        ret.x = centroid.x;
+        ret.y = centroid.y;
+        ret.z = centroid.z;
+        return ret;
+    }
+
+    float getScatter() const {
+        return getDescendingLambda(0);
+    }
+
+    float getLinearNess() const {
+        return (getDescendingLambda(0) - getDescendingLambda(1));
+    }
+
+    float getPlanarNess() const {
+        return (getDescendingLambda(1) - getDescendingLambda(2));
+    }
+
+    float getNormalZComponent() const {
+        return normal[2];
+    }
+
+    float getAngleWithVerticalInRadians() const {
+        return acos(getNormalZComponent());
+    }
+
+    float getHorzDistanceBwCentroids(const SpectralProfile & other) const {
+        return sqrt(pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2));
+    }
+
+    float getDistanceSqrBwCentroids(const SpectralProfile & other) const {
+        return pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2) + pow(centroid.z - other.centroid.z, 2);
+    }
+
+    float getVertDispCentroids(const SpectralProfile & other) {
+        return (centroid.z - other.centroid.z);
+    }
+
+    float getHDiffAbs(const SpectralProfile & other) {
+        return fabs(avgH - other.avgH);
+    }
+
+    float getSDiff(const SpectralProfile & other) {
+        return (avgS - other.avgS);
+    }
+
+    float getVDiff(const SpectralProfile & other) {
+        return (avgV - other.avgV);
+    }
+
+    float getAngleDiffInRadians(const SpectralProfile & other) {
+        return (getAngleWithVerticalInRadians() - other.getAngleWithVerticalInRadians());
+    }
+
+    float getNormalDotProduct(const SpectralProfile & other) {
+        return fabs(normal(0) * other.normal(0) + normal(1) * other.normal(1) + normal(2) * other.normal(2));
+    }
+
+    float getInnerness(const SpectralProfile & other) {
+        float r1 = sqrt(centroid.x * centroid.x + centroid.y * centroid.y);
+        float r2 = sqrt(other.centroid.x * other.centroid.x + other.centroid.y * other.centroid.y);
+        return r1 - r2;
+    }
+
+    float pushHogDiffFeats(const SpectralProfile & other, vector<float> & feats) {
+        avgHOGFeatsOfSegment.pushBackAllDiffFeats(other.avgHOGFeatsOfSegment, feats);
+    }
+
+    float getCoplanarity(const SpectralProfile & other) {
+        float dotproduct = getNormalDotProduct(other);
+        if (fabs(dotproduct) > 0.9) // if the segments are coplanar return the displacement between centroids in the direction of the normal
+        {
+            float distance = (centroid.x - other.centroid.x) * normal[0] + (centroid.y - other.centroid.y) * normal[1] + (centroid.z - other.centroid.z) * normal[2];
+            if (distance == 0 || fabs(distance) < (1 / 1000)) {
+                return 1000;
+            }
+            return fabs(1 / distance);
+        } else // else return -1
+            return -1;
+    }
+
+    int getConvexity(const SpectralProfile & other, float mindistance) {
+        VectorG centroid1(centroid.x, centroid.y, centroid.z);
+        VectorG centroid2(other.centroid.x, other.centroid.y, other.centroid.z);
+
+        VectorG c1c2 = centroid2.subtract(centroid1);
+        VectorG c2c1 = centroid1.subtract(centroid2);
+        VectorG normal1(normal[0], normal[1], normal[2]);
+        VectorG normal2(other.normal[0], other.normal[1], other.normal[2]);
+        if (mindistance < 0.04 && ((normal1.dotProduct(c1c2) <= 0 && normal2.dotProduct(c2c1) <= 0) || fabs(normal1.dotProduct(normal2)) > 0.95)) // refer local convexity criterion paper
+        {
+            return 1;
+        }
+        // else return 0
+        return 0;
+    }
+
+};
 
 
 // global variables related to moving the robot and finding the lables
@@ -76,13 +210,12 @@ int turnCount = 0;
 vector<int> labelsToFind; // list of classes to find
 boost::dynamic_bitset<> labelsFound(NUM_CLASSES); // if the class label is found or not
 boost::dynamic_bitset<> labelsToFindBitset(NUM_CLASSES);
-
-
-using namespace Eigen;
-Matrix<float, Dynamic, Dynamic> *nodeWeights;
-Matrix<float, Dynamic, Dynamic> *edgeWeights[NUM_CLASSES];
-vector<int> nodeFeatIndices;
-vector<int> edgeFeatIndices;
+vector<pcl::PointCloud<pcl::PointXYZRGBCamSL> > cloudVector;
+std::vector<std::map<int, int> > segIndex2LabelVector;
+vector<vector<SpectralProfile> >  spectralProfilesVector;
+vector<vector<pcl::PointCloud<PointT> > > segment_cloudsVector;
+bool all_done = false;
+std::ofstream labelsFoundFile;
 
 
 
@@ -402,134 +535,6 @@ public:
 
 
 OriginalFrameInfo * originalFrame;
-
-class SpectralProfile {
-    vector<float> eigenValues; // sorted in ascending order
-public:
-    pcl::PointCloud<PointT>::Ptr cloudPtr;
-    HOGFeaturesOfBlock avgHOGFeatsOfSegment;
-    float avgH;
-    float avgS;
-    float avgV;
-
-    geometry_msgs::Point32 centroid;
-    Eigen::Vector3d normal;
-
-    void setEigValues(Eigen::Vector3d eigenValues_) {
-        eigenValues.clear();
-        //Assuming the values are sorted
-        assert(eigenValues_(0) <= eigenValues_(1));
-        assert(eigenValues_(1) <= eigenValues_(2));
-
-        for (int i = 0; i < 3; i++)
-            eigenValues.push_back(eigenValues_(i));
-        //  std::sort (eigenValues.begin (),eigenValues.end ()); // sorted in ascending order
-    }
-
-    float getDescendingLambda(int index) const {
-        return eigenValues[2 - index];
-    }
-
-    pcl::PointXYZ getCentroid() {
-        pcl::PointXYZ ret;
-        ret.x = centroid.x;
-        ret.y = centroid.y;
-        ret.z = centroid.z;
-        return ret;
-    }
-
-    float getScatter() const {
-        return getDescendingLambda(0);
-    }
-
-    float getLinearNess() const {
-        return (getDescendingLambda(0) - getDescendingLambda(1));
-    }
-
-    float getPlanarNess() const {
-        return (getDescendingLambda(1) - getDescendingLambda(2));
-    }
-
-    float getNormalZComponent() const {
-        return normal[2];
-    }
-
-    float getAngleWithVerticalInRadians() const {
-        return acos(getNormalZComponent());
-    }
-
-    float getHorzDistanceBwCentroids(const SpectralProfile & other) const {
-        return sqrt(pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2));
-    }
-
-    float getDistanceSqrBwCentroids(const SpectralProfile & other) const {
-        return pow(centroid.x - other.centroid.x, 2) + pow(centroid.y - other.centroid.y, 2) + pow(centroid.z - other.centroid.z, 2);
-    }
-
-    float getVertDispCentroids(const SpectralProfile & other) {
-        return (centroid.z - other.centroid.z);
-    }
-
-    float getHDiffAbs(const SpectralProfile & other) {
-        return fabs(avgH - other.avgH);
-    }
-
-    float getSDiff(const SpectralProfile & other) {
-        return (avgS - other.avgS);
-    }
-
-    float getVDiff(const SpectralProfile & other) {
-        return (avgV - other.avgV);
-    }
-
-    float getAngleDiffInRadians(const SpectralProfile & other) {
-        return (getAngleWithVerticalInRadians() - other.getAngleWithVerticalInRadians());
-    }
-
-    float getNormalDotProduct(const SpectralProfile & other) {
-        return fabs(normal(0) * other.normal(0) + normal(1) * other.normal(1) + normal(2) * other.normal(2));
-    }
-
-    float getInnerness(const SpectralProfile & other) {
-        float r1 = sqrt(centroid.x * centroid.x + centroid.y * centroid.y);
-        float r2 = sqrt(other.centroid.x * other.centroid.x + other.centroid.y * other.centroid.y);
-        return r1 - r2;
-    }
-
-    float pushHogDiffFeats(const SpectralProfile & other, vector<float> & feats) {
-        avgHOGFeatsOfSegment.pushBackAllDiffFeats(other.avgHOGFeatsOfSegment, feats);
-    }
-
-    float getCoplanarity(const SpectralProfile & other) {
-        float dotproduct = getNormalDotProduct(other);
-        if (fabs(dotproduct) > 0.9) // if the segments are coplanar return the displacement between centroids in the direction of the normal
-        {
-            float distance = (centroid.x - other.centroid.x) * normal[0] + (centroid.y - other.centroid.y) * normal[1] + (centroid.z - other.centroid.z) * normal[2];
-            if (distance == 0 || fabs(distance) < (1 / 1000)) {
-                return 1000;
-            }
-            return fabs(1 / distance);
-        } else // else return -1
-            return -1;
-    }
-
-    int getConvexity(const SpectralProfile & other, float mindistance) {
-        VectorG centroid1(centroid.x, centroid.y, centroid.z);
-        VectorG centroid2(other.centroid.x, other.centroid.y, other.centroid.z);
-
-        VectorG c1c2 = centroid2.subtract(centroid1);
-        VectorG c2c1 = centroid1.subtract(centroid2);
-        VectorG normal1(normal[0], normal[1], normal[2]);
-        VectorG normal2(other.normal[0], other.normal[1], other.normal[2]);
-        if (mindistance < 0.04 && ((normal1.dotProduct(c1c2) <= 0 && normal2.dotProduct(c2c1) <= 0) || fabs(normal1.dotProduct(normal2)) > 0.95)) // refer local convexity criterion paper
-        {
-            return 1;
-        }
-        // else return 0
-        return 0;
-    }
-
-};
 
 class BinningInfo {
     float max;
@@ -1977,6 +1982,10 @@ int write_feats(TransformG transG, pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr &
     map<int, int> segIndex2Label;
     parseAndApplyLabels(predLabels, cloud, segment_clouds, segIndex2Label);
     //lookForClass(7, cloud, spectralProfiles, segIndex2Label, segment_clouds);
+    cloudVector.push_back(cloud);
+    spectralProfilesVector.push_back(spectralProfiles);
+    segIndex2LabelVector.push_back(segIndex2Label);
+    segment_cloudsVector.push_back(segment_clouds);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename + ".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
@@ -2031,7 +2040,7 @@ void readLabelList(const string & file) {
         if (line.length() > 0) {
             char_separator<char> sep(",");
             tokenizer<char_separator<char> > tokens(line, sep);
-            int count = 0;
+            
 
             BOOST_FOREACH(string t, tokens) {
                 labelsToFind.push_back(lexical_cast<int>(t.data()));
@@ -2072,12 +2081,30 @@ void processPointCloud(/*const sensor_msgs::ImageConstPtr& visual_img_msg,
 
     } else
         ROS_INFO("rejected it");
+    
 }
 
+void printLabelsFound(int turnCount){
+
+    labelsFoundFile << turnCount ; 
+    // print out the list of labels found
+    cout << "Labels Found:\n";
+    for (boost::dynamic_bitset<>::size_type i = 0; i < labelsToFindBitset.size(); i++)
+    {
+        if(labelsToFindBitset.test(i) ){
+            std::cout << i << ":" << labelsFound[i] << "," ;
+            labelsFoundFile << "\t"<< i << ":" << labelsFound[i]    ;
+        }
+    }
+    std::cout << std::endl;
+    labelsFoundFile << endl;
+}
 
 void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
+
+    if(all_done){ exit(0); }
     
-    if(turnCount < MAX_TURNS && labelsFound.flip().any() ) // if more labels are to be found and the turn count is less than the max
+    if(turnCount < MAX_TURNS && labelsFound.count() < NUM_CLASSES ) // if more labels are to be found and the turn count is less than the max
     {
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
@@ -2086,16 +2113,24 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         
         robot->turnLeft(40,2);
         turnCount++;
+        printLabelsFound(turnCount);
+        return;
+    }else {
+        all_done = true;
     } 
     
-    // print out the list of labels found
-    cout << "Labels Found:\n";
-    for (boost::dynamic_bitset<>::size_type i = 0; i < labelsToFindBitset.size(); ++i)
-    {
-        if(labelsToFindBitset.test(i) )
-            std::cout << i << ":" << labelsFound[i] << "," ;
+    // for all the classes not found run look for class in each of the predicted frames
+    
+    for(boost::dynamic_bitset<>::size_type k = 0; k < labelsFound.size(); k++){
+        
+        if(!labelsFound.test(k)){
+            for (int i=0; i< MAX_TURNS ; i++){
+                lookForClass(k, cloudVector[i], spectralProfilesVector[i], segIndex2LabelVector[i], segment_cloudsVector[i]);
+            }
+            
+        }
+        
     }
-    std::cout << std::endl;
         
 }
 
@@ -2111,16 +2146,21 @@ int main(int argc, char** argv) {
     cout << "using evv= " << environment << endl;
     ros::NodeHandle n;
     robot = new MoveRobot(n);
+
+
+    string labelsFoundFilename = environment+ "labels_found.txt";
+    labelsFoundFile.open(labelsFoundFilename.data());
+
     
 
     //Instantiate the kinect image listener
     if (BinFeatures) {
         readAllStumpValues();
     }
-    
 
     readLabelList(environment + "_to_find.txt");
-    labelsFound = labelsToFindBitset.flip();
+    labelsFound = labelsToFindBitset;
+    labelsFound.flip();
     //for (boost::dynamic_bitset<>::size_type i = 0; i < labelsFound.size(); ++i)
       //  std::cout << labelsFound[i];
 
