@@ -1509,7 +1509,7 @@ void parseAndApplyLabels(std::ifstream & file, pcl::PointCloud<pcl::PointXYZRGBC
     }
 }
 
-void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud, pcl::PointXYZ max, pcl::PointXYZ min, pcl::PointXYZ steps) {
+void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud, pcl::PointXYZ max, pcl::PointXYZ min, pcl::PointXYZ steps, int scene_num) {
     int numBins[3];
     for (int i = 0; i < 3; i++) {
         numBins[i] = int((max.data[i] - min.data[i]) / steps.data[i]) + 1;
@@ -1599,7 +1599,7 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud, pcl
 
         }
     // char filename[30];
-    sprintf(filename, "front0riginal.png");
+    sprintf(filename, "front0riginal%d.png",scene_num);
     HOG::saveFloatImage(filename, frontImageOriginal);
 
 }
@@ -1612,10 +1612,11 @@ int getBinIndex(pcl::PointXYZ value, pcl::PointXYZ min, pcl::PointXYZ step, int 
     return (value.data[index] - min.data[index]) / step.data[index];
 }
 
-void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds) {
+void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds,int scene_num, vector<pcl::PointXYZI> & maximas) {
     pcl::PointXYZ steps(0.01, 0.01, 0.01);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
+    assert(maximas.size()==classes.size());
     createTrees(segment_clouds, trees);
     /* find bounding box and discretize
      */
@@ -1634,7 +1635,11 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 min.data[j] = cloud.points[i].data[j];
         }
     }
-    saveOriginalImages(cloud, max, min, steps);
+    saveOriginalImages(cloud, max, min, steps,scene_num);
+    int numBins[3];
+    for (int i = 0; i < 3; i++) {
+        numBins[i] = (int) ((max.data[i] - min.data[i]) / steps.data[i]) + 1;
+    }
 
     Matrix<float, Dynamic, 1 > nodeFeatsB(nodeFeatIndices.size()*10);
     Matrix<float, Dynamic, 1 > edgeFeatsB(edgeFeatIndices.size()*10);
@@ -1644,33 +1649,28 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
     cout << "min:" << min << endl;
     double maxDist[360];
     getMaxRanges(maxDist, cloud);
-    double cost, maxCost, minCost;
-    minCost = FLT_MAX;
-    maxCost = FLT_MIN;
-    cout << "max costf:" << maxCost << endl;
-    maxCost = -DBL_MAX;
-    cout << "max costd:" << maxCost << endl;
-    SpectralProfile maxS;
-    cout << "node weights :\n" << *nodeWeights << endl;
-    cout << "target row :\n" << nodeWeights->row(k) << endl;
-    cout << "binning :\n";
-    nodeFeatStumps[nodeFeatIndices.at(1)].print();
+    double cost;
+    double maxCost[classes.size()];
+    double minCost[classes.size()];
+    SpectralProfile maxS[classes.size()];
+    Matrix<float, Dynamic, Dynamic> heatMapTop[classes.size()];
+    Matrix<float, Dynamic, Dynamic> heatMapFront[classes.size()];
 
-    int numBins[3];
-    for (int i = 0; i < 3; i++) {
-        numBins[i] = (int) ((max.data[i] - min.data[i]) / steps.data[i]) + 1;
-        cout << "numBins: " << numBins[i] << "," << ((max.data[i] - min.data[i]) / steps.data[i]) << endl;
+    for(int oclass=0;oclass<classes.size();oclass++)
+    {
+        minCost[oclass] = DBL_MAX;
+        maxCost[oclass] = -DBL_MAX;
+        heatMapTop[oclass].setConstant(numBins[1], numBins[0], -FLT_MAX);
+        heatMapFront[oclass].setConstant(numBins[2], numBins[1], -FLT_MAX);
     }
+    
 
-    Matrix<float, Dynamic, Dynamic> heatMapTop;
-    Matrix<float, Dynamic, Dynamic> heatMapFront;
 
-    heatMapTop.setConstant(numBins[1], numBins[0], -FLT_MAX);
-    heatMapFront.setConstant(numBins[2], numBins[1], -FLT_MAX);
 
     int countx = 0;
     int county = 0;
     int countz = 0;
+    int k;
     float x;
     float y;
     float z;
@@ -1686,6 +1686,9 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 if (dist < 0)
                     continue;
                 findNeighbors(centroid, segment_clouds, trees, neighbors);
+                for(int oclass=0;oclass<classes.size();oclass++)
+                {
+                    k=classes[oclass];
                 // get neighbors
                 cost = 0.0;
                 //compute feats
@@ -1707,7 +1710,7 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 for (size_t i = 0; i < neighbors.size(); i++) {
                     int nbrIndex = neighbors.at(i);
                     int nbrLabel = segIndex2label[nbrIndex] - 1;
-                    assert(nbrLabel != k);
+                    //assert(nbrLabel != k);
                     edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles[nbrIndex]);
@@ -1732,22 +1735,27 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
                 }
 
                 //     cout<<x<<","<<y<<","<<z<<","<<dist<<","<<cost<<endl;
-                if (maxCost < cost) {
-                    maxCost = cost;
-                    maxS = target;
+                if (maxCost[oclass] < cost) {
+                    maxCost[oclass] = cost;
+                    maxS[oclass] = target;
+                    maximas[oclass].x=x;
+                    maximas[oclass].y=y;
+                    maximas[oclass].z=z;
+                    maximas[oclass].intensity=cost;
                     //   cout<<"nodeFeats \n"<<nodeFeatsB<<endl;                    
                 }
 
-                if (minCost > cost) {
-                    minCost = cost;
+                if (minCost[oclass] > cost) {
+                    minCost[oclass] = cost;
                 }
 
-                if (heatMapTop(numBins[1] - 1 - county, countx) < cost) {
-                    heatMapTop(numBins[1] - 1 - county, countx) = cost;
+                if (heatMapTop[oclass](numBins[1] - 1 - county, countx) < cost) {
+                    heatMapTop[oclass](numBins[1] - 1 - county, countx) = cost;
                 }
 
-                if (heatMapFront(numBins[2] - 1 - countz, county) < cost) {
-                    heatMapFront(numBins[2] - 1 - countz, county) = cost;
+                if (heatMapFront[oclass](numBins[2] - 1 - countz, county) < cost) {
+                    heatMapFront[oclass](numBins[2] - 1 - countz, county) = cost;
+                }
                 }
 
                 // all feats can be computed using SpectralProfile
@@ -1756,12 +1764,15 @@ void lookForClass(int k, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<
 
             }
 
-    replace<float>(heatMapTop, -FLT_MAX, minCost);
-    replace<float>(heatMapFront, -FLT_MAX, minCost);
-    writeHeatMap<float>("topHeat.png", heatMapTop, maxCost, minCost, numBins[1] - 1 - getBinIndex(maxS.getCentroid(), min, steps, 1), getBinIndex(maxS.getCentroid(), min, steps, 0));
-    writeHeatMap<float>("frontHeat.png", heatMapFront, maxCost, minCost, numBins[2] - 1 - getBinIndex(maxS.getCentroid(), min, steps, 2), getBinIndex(maxS.getCentroid(), min, steps, 1));
-    cout << "optimal point" << maxS.centroid.x << "," << maxS.centroid.y << "," << maxS.centroid.z << " with cost:" << minCost << endl;
-    exit(1);
+     for(int oclass=0;oclass<classes.size();oclass++)
+    {
+//   replace<float>(heatMapTop[oclass], -FLT_MAX, minCost);
+//    replace<float>(heatMapFront[oclass], -FLT_MAX, minCost);
+    writeHeatMap<float>((lexical_cast<string>(classes[oclass])+"_topHeat"+lexical_cast<string>(scene_num)+".png").data(), heatMapTop[oclass], maxCost[oclass], minCost[oclass], numBins[1] - 1 - getBinIndex(maxS[oclass].getCentroid(), min, steps, 1), getBinIndex(maxS[oclass].getCentroid(), min, steps, 0));
+    writeHeatMap<float>((lexical_cast<string>(classes[oclass])+"frontHeat"+lexical_cast<string>(scene_num)+".png").data(), heatMapFront[oclass], maxCost[oclass], minCost[oclass], numBins[2] - 1 - getBinIndex(maxS[oclass].getCentroid(), min, steps, 2), getBinIndex(maxS[oclass].getCentroid(), min, steps, 1));
+    //cout << "optimal point" << maxS.centroid.x << "," << maxS.centroid.y << "," << maxS.centroid.z << " with cost:" << minCost << endl;
+     }
+    //exit(1);
 
 
 }
@@ -2125,7 +2136,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         
         if(!labelsFound.test(k)){
             for (int i=0; i< MAX_TURNS ; i++){
-                lookForClass(k, cloudVector[i], spectralProfilesVector[i], segIndex2LabelVector[i], segment_cloudsVector[i]);
+//                lookForClass(k, cloudVector[i], spectralProfilesVector[i], segIndex2LabelVector[i], segment_cloudsVector[i]);
             }
             
         }
