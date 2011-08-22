@@ -66,10 +66,10 @@ map<int, int> invLabelMap;
 pcl::PCDWriter writer;
 #define NUM_CLASSES 17
 
-ros::NodeHandle n;
-MoveRobot robot(n);
+
 
 // global variables related to moving the robot and finding the lables
+MoveRobot * robot;
 #define MAX_TURNS 3
 #define NUM_MAX_TRY 6
 int turnCount = 0;
@@ -1976,7 +1976,7 @@ int write_feats(TransformG transG, pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr &
     predLabels.open(("pred." + featfilename).data()); // open the file containing predictions
     map<int, int> segIndex2Label;
     parseAndApplyLabels(predLabels, cloud, segment_clouds, segIndex2Label);
-    lookForClass(7, cloud, spectralProfiles, segIndex2Label, segment_clouds);
+    //lookForClass(7, cloud, spectralProfiles, segIndex2Label, segment_clouds);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename + ".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
@@ -2077,15 +2077,26 @@ void processPointCloud(/*const sensor_msgs::ImageConstPtr& visual_img_msg,
 
 void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     
-    if(turnCount < MAX_TURNS && labelsFound.flip().any() )
+    if(turnCount < MAX_TURNS && labelsFound.flip().any() ) // if more labels are to be found and the turn count is less than the max
     {
+        ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
         
-    
-    // turn robot
-        robot.turnLeft(40,2);
-    
+        // turn robot and increase the count
+        
+        robot->turnLeft(40,2);
+        turnCount++;
     } 
+    
+    // print out the list of labels found
+    cout << "Labels Found:\n";
+    for (boost::dynamic_bitset<>::size_type i = 0; i < labelsToFindBitset.size(); ++i)
+    {
+        if(labelsToFindBitset.test(i) )
+            std::cout << i << ":" << labelsFound[i] << "," ;
+    }
+    std::cout << std::endl;
+        
 }
 
 
@@ -2098,12 +2109,15 @@ int main(int argc, char** argv) {
     environment = "office";
     if (argc > 1) environment = argv[1];
     cout << "using evv= " << environment << endl;
+    ros::NodeHandle n;
+    robot = new MoveRobot(n);
     
+
     //Instantiate the kinect image listener
     if (BinFeatures) {
         readAllStumpValues();
     }
-
+    
 
     readLabelList(environment + "_to_find.txt");
     labelsFound = labelsToFindBitset.flip();
