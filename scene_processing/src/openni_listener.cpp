@@ -1501,14 +1501,14 @@ void parseAndApplyLabels(std::ifstream & file, pcl::PointCloud<pcl::PointXYZRGBC
         int segmentIndex = (lexical_cast<int>(tokens[0])) - 1;
         int segmentId = segment_clouds[segmentIndex].points[1].segment;
         int label = lexical_cast<int>(tokens[1]);
-        segId2label[segmentId] = label-1;
-        segIndex2label[segmentIndex] = label-1;
-        labelsFound[label] = 1;
+        segId2label[segmentId] = label;
+        segIndex2label[segmentIndex] = label;
+        labelsFound[label-1] = 1;
 
     }
 
     for (int i = 0; i < cloud.size(); i++) {
-        cloud.points[i].label = invLabelMap[segId2label[cloud.points[i].segment]+1];
+        cloud.points[i].label = invLabelMap[segId2label[cloud.points[i].segment]];
     }
 }
 
@@ -1712,7 +1712,7 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
 
                 for (size_t i = 0; i < neighbors.size(); i++) {
                     int nbrIndex = neighbors.at(i);
-                    int nbrLabel = segIndex2label[nbrIndex];
+                    int nbrLabel = segIndex2label[nbrIndex]-1;
                     //assert(nbrLabel != k);
                     edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
