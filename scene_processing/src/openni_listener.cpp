@@ -1712,7 +1712,7 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
 
                 for (size_t i = 0; i < neighbors.size(); i++) {
                     int nbrIndex = neighbors.at(i);
-                    int nbrLabel = segIndex2label[nbrIndex] - 1;
+                    int nbrLabel = segIndex2label[nbrIndex];
                     //assert(nbrLabel != k);
                     edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
                     edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
