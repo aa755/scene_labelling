@@ -204,8 +204,8 @@ public:
 
 // global variables related to moving the robot and finding the lables
 MoveRobot * robot;
-#define MAX_TURNS 3
-#define MAX_TRYS 6
+#define MAX_TURNS 1
+#define MAX_TRYS 3
 int turnCount = 0;
 vector<int> labelsToFind; // list of classes to find
 boost::dynamic_bitset<> labelsFound(NUM_CLASSES); // if the class label is found or not
@@ -681,7 +681,7 @@ void apply_segment_filter(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<Poin
         outcloud.points.clear();
 }
 
-int MIN_SEG_SIZE = 10;
+int MIN_SEG_SIZE = 300;
 
 /** it also discards unlabeled segments
  */
@@ -1616,7 +1616,7 @@ int getBinIndex(pcl::PointXYZ value, pcl::PointXYZ min, pcl::PointXYZ step, int 
 }
 
 void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds,int scene_num, vector<pcl::PointXYZI> & maximas) {
-    pcl::PointXYZ steps(0.01, 0.01, 0.01);
+    pcl::PointXYZ steps(0.1, 0.1, 0.1);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
     maximas.resize(classes.size());
@@ -1833,8 +1833,8 @@ int write_feats(TransformG transG, pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr &
     vector<SpectralProfile> spectralProfiles;
     std::cerr << "max_seg num:" << max_segment_num << "," << cloud.points.size() << endl;
     for (int seg = 1; seg <= max_segment_num; seg++) {
-        // if(counts[seg]<=MIN_SEG_SIZE)
-        //   continue;
+         if(counts[seg]<=MIN_SEG_SIZE)
+           continue;
         //vector<float> features;
         //int label;
         //segment_indices->indices.clear();
@@ -2128,25 +2128,28 @@ void getMovement(){
 			labelsToLookFor.push_back(k);
         }
     }
-    vector< vector<pcl::PointXYZI> > locations;;
+    vector< vector<pcl::PointXYZI> > locations;
+    vector<pcl::PointXYZI> frame_maximas;
     for (int i=0; i< MAX_TURNS ; i++){
-    	lookForClass(labelsToLookFor, cloudVector[i], spectralProfilesVector[i], segIndex2LabelVector[i], segment_cloudsVector[i], i, locations[i]); 
+    	lookForClass(labelsToLookFor, cloudVector[i], spectralProfilesVector[i], segIndex2LabelVector[i], segment_cloudsVector[i], i, frame_maximas); 
+        locations.push_back(frame_maximas);
     }
     
     // find the maximum for each class and the corresponding frames     
     vector<pcl::PointXYZI> maximas;
+    maximas.resize(labelsToLookFor.size());
     vector<int> maximaFrames;
     maximaFrames.resize(labelsToLookFor.size(),-1);
     
     for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++){
         float max_cost = -FLT_MAX;;
         for (int i=0; i< MAX_TURNS ; i++){
-            if(locations[i][lcount].intensity > max_cost){
-                maximas[lcount].x = locations[i][lcount].x;
-                maximas[lcount].y = locations[i][lcount].y;
-                maximas[lcount].z = locations[i][lcount].z;
-                maximas[lcount].intensity = locations[i][lcount].intensity;
-                maximaFrames[lcount] = i;
+            if(locations.at(i).at(lcount).intensity > max_cost){
+                maximas.at(lcount).x = locations.at(i).at(lcount).x;
+                maximas.at(lcount).y = locations.at(i).at(lcount).y;
+                maximas.at(lcount).z = locations.at(i).at(lcount).z;
+                maximas.at(lcount).intensity = locations.at(i).at(lcount).intensity;
+                maximaFrames.at(lcount) = i;
             }
         }
     }
@@ -2154,19 +2157,22 @@ void getMovement(){
     
     rotations.resize(labelsToLookFor.size(),0);
     translations.resize(labelsToLookFor.size(),0);
-    double turnAngle = currentAngle;
+    
     for(int lcount =0; lcount< labelsToLookFor.size(); lcount++)
     {
-        double angle = (int(turnAngle/40)- maximaFrames[lcount])*40;
-        rotations.push_back(-angle);
-        turnAngle = turnAngle - angle;
+        double angle =  maximaFrames[lcount]*40; // this angle is wrt to the initial point
+        double theta= (double)(atan(maximas[lcount].y/maximas[lcount].x)*180/PI);
+        cout << "the angle within the frame is: " << theta << endl;
+        angle = angle+theta;
+        rotations.at(lcount) =  angle;
+        
         
     }
     cout << "Rotations calculated:" << endl;
     // printing the labels to look for, frame numbers and rotation angles
     for(int lcount =0; lcount< labelsToLookFor.size(); lcount++)
     {
-        cout << "label: "  << labelsToLookFor[lcount] << " frame: " << maximaFrames[lcount] << " rotation: " << rotations[lcount] << endl;
+        cout << lcount << ". label: "  << labelsToLookFor[lcount] << " frame: " << maximaFrames[lcount] << " rotation: " << rotations[lcount] << endl;
     }
     
 }
@@ -2184,6 +2190,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         
         robot->turnLeft(40,2);
         currentAngle += 40;
+        cout << "current Angle now is "  << currentAngle<< endl;
         turnCount++;
         printLabelsFound(turnCount);
         // if all classes found then return
@@ -2201,8 +2208,10 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
        
         getMovement();
         // do not process the current cloud but move the robot to the correct position
-        robot->turnLeft(rotations[0], 2);
-        currentAngle += rotations[0];
+        double angle = rotations[0] - currentAngle;
+        robot->turnLeft(angle, 2);
+        currentAngle = rotations[0];
+        cout << "current Angle now is "  << currentAngle<< endl;
         robot->moveForward(translations[0], 2);
         rotations.erase(rotations.begin());
         translations.erase(translations.begin());
@@ -2215,8 +2224,10 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         processPointCloud (point_cloud);
         // if there are still movements left, move the robot else all_done
         if(!rotations.empty()){
-           robot->turnLeft(rotations[0],2);
-           currentAngle += rotations[0];
+           double angle = rotations[0] - currentAngle;
+           robot->turnLeft(angle,2);
+           currentAngle = rotations[0];
+           cout << "current angle now is " << currentAngle << endl;
            robot->moveForward(translations[0],2);
            rotations.erase(rotations.begin());
            translations.erase(translations.begin());
