@@ -1734,6 +1734,11 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
                         edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
                     }
 
+                    cout<<nbrLabel<<",nl-k,"<<k<<endl;
+                    assert(nbrLabel>=0);
+                    assert(nbrLabel<NUM_CLASSES);
+                    assert(k>=0);
+                    assert(k<NUM_CLASSES);
                     cost += edgeFeatsB.dot(edgeWeights[nbrLabel]->row(k));
                 }
 
