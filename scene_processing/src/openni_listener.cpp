@@ -1714,10 +1714,10 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
                     int nbrIndex = neighbors.at(i);
                     int nbrLabel = segIndex2label[nbrIndex]-1;
                     //assert(nbrLabel != k);
-                    edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles[nbrIndex]);
-                    edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles[nbrIndex]);
-                    edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles[nbrIndex]);
-                    edgeFeats.at(3) = target.getInnerness(spectralProfiles[nbrIndex]);
+                    edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles.at(nbrIndex));
+                    edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles.at(nbrIndex));
+                    edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles.at(nbrIndex));
+                    edgeFeats.at(3) = target.getInnerness(spectralProfiles.at(nbrIndex));
                     //  cout<<"edge feats "<<edgeFeats[0]<<","<<edgeFeats[1]<<","<<edgeFeats[2]<<endl;
 
                     for (size_t j = 0; j < edgeFeatIndices.size(); j++) {
@@ -1725,16 +1725,16 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
                     }
                     cost += edgeFeatsB.dot(edgeWeights[k]->row(nbrLabel));
 
-                    edgeFeats.at(0) = spectralProfiles[nbrIndex].getHorzDistanceBwCentroids(target);
-                    edgeFeats.at(1) = spectralProfiles[nbrIndex].getVertDispCentroids(target);
-                    edgeFeats.at(2) = spectralProfiles[nbrIndex].getDistanceSqrBwCentroids(target);
-                    edgeFeats.at(3) = spectralProfiles[nbrIndex].getInnerness(target);
+                    edgeFeats.at(0) = spectralProfiles.at(nbrIndex).getHorzDistanceBwCentroids(target);
+                    edgeFeats.at(1) = spectralProfiles.at(nbrIndex).getVertDispCentroids(target);
+                    edgeFeats.at(2) = spectralProfiles.at(nbrIndex).getDistanceSqrBwCentroids(target);
+                    edgeFeats.at(3) = spectralProfiles.at(nbrIndex).getInnerness(target);
 
+                    cerr<<nbrLabel<<",nl - k,"<<k<<endl;
                     for (size_t j = 0; j < edgeFeatIndices.size(); j++) {
                         edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
                     }
 
-                    cout<<nbrLabel<<",nl-k,"<<k<<endl;
                     assert(nbrLabel>=0);
                     assert(nbrLabel<NUM_CLASSES);
                     assert(k>=0);
@@ -2136,7 +2136,7 @@ void getMovement(){
     vector< vector<pcl::PointXYZI> > locations;
     vector<pcl::PointXYZI> frame_maximas;
     for (int i=0; i< MAX_TURNS ; i++){
-    	lookForClass(labelsToLookFor, cloudVector[i], spectralProfilesVector[i], segIndex2LabelVector[i], segment_cloudsVector[i], i, frame_maximas); 
+    	lookForClass(labelsToLookFor, cloudVector.at(i), spectralProfilesVector.at(i), segIndex2LabelVector.at(i), segment_cloudsVector.at(i), i, frame_maximas); 
         locations.push_back(frame_maximas);
     }
     
