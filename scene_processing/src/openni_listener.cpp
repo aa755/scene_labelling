@@ -1988,7 +1988,7 @@ int write_feats(TransformG transG, pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr &
     featfile.open(("temp." + featfilename).data());
     featfile << featfilename;
     featfile.close();
-    string command = "../svm-python-v204/svm_python_classify --m svmstruct_mrf --l micro --lm nonassoc --cm sum1.IP --omf ../svm-python-v204/" + environment + "_objectMap.txt temp." + featfilename + " ../svm-python-v204/" + environment + "Model pred." + featfilename + " > out." + featfilename;
+    string command = "../svm-python-v204/svm_python_classify --m svmstruct_mrf --l micro --lm nonassoc --cm sumLE1.IP --omf ../svm-python-v204/" + environment + "_objectMap.txt temp." + featfilename + " ../svm-python-v204/" + environment + "Model pred." + featfilename + " > out." + featfilename;
     system(command.data());
 
     std::ifstream predLabels;
@@ -2095,7 +2095,7 @@ void processPointCloud(/*const sensor_msgs::ImageConstPtr& visual_img_msg,
         convertType(cloud, *cloud_seg_ptr, globalTransform.getOrigin(), 0);
         assert(cloud_seg_ptr->size() == 640 * 480);
         segmentInPlace(*cloud_seg_ptr);
-        //  globalTransform.transformPointCloudInPlaceAndSetOrigin(*cloud_seg_ptr);
+        globalTransform.transformPointCloudInPlaceAndSetOrigin(*cloud_seg_ptr);
         write_feats(globalTransform, cloud_seg_ptr, callback_counter_);
 
     } else
