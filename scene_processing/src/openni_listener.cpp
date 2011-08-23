@@ -1501,14 +1501,14 @@ void parseAndApplyLabels(std::ifstream & file, pcl::PointCloud<pcl::PointXYZRGBC
         int segmentIndex = (lexical_cast<int>(tokens[0])) - 1;
         int segmentId = segment_clouds[segmentIndex].points[1].segment;
         int label = lexical_cast<int>(tokens[1]);
-        segId2label[segmentId] = label;
-        segIndex2label[segmentIndex] = label;
+        segId2label[segmentId] = label-1;
+        segIndex2label[segmentIndex] = label-1;
         labelsFound[label] = 1;
 
     }
 
     for (int i = 0; i < cloud.size(); i++) {
-        cloud.points[i].label = invLabelMap[segId2label[cloud.points[i].segment]];
+        cloud.points[i].label = invLabelMap[segId2label[cloud.points[i].segment]+1];
     }
 }
 
