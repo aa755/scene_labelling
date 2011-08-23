@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
         cout<<"could not open color mapping file...exiting\n";
         exit(-1);
     }
-    int NUM_CLASSES_TO_SHOW=10;
+    int NUM_CLASSES_TO_SHOW=12;
         ColorRGB *labelColors[NUM_CLASSES_TO_SHOW];
         labelColors[0]= new ColorRGB(1,0,0);
         labelColors[1]= new ColorRGB(0,1,0);
@@ -84,7 +84,9 @@ int main(int argc, char** argv) {
         labelColors[6]= new ColorRGB(0.5,0,0);
         labelColors[7]= new ColorRGB(0,0.5,0);
         labelColors[8]= new ColorRGB(0,0,0.5);
-        labelColors[9]= new ColorRGB(0.5,0,0.5);
+        labelColors[9]= new  ColorRGB(0.5,0.5,0.0);
+        labelColors[10]= new ColorRGB(0.0,0.5,0.5);
+        labelColors[11]= new ColorRGB(0.5,0.0,0.5);
 
     
 
