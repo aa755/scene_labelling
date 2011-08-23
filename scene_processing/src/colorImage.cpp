@@ -85,8 +85,8 @@ int main(int argc, char** argv) {
         labelColors[7]= new ColorRGB(0,0.5,0);
         labelColors[8]= new ColorRGB(0,0,0.5);
         labelColors[9]= new  ColorRGB(0.5,0.5,0.0);
-        labelColors[11]= new ColorRGB(0.0,0.5,0.5);
-        labelColors[10]= new ColorRGB(0.5,0.0,0.5);
+        labelColors[10]= new ColorRGB(0.0,0.5,0.5);
+        labelColors[11]= new ColorRGB(0.5,0.0,0.5);
 
     
 
