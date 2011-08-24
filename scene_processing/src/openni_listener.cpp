@@ -1512,8 +1512,12 @@ void parseAndApplyLabels(std::ifstream & file, pcl::PointCloud<pcl::PointXYZRGBC
         int label = lexical_cast<int>(tokens[1]);
         segId2label[segmentId] = label;
         segIndex2label[segmentIndex] = label;
+        if (!labelsFound.test(label-1)){
+            labelsFound.set(label-1, true);
+            foundAny = true;
+            cout << "Found label:"<< " in scene" <<  sceneNumVector.back() << "  at :" << currentAngle << endl; 
+        }
         
-        labelsFound[label-1] = 1;
 
     }
 
@@ -2027,7 +2031,7 @@ int write_feats(TransformG transG, pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr &
     std::ifstream predLabels;
     predLabels.open(("pred." + featfilename).data()); // open the file containing predictions
     map<int, int> segIndex2Label;
-    parseAndApplyLabels(predLabels, cloud, segment_clouds, segIndex2Label);
+    
 /*    vector<int> classes;
     classes.push_back(7);
     classes.push_back(13);
@@ -2039,6 +2043,7 @@ int write_feats(TransformG transG, pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr &
     segIndex2LabelVector.push_back(segIndex2Label);
     segment_cloudsVector.push_back(segment_clouds);
     sceneNumVector.push_back(scene_num);
+    parseAndApplyLabels(predLabels, cloud, segment_clouds, segIndex2Label);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename + ".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
@@ -2264,7 +2269,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         robot->moveForward(1.0,2);
         currentAngle = rotations[0];
         cout << "current Angle now is "  << currentAngle<< endl;
-        cout << "Looking for object " << labelsToLookFor.at(0)<< endl;
+        cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
         labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
         objCount++;
         //robot->moveForward(translations[0], 2);
@@ -2291,7 +2296,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         robot->moveForward(1.0,2);
            currentAngle = rotations[0];
            cout << "current angle now is " << currentAngle << endl;
-           cout << "Looking for object " << labelsToLookFor.at(0)<< endl;
+           cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
            labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
            objCount++;
           // robot->moveForward(translations[0],2);
