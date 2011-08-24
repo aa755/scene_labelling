@@ -1735,7 +1735,7 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
                         if(nbrLabel<0) // this neighbor was not labeled by the classifier(probably it is using sum<1)
                             continue;
                         
-                        cerr << nbrIndex<<","<<nbrLabel << ",nl - k," << k << endl;
+                        //cerr << nbrIndex<<","<<nbrLabel << ",nl - k," << k << endl;
                         //assert(nbrLabel != k);
                         edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles.at(nbrIndex));
                         edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles.at(nbrIndex));
@@ -2260,7 +2260,8 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         originalScan = false;
         // do not process the current cloud but move the robot to the correct position
         double angle = rotations[0] - currentAngle;
-        robot->turnLeft(angle, 2);
+        robot->turnLeft(angle, 0);
+        robot->moveForward(1.0,2);
         currentAngle = rotations[0];
         cout << "current Angle now is "  << currentAngle<< endl;
         cout << "Looking for object " << labelsToLookFor.at(0)<< endl;
@@ -2285,7 +2286,9 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         // if there are still movements left, move the robot else all_done
         if(!rotations.empty()){
            double angle = rotations[0] - currentAngle;
-           robot->turnLeft(angle,2);
+        robot->moveForward(-1.0,0);
+           robot->turnLeft(angle,0);
+        robot->moveForward(1.0,2);
            currentAngle = rotations[0];
            cout << "current angle now is " << currentAngle << endl;
            cout << "Looking for object " << labelsToLookFor.at(0)<< endl;
