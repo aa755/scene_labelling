@@ -2247,6 +2247,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES ){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
+        printLabelsFound(turnCount);
         // if there are still movements left, move the robot else all_done
         if(!rotations.empty()){
            double angle = rotations[0] - currentAngle;
