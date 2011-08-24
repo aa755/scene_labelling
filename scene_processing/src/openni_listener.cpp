@@ -219,7 +219,8 @@ std::ofstream labelsFoundFile;
 double currentAngle = 0;
 vector<double> rotations;
 vector<double> translations;
-
+int objCount = 0;
+vector<int> labelsToLookFor; 
 
 
 class BinStumps {
@@ -2126,7 +2127,6 @@ void printLabelsFound(int turnCount){
 
 void getMovement(){
       // for all the classes not found run look for class in each of the predicted frames
-    vector<int> labelsToLookFor; 
     for(boost::dynamic_bitset<>::size_type k = 0; k < labelsFound.size(); k++){
         
         if(!labelsFound.test(k)){
@@ -2217,7 +2217,9 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         robot->turnLeft(angle, 2);
         currentAngle = rotations[0];
         cout << "current Angle now is "  << currentAngle<< endl;
-        robot->moveForward(translations[0], 2);
+        cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+        objCount++;
+        //robot->moveForward(translations[0], 2);
         rotations.erase(rotations.begin());
         translations.erase(translations.begin());
         turnCount++;
@@ -2233,10 +2235,13 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
            robot->turnLeft(angle,2);
            currentAngle = rotations[0];
            cout << "current angle now is " << currentAngle << endl;
-           robot->moveForward(translations[0],2);
+           cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+           objCount++;
+          // robot->moveForward(translations[0],2);
            rotations.erase(rotations.begin());
            translations.erase(translations.begin());
            turnCount++;
+
         }else{all_done = true;}
                 
     }else{ 
