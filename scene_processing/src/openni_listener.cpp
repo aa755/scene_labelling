@@ -205,7 +205,7 @@ public:
 // global variables related to moving the robot and finding the lables
 MoveRobot * robot;
 #define MAX_TURNS 1
-#define MAX_TRYS 3
+#define MAX_TRYS 10
 int turnCount = 0;
 vector<int> labelsToFind; // list of classes to find
 boost::dynamic_bitset<> labelsFound(NUM_CLASSES); // if the class label is found or not
