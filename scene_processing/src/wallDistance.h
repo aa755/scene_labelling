@@ -145,8 +145,8 @@ void getSegmentDistanceToBoundaryOptimized( const pcl::PointCloud<PointT> &cloud
 }
 
 void add_distance_features(pcl::PointCloud<PointT> &cloud, map< int,vector<float> >&features,std::vector<pcl::PointCloud<PointT> > & segment_clouds){
-    bool outputDistancePCDSegmentWise=true;
-    bool outputDistancePCDPointWise=true;
+    bool outputDistancePCDSegmentWise=false;
+    bool outputDistancePCDPointWise=false;
     map<int,float> segment_boundary_distance;
     getSegmentDistanceToBoundaryOptimized(cloud,segment_boundary_distance,segment_clouds);
     for(map<int,float>::iterator it = segment_boundary_distance.begin(); it != segment_boundary_distance.end(); it++ )
