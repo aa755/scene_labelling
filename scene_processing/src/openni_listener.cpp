@@ -205,7 +205,7 @@ public:
 // global variables related to moving the robot and finding the lables
 MoveRobot * robot;
 #define MAX_TURNS 1
-#define MAX_TRYS 3
+#define MAX_TRYS 10
 int turnCount = 0;
 vector<int> labelsToFind; // list of classes to find
 boost::dynamic_bitset<> labelsFound(NUM_CLASSES); // if the class label is found or not
@@ -219,7 +219,8 @@ std::ofstream labelsFoundFile;
 double currentAngle = 0;
 vector<double> rotations;
 vector<double> translations;
-
+int objCount = 0;
+vector<int> labelsToLookFor; 
 
 
 class BinStumps {
@@ -2144,7 +2145,6 @@ void printLabelsFound(int turnCount){
 
 void getMovement(){
       // for all the classes not found run look for class in each of the predicted frames
-    vector<int> labelsToLookFor; 
     for(boost::dynamic_bitset<>::size_type k = 0; k < labelsFound.size(); k++){
         
         if(!labelsFound.test(k)){
@@ -2235,7 +2235,9 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         robot->turnLeft(angle, 2);
         currentAngle = rotations[0];
         cout << "current Angle now is "  << currentAngle<< endl;
-        robot->moveForward(translations[0], 2);
+        cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+        objCount++;
+        //robot->moveForward(translations[0], 2);
         rotations.erase(rotations.begin());
         translations.erase(translations.begin());
         turnCount++;
@@ -2245,16 +2247,20 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES ){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
+        printLabelsFound(turnCount);
         // if there are still movements left, move the robot else all_done
         if(!rotations.empty()){
            double angle = rotations[0] - currentAngle;
            robot->turnLeft(angle,2);
            currentAngle = rotations[0];
            cout << "current angle now is " << currentAngle << endl;
-           robot->moveForward(translations[0],2);
+           cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+           objCount++;
+          // robot->moveForward(translations[0],2);
            rotations.erase(rotations.begin());
            translations.erase(translations.begin());
            turnCount++;
+
         }else{all_done = true;}
                 
     }else{ 
