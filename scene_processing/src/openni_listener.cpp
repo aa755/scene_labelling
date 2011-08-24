@@ -1618,7 +1618,7 @@ int getBinIndex(pcl::PointXYZ value, pcl::PointXYZ min, pcl::PointXYZ step, int 
 
 void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
 {
-    pcl::PointXYZ steps(0.01, 0.01, 0.01);
+    pcl::PointXYZ steps(0.1, 0.1, 0.1);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
     maximas.resize(classes.size());
@@ -1726,7 +1726,7 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
                         if(nbrLabel<0) // this neighbor was not labeled by the classifier(probably it is using sum<1)
                             continue;
                         
-                        cerr << nbrIndex<<","<<nbrLabel << ",nl - k," << k << endl;
+                        //cerr << nbrIndex<<","<<nbrLabel << ",nl - k," << k << endl;
                         //assert(nbrLabel != k);
                         edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles.at(nbrIndex));
                         edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles.at(nbrIndex));
