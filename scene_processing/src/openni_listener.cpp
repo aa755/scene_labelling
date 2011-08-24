@@ -214,6 +214,7 @@ vector<pcl::PointCloud<pcl::PointXYZRGBCamSL> > cloudVector;
 std::vector<std::map<int, int> > segIndex2LabelVector;
 vector<vector<SpectralProfile> >  spectralProfilesVector;
 vector<vector<pcl::PointCloud<PointT> > > segment_cloudsVector;
+vector<int > sceneNumVector;
 bool all_done = false;
 std::ofstream labelsFoundFile;
 double currentAngle = 0;
@@ -221,6 +222,13 @@ vector<double> rotations;
 vector<double> translations;
 int objCount = 0;
 vector<int> labelsToLookFor; 
+vector< vector<pcl::PointXYZI> > locations;
+vector<pcl::PointXYZI> maximas(NUM_CLASSES);
+bool originalScan = true;
+boost::dynamic_bitset<> labelsAlreadyLookedFor(NUM_CLASSES);
+boost::dynamic_bitset<> maximaChanged(NUM_CLASSES);
+bool foundAny = false;
+ 
 
 
 class BinStumps {
@@ -1489,7 +1497,7 @@ void parseAndApplyLabels(std::ifstream & file, pcl::PointCloud<pcl::PointXYZRGBC
     int count;
     tokenizer<char_separator<char> > tokens1(line, sep1);
     map<int, int> segId2label;
-
+    foundAny = false;
     BOOST_FOREACH(string t, tokens1) {
         count = 0;
         tokenizer<char_separator<char> > tokens2(t, sep2);
@@ -1504,6 +1512,7 @@ void parseAndApplyLabels(std::ifstream & file, pcl::PointCloud<pcl::PointXYZRGBC
         int label = lexical_cast<int>(tokens[1]);
         segId2label[segmentId] = label;
         segIndex2label[segmentIndex] = label;
+        
         labelsFound[label-1] = 1;
 
     }
@@ -2029,6 +2038,7 @@ int write_feats(TransformG transG, pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr &
     spectralProfilesVector.push_back(spectralProfiles);
     segIndex2LabelVector.push_back(segIndex2Label);
     segment_cloudsVector.push_back(segment_clouds);
+    sceneNumVector.push_back(scene_num);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename + ".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
@@ -2144,6 +2154,8 @@ void printLabelsFound(int turnCount){
 }
 
 void getMovement(){
+    objCount = 0;
+    labelsToLookFor.clear();
       // for all the classes not found run look for class in each of the predicted frames
     for(boost::dynamic_bitset<>::size_type k = 0; k < labelsFound.size(); k++){
         
@@ -2151,33 +2163,49 @@ void getMovement(){
 			labelsToLookFor.push_back(k);
         }
     }
-    vector< vector<pcl::PointXYZI> > locations;
-    vector<pcl::PointXYZI> frame_maximas;
-    for (int i=0; i< MAX_TURNS ; i++){
-    	lookForClass(labelsToLookFor, cloudVector.at(i), spectralProfilesVector.at(i), segIndex2LabelVector.at(i), segment_cloudsVector.at(i), i, frame_maximas); 
+    while (cloudVector.size() > 0 ){
+        vector<pcl::PointXYZI> frame_maximas;
+    	lookForClass(labelsToLookFor, cloudVector.at(0), spectralProfilesVector.at(0), segIndex2LabelVector.at(0), segment_cloudsVector.at(0), sceneNumVector.at(0), frame_maximas);
         locations.push_back(frame_maximas);
+        // remove the point clouds in which maximas are found
+        cloudVector.erase (cloudVector.begin()) ;
+        spectralProfilesVector.erase (spectralProfilesVector.begin()) ;
+        segIndex2LabelVector.erase (segIndex2LabelVector.begin()) ;
+        segment_cloudsVector.erase (segment_cloudsVector.begin()) ;
+        sceneNumVector.erase (sceneNumVector.begin()) ;
     }
     
     // find the maximum for each class and the corresponding frames     
-    vector<pcl::PointXYZI> maximas;
-    maximas.resize(labelsToLookFor.size());
+    
     vector<int> maximaFrames;
     maximaFrames.resize(labelsToLookFor.size(),-1);
     
     for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++){
-        float max_cost = -FLT_MAX;;
+        
+        int label = labelsToLookFor.at(lcount);
         for (int i=0; i< MAX_TURNS ; i++){
-            if(locations.at(i).at(lcount).intensity > max_cost){
-                maximas.at(lcount).x = locations.at(i).at(lcount).x;
-                maximas.at(lcount).y = locations.at(i).at(lcount).y;
-                maximas.at(lcount).z = locations.at(i).at(lcount).z;
-                maximas.at(lcount).intensity = locations.at(i).at(lcount).intensity;
+            if(locations.at(i).at(lcount).intensity > maximas.at(label).intensity){
+                maximas.at(label).x = locations.at(i).at(lcount).x;
+                maximas.at(label).y = locations.at(i).at(lcount).y;
+                maximas.at(label).z = locations.at(i).at(lcount).z;
+                maximas.at(label).intensity = locations.at(i).at(lcount).intensity;
                 maximaFrames.at(lcount) = i;
+                maximaChanged.set(label,true);
             }
         }
     }
     
+    // remove any classes already looked for and maxima location didnt change
+    for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++){
+        if(!maximaChanged.test(labelsToLookFor.at(lcount)) && labelsAlreadyLookedFor.test(labelsToLookFor.at(lcount))){
+            labelsToLookFor.erase(labelsToLookFor.begin()+lcount);
+            maximaFrames.erase(maximaFrames.begin()+ lcount);
+            lcount --;
+        }
+    }
     
+    rotations.clear();
+    translations.clear(); 
     rotations.resize(labelsToLookFor.size(),0);
     translations.resize(labelsToLookFor.size(),0);
     
@@ -2188,7 +2216,6 @@ void getMovement(){
         cout << "the angle within the frame is: " << theta << endl;
         angle = angle+theta;
         rotations.at(lcount) =  angle;
-        
         
     }
     cout << "Rotations calculated:" << endl;
@@ -2230,14 +2257,17 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         //look for the remaining labels and get the corresponding rotation and translation motions
        
         getMovement();
+        originalScan = false;
         // do not process the current cloud but move the robot to the correct position
         double angle = rotations[0] - currentAngle;
         robot->turnLeft(angle, 2);
         currentAngle = rotations[0];
         cout << "current Angle now is "  << currentAngle<< endl;
-        cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+        cout << "Looking for object " << labelsToLookFor.at(0)<< endl;
+        labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
         objCount++;
         //robot->moveForward(translations[0], 2);
+        labelsToLookFor.erase(labelsToLookFor.begin());
         rotations.erase(rotations.begin());
         translations.erase(translations.begin());
         turnCount++;
@@ -2247,6 +2277,10 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES ){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
+        // call get movement only if new labels are found 
+        if(foundAny){
+           getMovement();
+        }
         printLabelsFound(turnCount);
         // if there are still movements left, move the robot else all_done
         if(!rotations.empty()){
@@ -2254,7 +2288,8 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
            robot->turnLeft(angle,2);
            currentAngle = rotations[0];
            cout << "current angle now is " << currentAngle << endl;
-           cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+           cout << "Looking for object " << labelsToLookFor.at(0)<< endl;
+           labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
            objCount++;
           // robot->moveForward(translations[0],2);
            rotations.erase(rotations.begin());
@@ -2286,7 +2321,11 @@ int main(int argc, char** argv) {
 
     string labelsFoundFilename = environment+ "labels_found.txt";
     labelsFoundFile.open(labelsFoundFilename.data());
-
+    // initialize the maximas
+    for(size_t i = 0; i < maximas.size(); i++)
+    {
+        maximas.at(i).intensity = -FLT_MAX;
+    }
     
 
     //Instantiate the kinect image listener
