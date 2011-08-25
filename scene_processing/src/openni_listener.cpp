@@ -230,6 +230,7 @@ boost::dynamic_bitset<> maximaChanged(NUM_CLASSES);
 bool foundAny = false;
 map<int, double> sceneToAngleMap;
  
+vector<int> maximaFrames(NUM_CLASSES,0);
 
 
 class BinStumps {
@@ -2188,8 +2189,6 @@ void getMovement(){
     
     // find the maximum for each class and the corresponding frames     
     
-    vector<int> maximaFrames;
-    maximaFrames.resize(labelsToLookFor.size(),-1);
     
     for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++){
         
@@ -2200,7 +2199,7 @@ void getMovement(){
                 maximas.at(label).y = locations.at(i).at(lcount).y;
                 maximas.at(label).z = locations.at(i).at(lcount).z;
                 maximas.at(label).intensity = locations.at(i).at(lcount).intensity;
-                maximaFrames.at(lcount) = sceneNumVector.at(i);
+                maximaFrames.at(label) = sceneNumVector.at(i);
                 maximaChanged.set(label,true);
                 cout << "Maxima for label: " << label << " changed to scene num: " << sceneNumVector.at(i) << endl;
             }
@@ -2212,7 +2211,6 @@ void getMovement(){
     for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++){
         if(!maximaChanged.test(labelsToLookFor.at(lcount)) && labelsAlreadyLookedFor.test(labelsToLookFor.at(lcount))){
             labelsToLookFor.erase(labelsToLookFor.begin()+lcount);
-            maximaFrames.erase(maximaFrames.begin()+ lcount);
             lcount --;
         }
     }
@@ -2224,8 +2222,8 @@ void getMovement(){
     
     for(int lcount =0; lcount< labelsToLookFor.size(); lcount++)
     {
-        double angle =  sceneToAngleMap[maximaFrames[lcount]]; // this angle is wrt to the initial point
         int label = labelsToLookFor.at(lcount);
+        double angle =  sceneToAngleMap[maximaFrames.at(label)]; // this angle is wrt to the initial point
         double theta= (double)(atan(maximas.at(label).y/maximas.at(label).x)*180/PI);
         cout << "the angle within the frame is: " << theta << endl;
         angle = angle+theta;
@@ -2236,7 +2234,7 @@ void getMovement(){
     // printing the labels to look for, frame numbers and rotation angles
     for(int lcount =0; lcount< labelsToLookFor.size(); lcount++)
     {
-        cout << lcount << ". label: "  << labelsToLookFor.at(lcount) << " frame: " << maximaFrames[lcount] << " rotation: " << rotations[lcount] << endl;
+        cout << lcount << ". label: "  << labelsToLookFor.at(lcount) << " frame: " << maximaFrames.at(labelsToLookFor.at(lcount)) << " rotation: " << rotations[lcount] << endl;
     }
     
 }
