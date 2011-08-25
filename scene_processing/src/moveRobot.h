@@ -72,8 +72,8 @@ public:
                             setAllZero();
     			}
                         
-                                cout<<base_cmd.linear<<endl;
-                                cout<<base_cmd.angular<<endl;
+                                //cout<<base_cmd.linear<<endl;
+                                //cout<<base_cmd.angular<<endl;
       			cmd_vel_pub_.publish(base_cmd);
       			j++;
 			if(j>2+time_to_move+rate*secsToSleepAtFinish) break;
@@ -105,8 +105,8 @@ public:
                             setAllZero();
     			}
                         
-                                cout<<base_cmd.linear<<endl;
-                                cout<<base_cmd.angular<<endl;
+                                //cout<<base_cmd.linear<<endl;
+                                //cout<<base_cmd.angular<<endl;
       			cmd_vel_pub_.publish(base_cmd);
       			j++;
 			if(j>2+time_to_move+rate*secsToSleepAtFinish)break;
