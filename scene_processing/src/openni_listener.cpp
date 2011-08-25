@@ -228,6 +228,7 @@ bool originalScan = true;
 boost::dynamic_bitset<> labelsAlreadyLookedFor(NUM_CLASSES);
 boost::dynamic_bitset<> maximaChanged(NUM_CLASSES);
 bool foundAny = false;
+map<int, double> sceneToAngleMap;
  
 
 
@@ -2136,6 +2137,7 @@ void processPointCloud(/*const sensor_msgs::ImageConstPtr& visual_img_msg,
         segmentInPlace(*cloud_seg_ptr);
         globalTransform.transformPointCloudInPlaceAndSetOrigin(*cloud_seg_ptr);
         write_feats(globalTransform, cloud_seg_ptr, callback_counter_);
+        sceneToAngleMap[callback_counter_] = currentAngle;
 
     } else
         ROS_INFO("rejected it");
@@ -2168,16 +2170,20 @@ void getMovement(){
 			labelsToLookFor.push_back(k);
         }
     }
+    locations.clear();
+    int cloudCount = 0;
     while (cloudVector.size() > 0 ){
+        
         vector<pcl::PointXYZI> frame_maximas;
-    	lookForClass(labelsToLookFor, cloudVector.at(0), spectralProfilesVector.at(0), segIndex2LabelVector.at(0), segment_cloudsVector.at(0), sceneNumVector.at(0), frame_maximas);
+    	lookForClass(labelsToLookFor, cloudVector.at(0), spectralProfilesVector.at(0), segIndex2LabelVector.at(0), segment_cloudsVector.at(0), sceneNumVector.at(cloudCount), frame_maximas);
         locations.push_back(frame_maximas);
         // remove the point clouds in which maximas are found
         cloudVector.erase (cloudVector.begin()) ;
         spectralProfilesVector.erase (spectralProfilesVector.begin()) ;
         segIndex2LabelVector.erase (segIndex2LabelVector.begin()) ;
         segment_cloudsVector.erase (segment_cloudsVector.begin()) ;
-        sceneNumVector.erase (sceneNumVector.begin()) ;
+        
+        cloudCount ++;
     }
     
     // find the maximum for each class and the corresponding frames     
@@ -2188,17 +2194,19 @@ void getMovement(){
     for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++){
         
         int label = labelsToLookFor.at(lcount);
-        for (int i=0; i< MAX_TURNS ; i++){
+        for (int i=0; i< locations.size() ; i++){
             if(locations.at(i).at(lcount).intensity > maximas.at(label).intensity){
                 maximas.at(label).x = locations.at(i).at(lcount).x;
                 maximas.at(label).y = locations.at(i).at(lcount).y;
                 maximas.at(label).z = locations.at(i).at(lcount).z;
                 maximas.at(label).intensity = locations.at(i).at(lcount).intensity;
-                maximaFrames.at(lcount) = i;
+                maximaFrames.at(lcount) = sceneNumVector.at(i);
                 maximaChanged.set(label,true);
+                cout << "Maxima for label: " << label << " changed to scene num: " << sceneNumVector.at(i) << endl;
             }
         }
     }
+    sceneNumVector.clear();
     
     // remove any classes already looked for and maxima location didnt change
     for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++){
@@ -2216,7 +2224,7 @@ void getMovement(){
     
     for(int lcount =0; lcount< labelsToLookFor.size(); lcount++)
     {
-        double angle =  maximaFrames[lcount]*40; // this angle is wrt to the initial point
+        double angle =  sceneToAngleMap[maximaFrames[lcount]]; // this angle is wrt to the initial point
         double theta= (double)(atan(maximas[lcount].y/maximas[lcount].x)*180/PI);
         cout << "the angle within the frame is: " << theta << endl;
         angle = angle+theta;
@@ -2273,7 +2281,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
         objCount++;
         //robot->moveForward(translations[0], 2);
-        labelsToLookFor.erase(labelsToLookFor.begin());
+        
         rotations.erase(rotations.begin());
         translations.erase(translations.begin());
         turnCount++;
