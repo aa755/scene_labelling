@@ -2225,7 +2225,8 @@ void getMovement(){
     for(int lcount =0; lcount< labelsToLookFor.size(); lcount++)
     {
         double angle =  sceneToAngleMap[maximaFrames[lcount]]; // this angle is wrt to the initial point
-        double theta= (double)(atan(maximas[lcount].y/maximas[lcount].x)*180/PI);
+        int label = labelsToLookFor.at(i);
+        double theta= (double)(atan(maximas.at(label).y/maximas.at(label).x)*180/PI);
         cout << "the angle within the frame is: " << theta << endl;
         angle = angle+theta;
         rotations.at(lcount) =  angle;
