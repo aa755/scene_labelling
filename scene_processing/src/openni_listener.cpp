@@ -1516,7 +1516,7 @@ void parseAndApplyLabels(std::ifstream & file, pcl::PointCloud<pcl::PointXYZRGBC
         if (!labelsFound.test(label-1)){
             labelsFound.set(label-1, true);
             foundAny = true;
-            cout << "Found label:"<< " in scene" <<  sceneNumVector.back() << "  at :" << currentAngle << endl; 
+            cout << "Found label:"<< label-1  <<" in scene" <<  sceneNumVector.back() << "  at :" << currentAngle << endl; 
         }
         
 
@@ -2236,7 +2236,7 @@ void getMovement(){
     // printing the labels to look for, frame numbers and rotation angles
     for(int lcount =0; lcount< labelsToLookFor.size(); lcount++)
     {
-        cout << lcount << ". label: "  << labelsToLookFor[lcount] << " frame: " << maximaFrames[lcount] << " rotation: " << rotations[lcount] << endl;
+        cout << lcount << ". label: "  << labelsToLookFor.at(lcount) << " frame: " << maximaFrames[lcount] << " rotation: " << rotations[lcount] << endl;
     }
     
 }
