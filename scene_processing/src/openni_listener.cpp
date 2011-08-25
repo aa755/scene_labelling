@@ -1632,7 +1632,7 @@ int getBinIndex(pcl::PointXYZ value, pcl::PointXYZ min, pcl::PointXYZ step, int 
 
 void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
 {
-    pcl::PointXYZ steps(0.1, 0.1, 0.1);
+    pcl::PointXYZ steps(0.05, 0.02, 0.1);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
     maximas.resize(classes.size());
