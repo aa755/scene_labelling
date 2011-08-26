@@ -2287,7 +2287,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         return;
     }
     
-    if (  labelsFound.count() < NUM_CLASSES   && objCount < labelsToLookFor.size() ){
+    if (  labelsFound.count() < NUM_CLASSES   && objCount <= labelsToLookFor.size() ){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
         // call get movement only if new labels are found 
