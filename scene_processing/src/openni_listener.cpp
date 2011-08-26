@@ -2265,7 +2265,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         return;
     }
     // if all initial turns are done, and the there are some more labels to find
-    if ( labelsFound.count() < NUM_CLASSES && objCount < labelsToLookFor.size()) {
+    if ( turnCount == MAX_TURNS && labelsFound.count() < NUM_CLASSES) {
         //look for the remaining labels and get the corresponding rotation and translation motions
        
         getMovement();
@@ -2287,7 +2287,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         return;
     }
     
-    if ( turnCount == MAX_TURNS && labelsFound.count() < NUM_CLASSES  ){
+    if (  labelsFound.count() < NUM_CLASSES   && objCount < labelsToLookFor.size() ){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
         // call get movement only if new labels are found 
