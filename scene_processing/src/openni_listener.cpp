@@ -2214,7 +2214,7 @@ void getMovement(){
             lcount --;
         }
     }
-    
+    maximaChanged.reset(); 
     rotations.clear();
     translations.clear(); 
     rotations.resize(labelsToLookFor.size(),0);
