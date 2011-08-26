@@ -204,7 +204,7 @@ public:
 
 // global variables related to moving the robot and finding the lables
 MoveRobot * robot;
-#define MAX_TURNS 1
+#define MAX_TURNS 3
 #define MAX_TRYS 10
 int turnCount = 0;
 vector<int> labelsToFind; // list of classes to find
@@ -2272,8 +2272,8 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         originalScan = false;
         // do not process the current cloud but move the robot to the correct position
         double angle = rotations[0] - currentAngle;
-        robot->turnLeft(angle, 0);
-        robot->moveForward(1.0,2);
+        robot->turnLeft(angle, 2);
+  //      robot->moveForward(1.0,2);
         currentAngle = rotations[0];
         cout << "current Angle now is "  << currentAngle<< endl;
         cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
@@ -2298,9 +2298,9 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         // if there are still movements left, move the robot else all_done
         if(!rotations.empty()){
            double angle = rotations[0] - currentAngle;
-        robot->moveForward(-1.0,0);
-           robot->turnLeft(angle,0);
-        robot->moveForward(1.0,2);
+//        robot->moveForward(-1.0,0);
+           robot->turnLeft(angle,2);
+//        robot->moveForward(1.0,2);
            currentAngle = rotations[0];
            cout << "current angle now is " << currentAngle << endl;
            cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
