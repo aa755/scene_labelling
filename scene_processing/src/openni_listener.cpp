@@ -2265,7 +2265,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         return;
     }
     // if all initial turns are done, and the there are some more labels to find
-    if (turnCount == MAX_TURNS && labelsFound.count() < NUM_CLASSES) {
+    if ( labelsFound.count() < NUM_CLASSES && objCount < labelsToLookFor.size()) {
         //look for the remaining labels and get the corresponding rotation and translation motions
        
         getMovement();
@@ -2287,13 +2287,40 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         return;
     }
     
-    if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES ){
+    if ( turnCount == MAX_TURNS && labelsFound.count() < NUM_CLASSES  ){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
         // call get movement only if new labels are found 
         if(foundAny){
            getMovement();
         }
+        printLabelsFound(turnCount);
+        // if there are still movements left, move the robot else all_done
+        if(!rotations.empty()){
+           double angle = rotations[0] - currentAngle;
+        //robot->moveForward(-1.0,0);
+           robot->turnLeft(angle,0);
+        //robot->moveForward(1.0,2);
+           currentAngle = rotations[0];
+           cout << "current angle now is " << currentAngle << endl;
+           cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+           labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
+           objCount++;
+          // robot->moveForward(translations[0],2);
+           rotations.erase(rotations.begin());
+           translations.erase(translations.begin());
+           turnCount++;
+
+        }else{all_done = true;}
+                
+    }
+    if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES ){
+        ROS_INFO("processing %d cloud.. \n",turnCount+1);
+        processPointCloud (point_cloud);
+        // do not update the movement now
+        //if(foundAny){
+        //   getMovement();
+        //}
         printLabelsFound(turnCount);
         // if there are still movements left, move the robot else all_done
         if(!rotations.empty()){
@@ -2313,7 +2340,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
 
         }else{all_done = true;}
                 
-    }else{ 
+    } else{ 
         all_done = true;
     }
     
