@@ -228,6 +228,7 @@ bool originalScan = true;
 boost::dynamic_bitset<> labelsAlreadyLookedFor(NUM_CLASSES);
 boost::dynamic_bitset<> maximaChanged(NUM_CLASSES);
 bool foundAny = false;
+bool translationState = false;
 map<int, double> sceneToAngleMap;
  
 vector<int> maximaFrames(NUM_CLASSES,0);
@@ -2289,7 +2290,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         return;
     }
     
-    if (  labelsFound.count() < NUM_CLASSES   && objCount <= labelsToLookFor.size() ){
+    if ( !translationState && labelsFound.count() < NUM_CLASSES   && objCount <= labelsToLookFor.size() ){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
         // call get movement only if new labels are found 
@@ -2315,7 +2316,9 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
            labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
            objCount++;
            if(objCount == labelsToLookFor.size() ){
-             robot->moveForward(forwardDistance,2);  
+               translationState = true;
+               robot->moveForward(forwardDistance,2);  
+               cout<< "switching to moving forward mode"<<endl;
            }
           // robot->moveForward(translations[0],2);
            rotations.erase(rotations.begin());
@@ -2326,7 +2329,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         return;
                 
     }
-    if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES && objCount <= labelsToLookFor.size()){
+    if (translationState && turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES && objCount <= labelsToLookFor.size()){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
         // do not update the movement now
