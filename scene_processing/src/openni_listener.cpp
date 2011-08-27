@@ -2306,13 +2306,18 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         processPointCloud (point_cloud);
         printLabelsFound(turnCount);
         printLabelsToLookFor();
+        cout << "foundAny : " << foundAny << " objCount: " << objCount << "size of labelsToLookFor: " << labelsToLookFor.size() << endl;
         // call get movement only if new labels are found 
         if(foundAny && objCount != labelsToLookFor.size() ){
+		   cout << "calling getMovement  when found any "  <<  endl;
            getMovement(true);
+           printLabelsToLookFor();
         }
         if(objCount == labelsToLookFor.size())
         {
-            getMovement(false);
+            cout << "calling getMovement when objCount == labelsToLookFor.size()" << endl;
+		    getMovement(false);
+            printLabelsToLookFor();
             translationState = true;
             cout<< "switching to moving forward mode"<<endl;
         }
@@ -2330,7 +2335,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         //robot->moveForward(1.0,2);
            currentAngle = rotations[0];
            cout << "current angle now is " << currentAngle << endl;
-           cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+           cout << "Looking for object " << labelsToLookFor.at(objCount) << " at " << objCount << endl;
            labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
            objCount++;
           // robot->moveForward(translations[0],2);
