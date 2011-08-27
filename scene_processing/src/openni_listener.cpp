@@ -204,7 +204,7 @@ public:
 
 // global variables related to moving the robot and finding the lables
 MoveRobot * robot;
-#define MAX_TURNS 3
+#define MAX_TURNS 2
 #define MAX_TRYS 10
 int turnCount = 0;
 vector<int> labelsToFind; // list of classes to find
@@ -2161,7 +2161,7 @@ void printLabelsFound(int turnCount){
     labelsFoundFile << endl;
 }
 
-void getMovement(){
+void getMovement(bool lookFor){
     objCount = 0;
     labelsToLookFor.clear();
       // for all the classes not found run look for class in each of the predicted frames
@@ -2171,47 +2171,49 @@ void getMovement(){
 			labelsToLookFor.push_back(k);
         }
     }
-    locations.clear();
-    int cloudCount = 0;
-    while (cloudVector.size() > 0 ){
-        
-        vector<pcl::PointXYZI> frame_maximas;
-    	lookForClass(labelsToLookFor, cloudVector.at(0), spectralProfilesVector.at(0), segIndex2LabelVector.at(0), segment_cloudsVector.at(0), sceneNumVector.at(cloudCount), frame_maximas);
-        locations.push_back(frame_maximas);
-        // remove the point clouds in which maximas are found
-        cloudVector.erase (cloudVector.begin()) ;
-        spectralProfilesVector.erase (spectralProfilesVector.begin()) ;
-        segIndex2LabelVector.erase (segIndex2LabelVector.begin()) ;
-        segment_cloudsVector.erase (segment_cloudsVector.begin()) ;
-        
-        cloudCount ++;
-    }
-    
-    // find the maximum for each class and the corresponding frames     
-    
-    
-    for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++){
-        
-        int label = labelsToLookFor.at(lcount);
-        for (int i=0; i< locations.size() ; i++){
-            if(locations.at(i).at(lcount).intensity > maximas.at(label).intensity){
-                maximas.at(label).x = locations.at(i).at(lcount).x;
-                maximas.at(label).y = locations.at(i).at(lcount).y;
-                maximas.at(label).z = locations.at(i).at(lcount).z;
-                maximas.at(label).intensity = locations.at(i).at(lcount).intensity;
-                maximaFrames.at(label) = sceneNumVector.at(i);
-                maximaChanged.set(label,true);
-                cout << "Maxima for label: " << label << " changed to scene num: " << sceneNumVector.at(i) << endl;
+    if (lookFor) {
+        locations.clear();
+        int cloudCount = 0;
+        while (cloudVector.size() > 0) {
+
+            vector<pcl::PointXYZI> frame_maximas;
+            lookForClass(labelsToLookFor, cloudVector.at(0), spectralProfilesVector.at(0), segIndex2LabelVector.at(0), segment_cloudsVector.at(0), sceneNumVector.at(cloudCount), frame_maximas);
+            locations.push_back(frame_maximas);
+            // remove the point clouds in which maximas are found
+            cloudVector.erase(cloudVector.begin());
+            spectralProfilesVector.erase(spectralProfilesVector.begin());
+            segIndex2LabelVector.erase(segIndex2LabelVector.begin());
+            segment_cloudsVector.erase(segment_cloudsVector.begin());
+
+            cloudCount++;
+        }
+
+        // find the maximum for each class and the corresponding frames     
+
+
+        for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++) {
+
+            int label = labelsToLookFor.at(lcount);
+            for (int i = 0; i < locations.size(); i++) {
+                if (locations.at(i).at(lcount).intensity > maximas.at(label).intensity) {
+                    maximas.at(label).x = locations.at(i).at(lcount).x;
+                    maximas.at(label).y = locations.at(i).at(lcount).y;
+                    maximas.at(label).z = locations.at(i).at(lcount).z;
+                    maximas.at(label).intensity = locations.at(i).at(lcount).intensity;
+                    maximaFrames.at(label) = sceneNumVector.at(i);
+                    maximaChanged.set(label, true);
+                    cout << "Maxima for label: " << label << " changed to scene num: " << sceneNumVector.at(i) << endl;
+                }
             }
         }
-    }
-    sceneNumVector.clear();
-    
-    // remove any classes already looked for and maxima location didnt change
-    for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++){
-        if(!maximaChanged.test(labelsToLookFor.at(lcount)) && labelsAlreadyLookedFor.test(labelsToLookFor.at(lcount))){
-            labelsToLookFor.erase(labelsToLookFor.begin()+lcount);
-            lcount --;
+        sceneNumVector.clear();
+
+        // remove any classes already looked for and maxima location didnt change
+        for (int lcount = 0; lcount < labelsToLookFor.size(); lcount++) {
+            if (!maximaChanged.test(labelsToLookFor.at(lcount)) && labelsAlreadyLookedFor.test(labelsToLookFor.at(lcount))) {
+                labelsToLookFor.erase(labelsToLookFor.begin() + lcount);
+                lcount--;
+            }
         }
     }
     maximaChanged.reset(); 
@@ -2240,7 +2242,7 @@ void getMovement(){
 }
 
 void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
-
+        double forwardDistance=0.5;
     if(all_done){ exit(0); }
     
     if(turnCount < MAX_TURNS && labelsFound.count() < NUM_CLASSES ) // if more labels are to be found and the turn count is less than the max
@@ -2265,15 +2267,15 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         return;
     }
     // if all initial turns are done, and the there are some more labels to find
-    if (turnCount == MAX_TURNS && labelsFound.count() < NUM_CLASSES) {
+    if ( turnCount == MAX_TURNS && labelsFound.count() < NUM_CLASSES) {
         //look for the remaining labels and get the corresponding rotation and translation motions
        
-        getMovement();
+        getMovement(true);
         originalScan = false;
         // do not process the current cloud but move the robot to the correct position
         double angle = rotations[0] - currentAngle;
-        robot->turnLeft(angle, 2);
-  //      robot->moveForward(1.0,2);
+        robot->turnLeft(angle, 0);
+        //robot->moveForward(1.0,2);
         currentAngle = rotations[0];
         cout << "current Angle now is "  << currentAngle<< endl;
         cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
@@ -2287,20 +2289,58 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         return;
     }
     
-    if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES ){
+    if (  labelsFound.count() < NUM_CLASSES   && objCount <= labelsToLookFor.size() ){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
         // call get movement only if new labels are found 
-        if(foundAny){
-           getMovement();
+        if(foundAny && objCount != labelsToLookFor.size() ){
+           getMovement(true);
         }
+        if(objCount == labelsToLookFor.size())
+        {
+            getMovement(false);
+        }
+        
         printLabelsFound(turnCount);
         // if there are still movements left, move the robot else all_done
         if(!rotations.empty()){
            double angle = rotations[0] - currentAngle;
-//        robot->moveForward(-1.0,0);
-           robot->turnLeft(angle,2);
-//        robot->moveForward(1.0,2);
+        //robot->moveForward(-1.0,0);
+           robot->turnLeft(angle,0);
+           
+        //robot->moveForward(1.0,2);
+           currentAngle = rotations[0];
+           cout << "current angle now is " << currentAngle << endl;
+           cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+           labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
+           objCount++;
+           if(objCount == labelsToLookFor.size() ){
+             robot->moveForward(forwardDistance,2);  
+           }
+          // robot->moveForward(translations[0],2);
+           rotations.erase(rotations.begin());
+           translations.erase(translations.begin());
+           turnCount++;
+
+        }
+        return;
+                
+    }
+    if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES && objCount <= labelsToLookFor.size()){
+        ROS_INFO("processing %d cloud.. \n",turnCount+1);
+        processPointCloud (point_cloud);
+        // do not update the movement now
+        //if(foundAny){
+        //   getMovement();
+        //}
+
+        printLabelsFound(turnCount);
+        // if there are still movements left, move the robot else all_done
+        if(!rotations.empty()){
+           double angle = rotations[0] - currentAngle;
+        robot->moveForward(-forwardDistance,0);
+           robot->turnLeft(angle,0);
+        robot->moveForward(+forwardDistance,2);
            currentAngle = rotations[0];
            cout << "current angle now is " << currentAngle << endl;
            cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
@@ -2313,7 +2353,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
 
         }else{all_done = true;}
                 
-    }else{ 
+    } else{ 
         all_done = true;
     }
     
