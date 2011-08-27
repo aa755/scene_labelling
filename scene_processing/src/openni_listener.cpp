@@ -205,7 +205,7 @@ public:
 // global variables related to moving the robot and finding the lables
 MoveRobot * robot;
 #define MAX_TURNS 2
-#define MAX_TRYS 10
+#define MAX_TRYS 20
 int turnCount = 0;
 vector<int> labelsToFind; // list of classes to find
 boost::dynamic_bitset<> labelsFound(NUM_CLASSES); // if the class label is found or not
@@ -2146,6 +2146,16 @@ void processPointCloud(/*const sensor_msgs::ImageConstPtr& visual_img_msg,
     
 }
 
+void printLabelsToLookFor()
+{
+  cout << "Labels to look for: " ;
+  for (size_t i = 0; i < labelsToLookFor.size(); i++)
+  {
+     cout << labelsToLookFor.at(i) << ", ";
+  }
+  cout << "\n";
+}
+
 void printLabelsFound(int turnCount){
 
     labelsFoundFile << turnCount ; 
@@ -2250,7 +2260,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     {
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
-        
+         
         // turn robot and increase the count
         
         robot->turnLeft(40,2);
@@ -2272,6 +2282,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         //look for the remaining labels and get the corresponding rotation and translation motions
        
         getMovement(true);
+        printLabelsToLookFor();
         originalScan = false;
         // do not process the current cloud but move the robot to the correct position
         double angle = rotations[0] - currentAngle;
@@ -2293,6 +2304,8 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     if ( !translationState && labelsFound.count() < NUM_CLASSES   && objCount <= labelsToLookFor.size() ){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
+        printLabelsFound(turnCount);
+        printLabelsToLookFor();
         // call get movement only if new labels are found 
         if(foundAny && objCount != labelsToLookFor.size() ){
            getMovement(true);
@@ -2300,14 +2313,19 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         if(objCount == labelsToLookFor.size())
         {
             getMovement(false);
+            translationState = true;
+            cout<< "switching to moving forward mode"<<endl;
         }
         
-        printLabelsFound(turnCount);
         // if there are still movements left, move the robot else all_done
         if(!rotations.empty()){
            double angle = rotations[0] - currentAngle;
         //robot->moveForward(-1.0,0);
            robot->turnLeft(angle,0);
+
+           if(translationState ){
+               robot->moveForward(forwardDistance,2);  
+           }
            
         //robot->moveForward(1.0,2);
            currentAngle = rotations[0];
@@ -2315,11 +2333,6 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
            cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
            labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
            objCount++;
-           if(objCount == labelsToLookFor.size() ){
-               translationState = true;
-               robot->moveForward(forwardDistance,2);  
-               cout<< "switching to moving forward mode"<<endl;
-           }
           // robot->moveForward(translations[0],2);
            rotations.erase(rotations.begin());
            translations.erase(translations.begin());
@@ -2332,6 +2345,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     if (translationState && turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES && objCount <= labelsToLookFor.size()){
         ROS_INFO("processing %d cloud.. \n",turnCount+1);
         processPointCloud (point_cloud);
+        printLabelsToLookFor();
         // do not update the movement now
         //if(foundAny){
         //   getMovement();
