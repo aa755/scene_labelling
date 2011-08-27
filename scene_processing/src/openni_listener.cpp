@@ -2318,6 +2318,7 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
            if(objCount == labelsToLookFor.size() ){
                translationState = true;
                robot->moveForward(forwardDistance,2);  
+               cout<< "switching to moving forward mode"<<endl;
            }
           // robot->moveForward(translations[0],2);
            rotations.erase(rotations.begin());
