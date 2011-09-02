@@ -60,6 +60,8 @@ namespace pcl
        uint32_t segment;
        uint32_t label;
        
+ //      inline PointXYZRGBCamSL (float _x, float _y, float _z) { x = _x; y = _y; z = _z; data[3] = 1.0f; }
+       
        void clone(const struct PointXYZRGB &rhs)
        {
            for(int i=0;i<4;i++)
