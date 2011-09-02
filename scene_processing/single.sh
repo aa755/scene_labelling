@@ -14,10 +14,10 @@ mkdir $file.pred
 mv *.pcd $file.pred/
 mv pred.* $file.pred/
 mv *data_scene* $file.pred/
-mv topHeat.png $file.pred/
-mv frontHeat.png $file.pred/
-mv top0riginal.png $file.pred/
-mv front0riginal.png $file.pred/
+mv *topHeat*.png $file.pred/
+mv *frontHeat*.png $file.pred/
+mv *top0riginal*.png $file.pred/
+mv *front0riginal*.png $file.pred/
 mv log.txt $file.pred/
 
 #fi
