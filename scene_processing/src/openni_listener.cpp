@@ -2283,6 +2283,9 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
        
         getMovement(true);
         printLabelsToLookFor();
+        // exiting when finished look for once.
+          exit(0);
+     
         originalScan = false;
         // do not process the current cloud but move the robot to the correct position
         double angle = rotations[0] - currentAngle;
