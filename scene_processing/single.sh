@@ -1,14 +1,15 @@
 #!/bin/bash
 #cp ~/Nips2011/cleanKinectData/office/singles/allBags/*.bag ./
 num=0
-for file in `dir -d *.bag` ; do
+for file in `dir -d demo?/*.bag` ; do
 num=`expr $num + 1`
 #if [ $num -gt 6 ]
 # then
-cp $file globalTransform.bag
+#cp $file globalTransform.bag
+cp $file temp.bag
 #echo "$file $num" >> scene_mapping.txt 
-rosbag play -d 10 globalTransform.bag &
-rosrun scene_processing live_segment_computeFeats > log.txt
+rosbag play -d 10 temp.bag &
+rosrun scene_processing live_segment_computeFeats
 
 mkdir $file.pred
 mv *.pcd $file.pred/

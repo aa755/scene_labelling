@@ -1634,7 +1634,7 @@ int getBinIndex(pcl::PointXYZ value, pcl::PointXYZ min, pcl::PointXYZ step, int 
 
 void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
 {
-    pcl::PointXYZ steps(0.05, 0.02, 0.1);
+    pcl::PointXYZ steps(0.005, 0.005, 0.005);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
     maximas.resize(classes.size());
@@ -2137,7 +2137,7 @@ void processPointCloud(/*const sensor_msgs::ImageConstPtr& visual_img_msg,
         convertType(cloud, *cloud_seg_ptr, globalTransform.getOrigin(), 0);
         assert(cloud_seg_ptr->size() == 640 * 480);
         segmentInPlace(*cloud_seg_ptr);
-        globalTransform.transformPointCloudInPlaceAndSetOrigin(*cloud_seg_ptr);
+        //globalTransform.transformPointCloudInPlaceAndSetOrigin(*cloud_seg_ptr);
         write_feats(globalTransform, cloud_seg_ptr, callback_counter_);
         sceneToAngleMap[callback_counter_] = currentAngle;
 
@@ -2274,6 +2274,9 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
             return;
         }
         
+        // exiting when finished look for once.
+        getMovement(true);
+          exit(0);
         
         return;
     }
@@ -2283,8 +2286,6 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
        
         getMovement(true);
         printLabelsToLookFor();
-        // exiting when finished look for once.
-          exit(0);
      
         originalScan = false;
         // do not process the current cloud but move the robot to the correct position
@@ -2424,7 +2425,7 @@ int main(int argc, char** argv) {
     pub = n.advertise<sensor_msgs::PointCloud2 > ("/scene_labler/labeled_cloud", 10);
     //    std_msgs::String str;
     //    str.data = "hello world";
-    ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, robotMovementControl);
+    ros::Subscriber cloud_sub_ = n.subscribe("/rgbdslam/my_clouds", 1, robotMovementControl);
 
     ros::spin();
   
