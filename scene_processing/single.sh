@@ -6,9 +6,9 @@ num=`expr $num + 1`
 #if [ $num -gt 6 ]
 # then
 #cp $file globalTransform.bag
-cp $file temp.bag
+#cp $file temp.bag
 #echo "$file $num" >> scene_mapping.txt 
-rosbag play -d 10 temp.bag &
+rosbag play -d 10 $file &
 rosrun scene_processing live_segment_computeFeats
 
 mkdir $file.pred
