@@ -81,6 +81,7 @@ public:
     float avgH;
     float avgS;
     float avgV;
+    int count;
 
     geometry_msgs::Point32 centroid;
     Eigen::Vector3d normal;
@@ -100,6 +101,27 @@ public:
         return eigenValues[2 - index];
     }
 
+    void addCentroid(const SpectralProfile & other)
+    {        
+        centroid.x+=other.centroid.x;
+        centroid.y+=other.centroid.y;
+        centroid.z+=other.centroid.z;
+        count++; // will be used for computing average
+    }
+    
+    void setCentroid(const SpectralProfile & other)
+    {
+        centroid=other.centroid;
+        count=1;
+    }
+
+    void setAvgCentroid()
+    {
+        centroid.x/=count;
+        centroid.y/=count;
+        centroid.z/=count;
+    }
+    
     pcl::PointXYZ getCentroid() {
         pcl::PointXYZ ret;
         ret.x = centroid.x;
@@ -1777,12 +1799,16 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
                     if (maxCost[oclass] < cost)
                     {
                         maxCost[oclass] = cost;
-                        maxS[oclass] = target;
-                        maximas[oclass].x = x;
-                        maximas[oclass].y = y;
-                        maximas[oclass].z = z;
-                        maximas[oclass].intensity = cost;
+                        maxS[oclass].setCentroid( target);
+                      //  maximas[oclass].x = x;
+                      //  maximas[oclass].y = y;
+                      //  maximas[oclass].z = z;
+                      //  maximas[oclass].intensity = cost;
                         //   cout<<"nodeFeats \n"<<nodeFeatsB<<endl;                    
+                    } 
+                    else if(maxCost[oclass] == cost)
+                    {
+                        maxS[oclass].addCentroid(target);                        
                     }
 
                     if (minCost[oclass] > cost)
@@ -1807,10 +1833,17 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
 
             }
 
-    for (int oclass = 0; oclass < classes.size(); oclass++)
+    for (size_t oclass = 0; oclass < classes.size(); oclass++)
     {
         //   replace<float>(heatMapTop[oclass], -FLT_MAX, minCost);
         //    replace<float>(heatMapFront[oclass], -FLT_MAX, minCost);
+        maxS[oclass].setAvgCentroid();
+        
+        maximas[oclass].x = maxS[oclass].centroid.x;
+        maximas[oclass].y = maxS[oclass].centroid.y;
+        maximas[oclass].z = maxS[oclass].centroid.z;
+        maximas[oclass].intensity = maxCost[oclass];
+        
         writeHeatMap<float>((lexical_cast<string > (classes[oclass]) + "_topHeat" + lexical_cast<string > (scene_num) + ".png").data(), heatMapTop[oclass], maxCost[oclass], minCost[oclass], numBins[1] - 1 - getBinIndex(maxS[oclass].getCentroid(), min, steps, 1), getBinIndex(maxS[oclass].getCentroid(), min, steps, 0));
         writeHeatMap<float>((lexical_cast<string > (classes[oclass]) + "frontHeat" + lexical_cast<string > (scene_num) + ".png").data(), heatMapFront[oclass], maxCost[oclass], minCost[oclass], numBins[2] - 1 - getBinIndex(maxS[oclass].getCentroid(), min, steps, 2), getBinIndex(maxS[oclass].getCentroid(), min, steps, 1));
         //cout << "optimal point" << maxS.centroid.x << "," << maxS.centroid.y << "," << maxS.centroid.z << " with cost:" << minCost << endl;
