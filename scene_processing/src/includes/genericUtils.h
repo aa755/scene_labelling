@@ -89,19 +89,19 @@ void writeHeatMap(const char* filename,Eigen::Matrix<_Scalar,Eigen::Dynamic,  Ei
   for(int x=0;x<size.width;x++)
     for(int y=0;y<size.height;y++)
       {
-        if(mat(y,x)==max)
+        if(std::abs(x-maxX)<rad && std::abs(y-maxY)<rad)
+        {
+                CV_IMAGE_ELEM ( image, float, y, 3 * x ) = 0;
+                CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 ) = 1;
+                CV_IMAGE_ELEM ( image, float, y, 3 * x + 2 ) = 0;            
+        }        
+        else if(mat(y,x)==max)
         {
                 CV_IMAGE_ELEM ( image, float, y, 3 * x ) = 0;
                 CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 ) = 0.5;
                 CV_IMAGE_ELEM ( image, float, y, 3 * x + 2 ) = 0;            
             
         }
-        else if(std::abs(x-maxX)<rad && std::abs(y-maxY)<rad)
-        {
-                CV_IMAGE_ELEM ( image, float, y, 3 * x ) = 0;
-                CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 ) = 1;
-                CV_IMAGE_ELEM ( image, float, y, 3 * x + 2 ) = 0;            
-        }        
         else
         {
                 float scaledCost=(mat(y,x)-min)/(max-min);
