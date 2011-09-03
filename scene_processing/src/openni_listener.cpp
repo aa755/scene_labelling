@@ -1656,7 +1656,7 @@ int getBinIndex(pcl::PointXYZ value, pcl::PointXYZ min, pcl::PointXYZ step, int 
 
 void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
 {
-    pcl::PointXYZ steps(0.005, 0.005, 0.005);
+    pcl::PointXYZ steps(0.01, 0.01, 0.01);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
     maximas.resize(classes.size());
@@ -1848,7 +1848,7 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
         writeHeatMap<float>((lexical_cast<string > (classes[oclass]) + "frontHeat" + lexical_cast<string > (scene_num) + ".png").data(), heatMapFront[oclass], maxCost[oclass], minCost[oclass], numBins[2] - 1 - getBinIndex(maxS[oclass].getCentroid(), min, steps, 2), getBinIndex(maxS[oclass].getCentroid(), min, steps, 1));
         //cout << "optimal point" << maxS.centroid.x << "," << maxS.centroid.y << "," << maxS.centroid.z << " with cost:" << minCost << endl;
     }
-    //exit(1);
+    exit(1);
 
 
 }
