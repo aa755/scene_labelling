@@ -2308,8 +2308,8 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         }
         
         // exiting when finished look for once.
-        //getMovement(true);
-        //  exit(0);
+        getMovement(true);
+          exit(0);
         
         return;
     }

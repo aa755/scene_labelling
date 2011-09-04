@@ -1,13 +1,13 @@
 #!/bin/bash
 #cp ~/Nips2011/cleanKinectData/office/singles/allBags/*.bag ./
 num=0
-#for file in `dir -d demo?/*.bag` ; do
-for file in `dir -d *data*.bag` ; do
+for file in `dir -d demoFinalRaghu/*.bag` ; do
+#for file in `dir -d *data*.bag` ; do
 num=`expr $num + 1`
 #if [ $num -gt 6 ]
 # then
 echo "now processing $file ..."
-cp $file globalTransform.bag
+#cp $file globalTransform.bag
 #cp $file temp.bag
 #echo "$file $num" >> scene_mapping.txt 
 rosbag play -d 10 $file &
