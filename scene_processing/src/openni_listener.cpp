@@ -2295,10 +2295,11 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
         processPointCloud (point_cloud);
          
         // turn robot and increase the count
-        
+        if(turnCount < MAX_TURNS-1){ 
         robot->turnLeft(40,2);
         currentAngle += 40;
         cout << "current Angle now is "  << currentAngle<< endl;
+        }
         turnCount++;
         printLabelsFound(turnCount);
         // if all classes found then return
