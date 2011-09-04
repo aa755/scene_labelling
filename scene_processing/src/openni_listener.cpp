@@ -2076,10 +2076,10 @@ int write_feats(TransformG transG, pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr &
  */ 
     cloudVector.push_back(cloud);
     spectralProfilesVector.push_back(spectralProfiles);
-    segIndex2LabelVector.push_back(segIndex2Label);
     segment_cloudsVector.push_back(segment_clouds);
     sceneNumVector.push_back(scene_num);
     parseAndApplyLabels(predLabels, cloud, segment_clouds, segIndex2Label);
+    segIndex2LabelVector.push_back(segIndex2Label);
     predLabels.close();
     writer.write<pcl::PointXYZRGBCamSL > (featfilename + ".pcd", cloud, true);
     sensor_msgs::PointCloud2 cloudMsg;
