@@ -261,7 +261,8 @@ class TransformG
 {
 public:
     
-void transformPointCloudInPlaceAndSetOrigin( pcl::PointCloud<PointT> & in)
+    template <typename PointTT>
+void transformPointCloudInPlaceAndSetOrigin( pcl::PointCloud<PointTT> & in)
 {
 
     boost::numeric::ublas::matrix<double> matIn(4, 1);
