@@ -2167,7 +2167,7 @@ void processPointCloud(/*const sensor_msgs::ImageConstPtr& visual_img_msg,
         pcl::PointCloud<pcl::PointXYZRGB> cloud;
         pcl::PointCloud<pcl::PointXYZRGBCamSL>::Ptr cloud_seg_ptr(new pcl::PointCloud<pcl::PointXYZRGBCamSL > ());
         pcl::fromROSMsg(*point_cloud, cloud);
-        convertType(cloud, *cloud_seg_ptr, globalTransform.getOrigin(), 0);
+        convertType(cloud, *cloud_seg_ptr, VectorG(0,0,0), 0);
         assert(cloud_seg_ptr->size() == 640 * 480);
         segmentInPlace(*cloud_seg_ptr);
         globalTransform.transformPointCloudInPlaceAndSetOrigin(*cloud_seg_ptr);
