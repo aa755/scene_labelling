@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp ~/Nips2011/cleanKinectData/office/singles/allBags/*.bag ./
 num=0
-for file in `dir -d demoFinalRaghu/*.bag` ; do
+for file in `dir -d demo0/*.bag` ; do
 #for file in `dir -d *data*.bag` ; do
 num=`expr $num + 1`
 #if [ $num -gt 6 ]
