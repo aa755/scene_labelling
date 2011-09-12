@@ -1659,6 +1659,57 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud, pcl
     HOG::saveFloatImage(filename, frontImageOriginal);
 
 }
+void projectPointToImage(float x, float y, float z, int & imageY, int & imageX)
+{
+     int imageWidth=640;
+    int imageHeight=480;
+                       imageX=(imageWidth*x/z/1.1147 + imageWidth*0.5)  ;
+                        imageY=imageHeight-(imageHeight*0.5 -imageHeight*y/z/0.8336)-1  ;     
+}
+
+void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud, int scene_num)
+{
+    CvSize size;
+
+    size.height = 480;
+    size.width = 640;
+    IplImage * topImageOriginal = cvCreateImage(size, IPL_DEPTH_32F, 3);
+
+    int imageWidth = 640;
+    int imageHeight = 480;
+
+    int imageY, imageX;
+
+    ColorRGB tmpColor;
+    for (size_t i = 0; i < cloud.points.size(); i++)
+    {
+        if (isnan(cloud.points[i].x) || isnan(cloud.points[i].y) || isnan(cloud.points[i].z))
+        {
+            continue;
+        }
+        projectPointToImage(cloud.points[i].x, cloud.points[i].y, cloud.points[i].z, imageY, imageX);
+        //      assert(imageX>=0);
+        //      assert(imageY>=0);
+        //      assert(imageX<640);
+        //      assert(imageY<480);
+
+
+
+        if (imageX >= 0 && imageY >= 0 && imageX < imageWidth && imageY < imageHeight)
+        {
+
+            tmpColor.assignColor(cloud.points[i].rgb);
+            CV_IMAGE_ELEM(topImageOriginal, float, imageY, 3 * imageX) = tmpColor.b;
+            CV_IMAGE_ELEM(topImageOriginal, float, imageY, 3 * imageX + 1) = tmpColor.g;
+            CV_IMAGE_ELEM(topImageOriginal, float, imageY, 3 * imageX + 2) = tmpColor.r;
+        }
+    }
+
+    char filename[30];
+    sprintf(filename, "top0riginal%d.png", scene_num);
+    HOG::saveFloatImage(filename, topImageOriginal);
+
+}
 
 int getBinIndex(double value, double min, double step) {
     return (value - min) / step;
@@ -1873,8 +1924,12 @@ void lookForClassInOriginalFrameOrthographic(vector<int> & classes, pcl::PointCl
 
 }
 
+
 void lookForClassInOriginalFrameProjective(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
 {
+         int imageWidth=640;
+    int imageHeight=480;
+
     pcl::PointXYZ steps(0.01, 0.01, 0.01);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
@@ -1905,7 +1960,7 @@ void lookForClassInOriginalFrameProjective(vector<int> & classes, pcl::PointClou
         }
     }
     
-    saveOriginalImages(cloudOriginal, max, min, steps, scene_num);
+    saveOriginalImages(cloudOriginal, scene_num);
     int numBins[3];
     for (int i = 0; i < 3; i++)
     {
@@ -1927,8 +1982,6 @@ void lookForClassInOriginalFrameProjective(vector<int> & classes, pcl::PointClou
     Matrix<float, Dynamic, Dynamic> heatMapTop[classes.size()];
     //Matrix<float, Dynamic, Dynamic> heatMapFront[classes.size()];
 
-    int imageWidth=640;
-    int imageHeight=480;
     for (int oclass = 0; oclass < classes.size(); oclass++)
     {
         minCost[oclass] = DBL_MAX;
@@ -2043,15 +2096,15 @@ void lookForClassInOriginalFrameProjective(vector<int> & classes, pcl::PointClou
                         minCost[oclass] = cost;
                     }
                     
-                        imageX=(640*x/z/1.1147 + 640*0.5)/2.0  ;
-                        imageY=(480*0.5 -460*y/z/0.8336)/2.0  ; 
+                   projectPointToImage(x,y,z,imageY,imageX); 
+          
                         
-                        assert(imageX>=0);
-                        assert(imageY>=0);
-                        assert(imageX<imageWidth);
-                        assert(imageY>imageHeight);
+                      //  assert(imageX>=0);
+                      //  assert(imageY>=0);
+                      //  assert(imageX<imageWidth);
+                      //  assert(imageY<imageHeight);
 
-                    if (heatMapTop[oclass](imageY, imageX) < cost)
+                    if (imageX>=0 && imageY>=0 && imageX<imageWidth && imageY<imageHeight && heatMapTop[oclass](imageY, imageX) < cost)
                     {
                         heatMapTop[oclass](imageY, imageX) = cost;
                     }
@@ -2070,8 +2123,7 @@ void lookForClassInOriginalFrameProjective(vector<int> & classes, pcl::PointClou
         //    replace<float>(heatMapFront[oclass], -FLT_MAX, minCost);
         maxS[oclass].setAvgCentroid();
         maxS[oclass].transformCentroid(invTrans); // come back to original
-                        imageX=(640*maxS[oclass].centroid.x/maxS[oclass].centroid.z/1.1147 + 640*0.5)/2.0  ;
-                        imageY=(480*0.5 -460*maxS[oclass].centroid.y/maxS[oclass].centroid.z/0.8336)/2.0  ; 
+                   projectPointToImage(maxS[oclass].centroid.x,maxS[oclass].centroid.y,maxS[oclass].centroid.z,imageY,imageX); 
         
         maximas[oclass].x = maxS[oclass].centroid.x;
         maximas[oclass].y = maxS[oclass].centroid.y;
@@ -2654,7 +2706,7 @@ void getMovement(bool lookFor){
         while (cloudVector.size() > 0) {
 
             vector<pcl::PointXYZI> frame_maximas;
-            lookForClassInOriginalFrame(labelsToLookFor, cloudVector.at(0), spectralProfilesVector.at(0), segIndex2LabelVector.at(0), segment_cloudsVector.at(0), sceneNumVector.at(cloudCount), frame_maximas);
+            lookForClassInOriginalFrameProjective(labelsToLookFor, cloudVector.at(0), spectralProfilesVector.at(0), segIndex2LabelVector.at(0), segment_cloudsVector.at(0), sceneNumVector.at(cloudCount), frame_maximas);
             locations.push_back(frame_maximas);
             // remove the point clouds in which maximas are found
             cloudVector.erase(cloudVector.begin());
