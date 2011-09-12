@@ -12,7 +12,7 @@ echo "now processing $file ..."
 #cp $file temp.bag
 #echo "$file $num" >> scene_mapping.txt 
 rosbag play -d 10 $file &
-rosrun scene_processing live_segment_computeFeats
+rosrun scene_processing live_segment_computeFeats > log.txt
 
 mkdir $file.pred
 mv *.pcd $file.pred/

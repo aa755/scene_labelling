@@ -86,6 +86,8 @@ void writeHeatMap(const char* filename,Eigen::Matrix<_Scalar,Eigen::Dynamic,  Ei
   size.width=mat.cols();
   IplImage * image = cvCreateImage ( size, IPL_DEPTH_32F, 3 );
   
+  cout<<filename<<":"<<max<<endl;
+  
   for(int x=0;x<size.width;x++)
     for(int y=0;y<size.height;y++)
       {
