@@ -2899,6 +2899,36 @@ void robotMovementControlSingleObject(const sensor_msgs::PointCloud2ConstPtr& po
       
 }
 
+void robotMovementControlRandom(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
+    double angle = 0;
+    
+    // first frame just pick a random direction and move to it
+    if(turnCount== 0){
+       
+        angle = rand() % SPAN - SPAN/2;
+        robot->turnLeft(angle,2);
+        currentAngle = angle;
+        cout << "current Angle now is "  << currentAngle<< endl;
+        turnCount ++;
+        return;
+    }
+     // second frame onwards, 
+    else if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES){
+        // process the cloud
+        ROS_INFO("processing %d cloud.. \n",turnCount+1);
+        processPointCloud (point_cloud);
+        
+            angle = rand() % SPAN - SPAN/2;
+            robot->turnLeft(angle-currentAngle,2);
+            currentAngle = angle;
+            cout << "current Angle now is "  << currentAngle<< endl;
+        turnCount++;
+        return;
+        
+    }else {exit (0);}
+    
+      
+}
 
 int main(int argc, char** argv) {
     readWeightVectors();
@@ -2936,7 +2966,7 @@ int main(int argc, char** argv) {
     pub = n.advertise<sensor_msgs::PointCloud2 > ("/scene_labler/labeled_cloud", 10);
     //    std_msgs::String str;
     //    str.data = "hello world";
-    ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, robotMovementControlSingleObject);
+    ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, robotMovementControlRandom);
 
     ros::spin();
   
