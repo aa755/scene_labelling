@@ -266,7 +266,8 @@ boost::dynamic_bitset<> maximaChanged(NUM_CLASSES);
 bool foundAny = false;
 bool translationState = false;
 map<int, double> sceneToAngleMap;
- 
+#define SPAN 30
+
 vector<int> maximaFrames(NUM_CLASSES,0);
 
 
@@ -2849,7 +2850,54 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     
 }
 
+void robotMovementControlSingleObject(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
+    double angle = 0;
+    
+    // first frame just pick a random direction and move to it
+    if(turnCount== 0){
+       
+        angle = rand() % SPAN - SPAN/2;
+        robot->turnLeft(angle,2);
+        currentAngle = angle;
+        cout << "current Angle now is "  << currentAngle<< endl;
+        turnCount ++;
+        return;
+    }
+     // second frame onwards, 
+    else if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES){
+        // process the cloud
+        ROS_INFO("processing %d cloud.. \n",turnCount+1);
+        processPointCloud (point_cloud);
+        
+        // look for the class
+        getMovement(true);
+        // if maxima changed the look-for/rotations list will be non-empty
+        if(labelsToLookFor.size() != 0){
+             printLabelsToLookFor();
+             double angle = rotations[0] - currentAngle;
+             robot->turnLeft(angle, 0);
+             currentAngle = rotations[0];
+             cout << "current Angle now is "  << currentAngle<< endl;
+             cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+             labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
+             objCount++;
+             rotations.erase(rotations.begin());
+             
 
+        }else {// else pic a random angle and move
+            angle = rand() % SPAN - SPAN/2;
+            robot->turnLeft(angle-currentAngle,2);
+            currentAngle = angle;
+            cout << "current Angle now is "  << currentAngle<< endl;
+        }  
+        // increase the count
+        turnCount++;
+        return;
+        
+    }else {exit (0);}
+    
+      
+}
 
 
 int main(int argc, char** argv) {
@@ -2888,7 +2936,7 @@ int main(int argc, char** argv) {
     pub = n.advertise<sensor_msgs::PointCloud2 > ("/scene_labler/labeled_cloud", 10);
     //    std_msgs::String str;
     //    str.data = "hello world";
-    ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, robotMovementControl);
+    ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, robotMovementControlSingleObject);
 
     ros::spin();
   
