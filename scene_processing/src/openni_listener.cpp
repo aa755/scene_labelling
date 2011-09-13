@@ -2855,7 +2855,8 @@ void robotMovementControlSingleObject(const sensor_msgs::PointCloud2ConstPtr& po
     
     // first frame just pick a random direction and move to it
     if(turnCount== 0){
-       
+       srand ( time(NULL) );
+
         angle = rand() % SPAN - SPAN/2;
         robot->turnLeft(angle,2);
         currentAngle = angle;
@@ -2904,7 +2905,8 @@ void robotMovementControlRandom(const sensor_msgs::PointCloud2ConstPtr& point_cl
     
     // first frame just pick a random direction and move to it
     if(turnCount== 0){
-       
+       srand ( time(NULL) );
+
         angle = rand() % SPAN - SPAN/2;
         robot->turnLeft(angle,2);
         currentAngle = angle;
