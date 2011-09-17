@@ -15,7 +15,6 @@
   <depend package="pcl_visualization"/>
   <depend package="rospy"/>
   <depend package="roscpp"/>
- <depend package="point_cloud_mapping"/>
  <depend package="octomap_ros"/>
 
   <export>
@@ -26,6 +25,7 @@ temporarily removed:
 
  <depend package="stereo_msgs"/>
 
+ <depend package="point_cloud_mapping"/>
 
  <depend package="cloud_geometry"/>
  <depend package="cloud_io"/>
