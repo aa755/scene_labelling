@@ -71,6 +71,10 @@
 #include <dynamic_reconfigure/server.h>
 #include <scene_processing/labelingConfig.h>
 
+#include <pcl/filters/passthrough.h>
+
+
+
 //typedef pcl::PointXYZRGB PointT;
 //std::string initLabels[]={"wall","floor","table","shelf","chair","cpu","monitor","clutter"};
 
@@ -620,7 +624,14 @@ int
    pcl::fromROSMsg (cloud_blob, cloud);
    pcl::PointCloud<PointT>::Ptr cloud_ptr (new pcl::PointCloud<PointT> (cloud));
 
-
+   pcl::PassThrough<PointT> pass;
+   pass.setInputCloud (cloud_ptr);
+   pass.filter(*cloud_ptr);
+   //cout << "Size of cloud after filtering : " << cloud_ptr->points.size() << " , " << cloud.points.size() << endl; 
+   cloud = *cloud_ptr;
+   cout << "Size of cloud after filtering : " << cloud_ptr->points.size() << " , " << cloud.points.size() << endl; 
+   
+   
   // find the max segment number 
   size_t max_segment_num = 0;
   for (size_t i = 0; i < cloud.points.size (); ++i)
