@@ -64,6 +64,7 @@ static const string edgeBinFile = "binStumpsE.txt";
 string environment;
 
 map<int, int> invLabelMap;
+map<int, int> labelMap;
 pcl::PCDWriter writer;
 #define NUM_CLASSES 17
 
@@ -437,6 +438,7 @@ void readInvLabelMap(map<int, int> & invLabelMap, const string & file) {
         //        getline(myfile, line);
         //        cout << line << endl;
         invLabelMap[svmLabel] = origLabel;
+        labelMap[origLabel]=svmLabel;
     }
     myfile.close();
 }
@@ -778,6 +780,50 @@ void apply_segment_filter_and_compute_HOG(pcl::PointCloud<PointT> &incloud, pcl:
 
 }
 
+void apply_segment_filter(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment, SpectralProfile & feats) {
+    //ROS_INFO("applying filter");
+
+    outcloud.points.erase(outcloud.points.begin(), outcloud.points.end());
+
+    outcloud.header.frame_id = incloud.header.frame_id;
+    //    outcloud.points = incloud.points;
+    outcloud.points.resize(incloud.points.size());
+
+
+
+
+    vector<size_t> indices;
+    int j = -1;
+    for (size_t i = 0; i < incloud.points.size(); ++i) {
+
+        if (incloud.points[i].segment == segment) {
+            j++;
+            outcloud.points[j].x = incloud.points[i].x;
+            outcloud.points[j].y = incloud.points[i].y;
+            outcloud.points[j].z = incloud.points[i].z;
+            outcloud.points[j].rgb = incloud.points[i].rgb;
+            outcloud.points[j].segment = incloud.points[i].segment;
+            outcloud.points[j].label = incloud.points[i].label;
+            outcloud.points[j].cameraIndex = incloud.points[i].cameraIndex;
+            outcloud.points[j].distance = incloud.points[i].distance;
+            //  cerr<<incloud.points[i].cameraIndex<<","<<numFrames<<endl;
+            indices.push_back(i);
+
+            //     std::cerr<<segment_cloud.points[j].label<<",";
+        }
+    }
+
+    // cout<<j << ","<<segment<<endl;
+    if (j >= MIN_SEG_SIZE) {
+        outcloud.points.resize(j + 1);
+       // OriginalFrameInfo::findHog(indices, incloud, feats.avgHOGFeatsOfSegment, originalFrame);
+    } else {
+        outcloud.points.clear();
+        return;
+    }
+
+}
+
 void apply_notsegment_filter(const pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment) {
     //ROS_INFO("applying filter");
 
@@ -1080,6 +1126,15 @@ void getSpectralProfile(const pcl::PointCloud<PointT> &cloud, SpectralProfile &s
         }
     }
     assert(minEigV == spectralProfile.getDescendingLambda(2));
+}
+void getSpectralProfileCent(const pcl::PointCloud<PointT> &cloud, SpectralProfile &spectralProfile) {
+    Eigen::Matrix3d eigen_vectors;
+    Eigen::Vector3d eigen_values;
+    sensor_msgs::PointCloud2 cloudMsg2;
+    pcl::toROSMsg(cloud, cloudMsg2);
+    sensor_msgs::PointCloud cloudMsg;
+    sensor_msgs::convertPointCloud2ToPointCloud(cloudMsg2, cloudMsg);
+    cloud_geometry::nearest::computePatchEigenNormalized(cloudMsg, eigen_vectors, eigen_values, spectralProfile.centroid);
 }
 
 void get_feature_average(vector<vector<float> > &descriptor_results, vector<float> &avg_feats) {
@@ -2090,7 +2145,7 @@ void lookForClassInOriginalFrameProjective(vector<int> & classes, pcl::PointClou
 
 void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
 {
-    pcl::PointXYZ steps(0.05, 0.02, 0.1);
+    pcl::PointXYZ steps(0.01, 0.01, 0.01);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
     maximas.resize(classes.size());
@@ -2932,6 +2987,56 @@ void robotMovementControlRandom(const sensor_msgs::PointCloud2ConstPtr& point_cl
       
 }
 
+void evaluate(string inp, string out, int oclass)
+{
+    std::vector<pcl::PointCloud<PointT> > segment_clouds;
+        pcl::PointCloud<PointT> cloud;
+        pcl::PointCloud<PointT>::Ptr cloud_seg(new pcl::PointCloud<PointT>());
+        pcl::PointCloud<PointT> outc;
+        pcl::io::loadPCDFile<PointT>(inp, cloud);
+      //  pcl::io::loadPCDFile<PointT>(out, outc);
+    map<int, int> segIndex2Label;
+    int max_segment_num;
+    for (size_t i = 0; i < cloud.points.size(); ++i) {
+        counts[cloud.points[i].segment]++;
+        if (max_segment_num < cloud.points[i].segment) {
+            max_segment_num = (int) cloud.points[i].segment;
+        }
+    }
+
+
+    int index_ = 0;
+    vector<SpectralProfile> spectralProfiles;
+    std::cerr << "max_seg num:" << max_segment_num << "," << cloud.points.size() << endl;
+    for (int seg = 1; seg <= max_segment_num; seg++) {
+         if(counts[seg]<=MIN_SEG_SIZE)
+           continue;
+        SpectralProfile temp;
+        apply_segment_filter(cloud, *cloud_seg, seg, temp);
+        getSpectralProfileCent(*cloud_seg,temp);
+
+        //if (label!=0) cout << "segment: "<< seg << " label: " << label << " size: " << cloud_seg->points.size() << endl;
+        if (!cloud_seg->points.empty() && cloud_seg->points.size() > MIN_SEG_SIZE) {
+            segIndex2Label[index_]=labelMap[cloud_seg->points[1].label];
+            //std::cout << seg << ". Cloud size after extracting : " << cloud_seg->points.size() << std::endl;
+            segment_clouds.push_back(*cloud_seg);
+            pcl::PointCloud<PointT>::Ptr tempPtr(new pcl::PointCloud<PointT > (segment_clouds[segment_clouds.size() - 1]));
+            temp.cloudPtr = tempPtr;
+
+            spectralProfiles.push_back(temp);
+           // segment_num_index_map[cloud_seg->points[1].seugment] = index_;
+            index_++;
+        }
+    }
+    
+    vector<int> classes;
+    classes.push_back(oclass);
+    vector<PointXYZI> maximas;
+    lookForClass(classes, cloud, spectralProfiles, segIndex2Label, segment_clouds, 0, maximas);
+    cout<<maximas.at(0)<<endl;
+  
+    
+}
 int main(int argc, char** argv) {
     readWeightVectors();
     ros::init(argc, argv, "hi");
@@ -2968,6 +3073,10 @@ int main(int argc, char** argv) {
     pub = n.advertise<sensor_msgs::PointCloud2 > ("/scene_labler/labeled_cloud", 10);
     //    std_msgs::String str;
     //    str.data = "hello world";
+    
+    evaluate(argv[2],argv[3],7);
+    exit(0);
+    
     ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, robotMovementControlRandom);
 
     ros::spin();
