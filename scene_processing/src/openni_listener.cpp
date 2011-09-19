@@ -2994,10 +2994,10 @@ void evaluate(string inp, string out, int oclass)
         pcl::PointCloud<PointT>::Ptr cloud_seg(new pcl::PointCloud<PointT>());
         pcl::PointCloud<PointT> outc;
         pcl::io::loadPCDFile<PointT>(inp, cloud);
-      //  pcl::io::loadPCDFile<PointT>(out, outc);
+        pcl::io::loadPCDFile<PointT>(out, outc);
     map<int, int> segIndex2Label;
     int max_segment_num;
-    for (size_t i = 0; i < cloud.points.size(); ++i) {
+    for (size_t i = 0; i < cloud.points.size(); i++) {
         counts[cloud.points[i].segment]++;
         if (max_segment_num < cloud.points[i].segment) {
             max_segment_num = (int) cloud.points[i].segment;
@@ -3033,7 +3033,30 @@ void evaluate(string inp, string out, int oclass)
     classes.push_back(oclass);
     vector<PointXYZI> maximas;
     lookForClass(classes, cloud, spectralProfiles, segIndex2Label, segment_clouds, 0, maximas);
-    cout<<maximas.at(0)<<endl;
+    cout<<"heatMax"<<maximas.at(0)<<endl;
+    
+    Vector3d sump(0,0,0);
+    Vector3d predL(maximas.at(0).x,maximas.at(0).y,maximas.at(0).z);
+    
+    int count=0;
+    int targetLabel=invLabelMap[oclass+1];
+    double minDist=0.0;
+    cout<<"keyboard:"<<targetLabel<<endl;
+    for (size_t i = 0; i < outc.points.size(); i++) {
+        if(outc.points[i].label==targetLabel)
+        {
+                Vector3d point(outc.points[i].x,outc.points[i].y,outc.points[i].z);
+                sump+=point;
+                count++;
+                double dist=(predL-point).norm();
+                if(minDist<dist)
+                    minDist=dist;
+        }
+    }
+    
+    Vector3d centroid=sump/count;
+    cout<<"minDist"<<minDist<<endl;
+    cout<<"centDist"<<(predL-centroid).norm()<<endl;
   
     
 }
