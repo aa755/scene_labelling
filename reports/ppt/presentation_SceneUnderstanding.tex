@@ -5,10 +5,29 @@
 \usepackage{verbatim} 
 \usepackage{amsmath}
 
+\usepackage{array}
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{url}
-\usepackage{verbatim} 
+\usepackage{verbatim}
+\usepackage{multirow} 
+\usepackage{relsize}
+
+
+\usepackage{cite}
+\usepackage{url}
+\usepackage{color}
+
+
+
+
+\newlength\savedwidth
+\newcommand\whline[1]{\noalign{\global\savedwidth\arrayrulewidth
+                               \global\arrayrulewidth #1} %
+                      \hline
+                      \noalign{\global\arrayrulewidth\savedwidth}}
+\renewcommand\multirowsetup{\centering}                  
+
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}  
@@ -189,9 +208,58 @@ match the following to table/printer
 \end{frame}
 
 
+
 \begin{frame}{Features}
 
+\begin{itemize}
+\item Node Features
+\begin{itemize}
+\item Visual Appearance
+	\begin{itemize}
+	\item Histogram of HSV color values
+	\item Average HSV color values
+	\item HOG features corresponding to the segment
+	\end{itemize}
+	\item Local Shape and Geometry
+	\begin{itemize}
+	\item Linear-ness , Planar-ness and Scatter
+	\item Vertical component of the normal
+	\item Vertical position of centroid
+	\item Bounding box dimensions
+	\item Distance from scene boundary
+	\end{itemize}
+\end{itemize}
+\end{itemize}
+
 \end{frame}
+
+\begin{frame}{Features}
+
+\begin{itemize}
+\item Edge Features
+\begin{itemize}
+\item Visual Appearance
+	\begin{itemize}
+	\item Diff in avg. HSV color values
+	\end{itemize}
+	\item Local Shape and Geometry
+	\begin{itemize}
+	\item Coplanarity and convexity
+	\end{itemize}
+	\item Geometric context
+	\begin{itemize}
+	\item Horizontal distance b/w centroids
+	\item Vertical displacement b/w centroids
+	\item Angle between normals
+	\item Diff in angle with vertical
+	\item Distance between closest points
+	\item Relative position from camera (in front of/ behind) 
+	\end{itemize}
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+
 
 \begin{frame}{Learning}
 
@@ -225,6 +293,61 @@ match the following to table/printer
 % put table
 % put confusion matrices 
 % discuss the points mentioned in the paper  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Table of results 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}
+
+\caption{{\bf Learning experiment statistics.} The table shows average micro precision/recall, and average macro precision and recall for home and office scenes. }
+ \label{tbl:overall_result}
+ 
+{\tiny
+\newcolumntype{P}[2]{>{\footnotesize#1\hspace{0pt}\arraybackslash}p{#2}}
+\setlength{\tabcolsep}{2pt}
+\centering
+\resizebox{\hsize}{!}
+ {
+\begin{tabular}
+{p{0.24\linewidth}p{0.16\linewidth}|P{\centering}{14mm}P{\centering}{12mm}P{\centering}{12mm}|P{\centering}{14mm}P{\centering}{12mm}P{\centering}{12mm} }\\
+%{p{0.15\linewidth}p{0.18\linewidth}|p{10mm}p{12mm}p{12mm}|p{12mm}p{12mm}p{12mm}|p{12mm}p{12mm}p{12mm}|p{12mm}p{10mm}p{12mm}p{12mm}p{12mm}p{12mm}}
+%\multicolumn{18}{c}{Listed environment-wise, averaged over the objects.} \\
+\whline{1.1pt} 
+& & \multicolumn{3}{c|}{Office Scenes} & \multicolumn{3}{c}{Home Scenes}  \\
+\cline{3-8}
+& & \multicolumn{1}{c}{micro} & \multicolumn{2}{c|}{macro} & \multicolumn{1}{c}{micro} &  \multicolumn{2}{c}{macro}   \\
+\whline{0.4pt} 
+     features &  algorithm & \multicolumn{1}{c}{$P/R$} & \multicolumn{1}{c}{Precision}  & \multicolumn{1}{c|}{Recall} &  \multicolumn{1}{c}{$P/R$} & \multicolumn{1}{c}{Precision} &  \multicolumn{1}{c}{Recall}  \\ 
+\whline{0.8pt} 
+None &  chance &  26.23 & 5.88 & 5.88 & 29.38 & 5.88 & 5.88\\
+\whline{0.6pt} 
+Image Only &           svm\_node\_only                        & 46.67  & 35.73 & 31.67 &   38.00 & 15.03 & 14.50\\%  &  &  &     \\
+Shape Only &              svm\_node\_only                        & 75.36  & 64.56 & 60.88 &    56.25 & 35.90 & 36.52 \\
+% &  &  &    \\
+Image+Shape &         svm\_node\_only                         & 77.97  & 69.44 & 66.23 &   56.50 & 37.18 & 34.73 \\
+% &  &  &   \\
+\whline{0.6pt} 
+Image+Shape \& context &  single\_frames                 & 84.32 & 77.84 & 68.12 & 69.13 & 47.84 & 43.62 \\
+%Image+Shape \& context &  single\_frames 500                 & 70.37 & 62.88 & 47.27 &  &  &  \\
+%Image+Shape \& context &  single\_frames 500,sum$\le$1                 & 77.57/63.35 & 63.58 & 36.51 &  &  &  \\
+%Image+Shape \& context &  single\_frames 500,learn,sum1                 & 78.36 & 68.86 & 66.69 &  &  &  \\
+%Image+Shape \& context &  single\_frames, sum$\le$1                 & 89.27/55.17 & 74.29 & 35.24 & 82.09/52.35 & 52.03 &  26.22 \\
+
+%  &  &  &    \\
+\whline{0.6pt} 
+Image+Shape \& context &  svm\_mrf\_assoc   					& 75.94  & 63.89 & 61.79 &    62.50 & 44.65 & 38.34\\
+%  & &  &   \\
+Image+Shape \& context &  svm\_mrf\_nonassoc   					& 81.45  &76.79  &70.07   & 72.38  & 57.82  & 53.62 \\
+% &   &  &    \\
+Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64   & 73.38  & 56.81  &54.80 \\
+%  &  &   \\
+
+\whline{1.1pt} 
+\end{tabular}
+}
+}
+
+\end{table}
+
 \end{frame}
 
 \begin{frame}{Robotic Experiments}
