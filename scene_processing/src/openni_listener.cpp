@@ -2987,6 +2987,24 @@ void robotMovementControlRandom(const sensor_msgs::PointCloud2ConstPtr& point_cl
       
 }
 
+Vector3d getCenter(pcl::PointCloud<PointT> & cloud)
+{
+    Vector3d max;
+    Vector3d min;
+        for (size_t i = 0; i < cloud.size(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (max(j) < cloud.points[i].data[j])
+                max(j) = cloud.points[i].data[j];
+
+            if (min(j) > cloud.points[i].data[j])
+                min(j) = cloud.points[i].data[j];
+        }
+    }
+    return (max+min)/2;
+}
+
 void evaluate(string inp, string out, int oclass)
 {
     std::vector<pcl::PointCloud<PointT> > segment_clouds;
@@ -3061,82 +3079,6 @@ void evaluate(string inp, string out, int oclass)
   
     
 }
-
-void evaluateBaseline(string out, int oclass)
-{
-    std::vector<pcl::PointCloud<PointT> > segment_clouds;
-        pcl::PointCloud<PointT> cloud;
-        pcl::PointCloud<PointT>::Ptr cloud_seg(new pcl::PointCloud<PointT>());
-        pcl::PointCloud<PointT> outc;
-        pcl::io::loadPCDFile<PointT>(inp, cloud);
-        pcl::io::loadPCDFile<PointT>(out, outc);
-    map<int, int> segIndex2Label;
-    int max_segment_num;
-    for (size_t i = 0; i < cloud.points.size(); i++) {
-        counts[cloud.points[i].segment]++;
-        if (max_segment_num < cloud.points[i].segment) {
-            max_segment_num = (int) cloud.points[i].segment;
-        }
-    }
-
-
-    int index_ = 0;
-    vector<SpectralProfile> spectralProfiles;
-    std::cerr << "max_seg num:" << max_segment_num << "," << cloud.points.size() << endl;
-    for (int seg = 1; seg <= max_segment_num; seg++) {
-         if(counts[seg]<=MIN_SEG_SIZE)
-           continue;
-        SpectralProfile temp;
-        apply_segment_filter(cloud, *cloud_seg, seg, temp);
-        getSpectralProfileCent(*cloud_seg,temp);
-
-        //if (label!=0) cout << "segment: "<< seg << " label: " << label << " size: " << cloud_seg->points.size() << endl;
-        if (!cloud_seg->points.empty() && cloud_seg->points.size() > MIN_SEG_SIZE) {
-            segIndex2Label[index_]=labelMap[cloud_seg->points[1].label];
-            //std::cout << seg << ". Cloud size after extracting : " << cloud_seg->points.size() << std::endl;
-            segment_clouds.push_back(*cloud_seg);
-            pcl::PointCloud<PointT>::Ptr tempPtr(new pcl::PointCloud<PointT > (segment_clouds[segment_clouds.size() - 1]));
-            temp.cloudPtr = tempPtr;
-
-            spectralProfiles.push_back(temp);
-           // segment_num_index_map[cloud_seg->points[1].seugment] = index_;
-            index_++;
-        }
-    }
-    
-    vector<int> classes;
-    classes.push_back(oclass);
-    vector<PointXYZI> maximas;
-    lookForClass(classes, cloud, spectralProfiles, segIndex2Label, segment_clouds, 0, maximas);
-    cout<<"heatMax"<<maximas.at(0)<<endl;
-    
-    Vector3d sump(0,0,0);
-    Vector3d predL(maximas.at(0).x,maximas.at(0).y,maximas.at(0).z);
-    
-    int count=0;
-    int targetLabel=invLabelMap[oclass+1];
-    double minDist=DBL_MAX;
-    cout<<"keyboard:"<<targetLabel<<endl;
-    for (size_t i = 0; i < outc.points.size(); i++) {
-        if(outc.points[i].label==targetLabel)
-        {
-                Vector3d point(outc.points[i].x,outc.points[i].y,outc.points[i].z);
-                sump+=point;
-                count++;
-                double dist=(predL-point).norm();
-                if(minDist>dist)
-                    minDist=dist;
-        }
-    }
-    
-    cout<<count<<" points had label keyboard"<<endl;
-    Vector3d centroid=sump/count;
-    cout<<"minDist"<<minDist<<endl;
-    cout<<"centDist"<<(predL-centroid).norm()<<endl;
-  
-    
-}
-
 int main(int argc, char** argv) {
     readWeightVectors();
     ros::init(argc, argv, "hi");
