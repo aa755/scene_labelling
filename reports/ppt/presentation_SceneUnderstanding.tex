@@ -187,9 +187,58 @@ match the following to table/printer
 \end{frame}
 
 
+
 \begin{frame}{Features}
 
+\begin{itemize}
+\item Node Features
+\begin{itemize}
+\item Visual Appearance
+	\begin{itemize}
+	\item Histogram of HSV color values
+	\item Average HSV color values
+	\item HOG features corresponding to the segment
+	\end{itemize}
+\item Local Shape and Geometry
+	\begin{itemize}
+	\item Linear-ness , Planar-ness and Scatter
+	\item Vertical component of the normal
+	\item Vertical position of centroid
+	\item Bounding box dimensions
+	\item Distance from scene boundary
+	\end{itemize}
+\end{itemize}
+\end{itemize}
+
 \end{frame}
+
+\begin{frame}{Features}
+
+\begin{itemize}
+\item Edge Features
+\begin{itemize}
+\item Visual Appearance
+	\begin{itemize}
+	\item Diff in avg. HSV color values
+	\end{itemize}
+	\item Local Shape and Geometry
+	\begin{itemize}
+	\item Coplanarity and convexity
+	\end{itemize}
+	\item Geometric context
+	\begin{itemize}
+	\item Horizontal distance b/w centroids
+	\item Vertical displacement b/w centroids
+	\item Angle between normals
+	\item Diff in angle with vertical
+	\item Distance between closest points
+	\item Relative position from camera (in front of/ behind) 
+	\end{itemize}
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+
 
 \begin{frame}{Learning}
 
