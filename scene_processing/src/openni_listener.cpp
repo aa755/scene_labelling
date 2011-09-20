@@ -53,6 +53,7 @@ using namespace octomap;
 ros::Publisher pub;
 //#include <Eig>
 //typedef pcl::PointXYGRGBCam PointT;
+TransformG globalTransform;
 
 typedef pcl::KdTree<PointT> KdTree;
 typedef pcl::KdTree<PointT>::Ptr KdTreePtr;
@@ -63,6 +64,7 @@ static const string edgeBinFile = "binStumpsE.txt";
 string environment;
 
 map<int, int> invLabelMap;
+map<int, int> labelMap;
 pcl::PCDWriter writer;
 #define NUM_CLASSES 17
 
@@ -109,6 +111,11 @@ public:
         count++; // will be used for computing average
     }
     
+    void transformCentroid(TransformG & trans)
+    {        
+        trans.transformPointInPlace(centroid);
+    }
+    
     void setCentroid(const SpectralProfile & other)
     {
         centroid=other.centroid;
@@ -130,6 +137,14 @@ public:
         return ret;
     }
 
+    PointT getCentroidSL() {
+        PointT ret;
+        ret.x = centroid.x;
+        ret.y = centroid.y;
+        ret.z = centroid.z;
+        return ret;
+    }
+    
     float getScatter() const {
         return getDescendingLambda(0);
     }
@@ -252,7 +267,8 @@ boost::dynamic_bitset<> maximaChanged(NUM_CLASSES);
 bool foundAny = false;
 bool translationState = false;
 map<int, double> sceneToAngleMap;
- 
+#define SPAN 30
+
 vector<int> maximaFrames(NUM_CLASSES,0);
 
 
@@ -422,6 +438,7 @@ void readInvLabelMap(map<int, int> & invLabelMap, const string & file) {
         //        getline(myfile, line);
         //        cout << line << endl;
         invLabelMap[svmLabel] = origLabel;
+        labelMap[origLabel]=svmLabel;
     }
     myfile.close();
 }
@@ -763,6 +780,50 @@ void apply_segment_filter_and_compute_HOG(pcl::PointCloud<PointT> &incloud, pcl:
 
 }
 
+void apply_segment_filter(pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment, SpectralProfile & feats) {
+    //ROS_INFO("applying filter");
+
+    outcloud.points.erase(outcloud.points.begin(), outcloud.points.end());
+
+    outcloud.header.frame_id = incloud.header.frame_id;
+    //    outcloud.points = incloud.points;
+    outcloud.points.resize(incloud.points.size());
+
+
+
+
+    vector<size_t> indices;
+    int j = -1;
+    for (size_t i = 0; i < incloud.points.size(); ++i) {
+
+        if (incloud.points[i].segment == segment) {
+            j++;
+            outcloud.points[j].x = incloud.points[i].x;
+            outcloud.points[j].y = incloud.points[i].y;
+            outcloud.points[j].z = incloud.points[i].z;
+            outcloud.points[j].rgb = incloud.points[i].rgb;
+            outcloud.points[j].segment = incloud.points[i].segment;
+            outcloud.points[j].label = incloud.points[i].label;
+            outcloud.points[j].cameraIndex = incloud.points[i].cameraIndex;
+            outcloud.points[j].distance = incloud.points[i].distance;
+            //  cerr<<incloud.points[i].cameraIndex<<","<<numFrames<<endl;
+            indices.push_back(i);
+
+            //     std::cerr<<segment_cloud.points[j].label<<",";
+        }
+    }
+
+    // cout<<j << ","<<segment<<endl;
+    if (j >= MIN_SEG_SIZE) {
+        outcloud.points.resize(j + 1);
+       // OriginalFrameInfo::findHog(indices, incloud, feats.avgHOGFeatsOfSegment, originalFrame);
+    } else {
+        outcloud.points.clear();
+        return;
+    }
+
+}
+
 void apply_notsegment_filter(const pcl::PointCloud<PointT> &incloud, pcl::PointCloud<PointT> &outcloud, int segment) {
     //ROS_INFO("applying filter");
 
@@ -1065,6 +1126,15 @@ void getSpectralProfile(const pcl::PointCloud<PointT> &cloud, SpectralProfile &s
         }
     }
     assert(minEigV == spectralProfile.getDescendingLambda(2));
+}
+void getSpectralProfileCent(const pcl::PointCloud<PointT> &cloud, SpectralProfile &spectralProfile) {
+    Eigen::Matrix3d eigen_vectors;
+    Eigen::Vector3d eigen_values;
+    sensor_msgs::PointCloud2 cloudMsg2;
+    pcl::toROSMsg(cloud, cloudMsg2);
+    sensor_msgs::PointCloud cloudMsg;
+    sensor_msgs::convertPointCloud2ToPointCloud(cloudMsg2, cloudMsg);
+    cloud_geometry::nearest::computePatchEigenNormalized(cloudMsg, eigen_vectors, eigen_values, spectralProfile.centroid);
 }
 
 void get_feature_average(vector<vector<float> > &descriptor_results, vector<float> &avg_feats) {
@@ -1653,10 +1723,429 @@ int getBinIndex(double value, double min, double step) {
 int getBinIndex(pcl::PointXYZ value, pcl::PointXYZ min, pcl::PointXYZ step, int index) {
     return (value.data[index] - min.data[index]) / step.data[index];
 }
+void lookForClassInOriginalFrameOrthographic(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
+{
+    pcl::PointXYZ steps(0.01, 0.01, 0.01);
+    std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
+
+    maximas.resize(classes.size());
+    createTrees(segment_clouds, trees);
+    /* find bounding box and discretize
+     */
+    pcl::PointXYZ max;
+    pcl::PointXYZ min;
+    TransformG invTrans=globalTransform.inverse();
+    pcl::PointCloud<pcl::PointXYZRGBCamSL>  cloudOriginal=cloud;
+    invTrans.transformPointCloudInPlaceAndSetOrigin(cloudOriginal);
+    
+    for (int i = 0; i < 3; i++)
+    {
+        max.data[i] = FLT_MIN;
+        min.data[i] = FLT_MAX;
+    }
+    for (size_t i = 0; i < cloud.size(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (max.data[j] < cloudOriginal.points[i].data[j])
+                max.data[j] = cloudOriginal.points[i].data[j];
+
+            if (min.data[j] > cloudOriginal.points[i].data[j])
+                min.data[j] = cloudOriginal.points[i].data[j];
+        }
+    }
+    saveOriginalImages(cloudOriginal, max, min, steps, scene_num);
+    int numBins[3];
+    for (int i = 0; i < 3; i++)
+    {
+        numBins[i] = (int) ((max.data[i] - min.data[i]) / steps.data[i]) + 1;
+    }
+
+    Matrix<float, Dynamic, 1 > nodeFeatsB(nodeFeatIndices.size()*10);
+    Matrix<float, Dynamic, 1 > edgeFeatsB(edgeFeatIndices.size()*10);
+    vector<float> nodeFeats(nodeFeatIndices.size(), 0.0);
+    vector<float> edgeFeats(edgeFeatIndices.size(), 0.0);
+    cout << "max:" << max << endl;
+    cout << "min:" << min << endl;
+    double maxDist[360];
+    getMaxRanges(maxDist, cloud);
+    double cost;
+    double maxCost[classes.size()];
+    double minCost[classes.size()];
+    SpectralProfile maxS[classes.size()];
+    Matrix<float, Dynamic, Dynamic> heatMapTop[classes.size()];
+    Matrix<float, Dynamic, Dynamic> heatMapFront[classes.size()];
+
+    for (int oclass = 0; oclass < classes.size(); oclass++)
+    {
+        minCost[oclass] = DBL_MAX;
+        maxCost[oclass] = -DBL_MAX;
+        heatMapTop[oclass].setConstant(numBins[1], numBins[0], -FLT_MAX);
+        heatMapFront[oclass].setConstant(numBins[2], numBins[1], -FLT_MAX);
+    }
+
+
+
+
+    int countx = 0;
+    int county = 0;
+    int countz = 0;
+    int k;
+    float x;
+    float y;
+    float z;
+    for (x = min.x, countx = 0; x < max.x; countx++, x += steps.x)
+        for (y = min.y, county = 0; y < max.y; county++, y += steps.y)
+            for (z = min.z, countz = 0; z < max.z; countz++, z += steps.z)
+            {
+                vector<int> neighbors;
+                    SpectralProfile target;
+                    target.centroid.x = x;
+                    target.centroid.y = y;
+                    target.centroid.z = z;
+                    
+                    target.transformCentroid(globalTransform);
+                    
+                PointT centroid=target.getCentroidSL();
+                double dist = getWallDistanceCent(maxDist, centroid);
+                
+                    nodeFeats.at(0) = target.centroid.z;
+                    nodeFeats.at(1) = dist;
+                    
+                if (dist < 0)
+                    continue;
+                findNeighbors(centroid, segment_clouds, trees, neighbors);
+                
+                for (int oclass = 0; oclass < classes.size(); oclass++)
+                {
+                    k = classes[oclass];
+                    cost = 0.0;
+                    //compute feats
+                    //                nodeFeats.at(1)=0;//dummy for now
+
+
+                    for (size_t i = 0; i < nodeFeatIndices.size(); i++)
+                    {
+                        nodeFeatStumps[nodeFeatIndices.at(i)].storeBinnedValues(nodeFeats[i], nodeFeatsB, i);
+                    }
+
+                    cost += nodeFeatsB.dot(nodeWeights->row(k));
+
+                    for (size_t i = 0; i < neighbors.size(); i++)
+                    {
+                        int nbrIndex = neighbors.at(i);
+                        int nbrLabel = segIndex2label[nbrIndex] - 1;
+                        
+                        if(nbrLabel<0) // this neighbor was not labeled by the classifier(probably it is using sum<1)
+                            continue;
+                        
+                        //cerr << nbrIndex<<","<<nbrLabel << ",nl - k," << k << endl;
+                        //assert(nbrLabel != k);
+                        edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles.at(nbrIndex));
+                        edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles.at(nbrIndex));
+                        edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles.at(nbrIndex));
+                        edgeFeats.at(3) = target.getInnerness(spectralProfiles.at(nbrIndex));
+                        //  cout<<"edge feats "<<edgeFeats[0]<<","<<edgeFeats[1]<<","<<edgeFeats[2]<<endl;
+
+                        for (size_t j = 0; j < edgeFeatIndices.size(); j++)
+                        {
+                            edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
+                        }
+                        cost += edgeFeatsB.dot(edgeWeights[k]->row(nbrLabel));
+
+                        edgeFeats.at(0) = spectralProfiles.at(nbrIndex).getHorzDistanceBwCentroids(target);
+                        edgeFeats.at(1) = spectralProfiles.at(nbrIndex).getVertDispCentroids(target);
+                        edgeFeats.at(2) = spectralProfiles.at(nbrIndex).getDistanceSqrBwCentroids(target);
+                        edgeFeats.at(3) = spectralProfiles.at(nbrIndex).getInnerness(target);
+
+                        for (size_t j = 0; j < edgeFeatIndices.size(); j++)
+                        {
+                            edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
+                        }
+
+                        assert(nbrLabel >= 0);
+                        assert(nbrLabel < NUM_CLASSES);
+                        assert(k >= 0);
+                        assert(k < NUM_CLASSES);
+                        cost += edgeFeatsB.dot(edgeWeights[nbrLabel]->row(k));
+                    }
+
+                    //     cout<<x<<","<<y<<","<<z<<","<<dist<<","<<cost<<endl;
+                    if (maxCost[oclass] < cost)
+                    {
+                        maxCost[oclass] = cost;
+                        maxS[oclass].setCentroid( target);
+                      //  maximas[oclass].x = x;
+                      //  maximas[oclass].y = y;
+                      //  maximas[oclass].z = z;
+                      //  maximas[oclass].intensity = cost;
+                        //   cout<<"nodeFeats \n"<<nodeFeatsB<<endl;                    
+                    } 
+                    else if(maxCost[oclass] == cost)
+                    {
+                        maxS[oclass].addCentroid(target);                        
+                    }
+
+                    if (minCost[oclass] > cost)
+                    {
+                        minCost[oclass] = cost;
+                    }
+
+                    if (heatMapTop[oclass](numBins[1] - 1 - county, countx) < cost)
+                    {
+                        heatMapTop[oclass](numBins[1] - 1 - county, countx) = cost;
+                    }
+
+                    if (heatMapFront[oclass](numBins[2] - 1 - countz, county) < cost)
+                    {
+                        heatMapFront[oclass](numBins[2] - 1 - countz, county) = cost;
+                    }
+                }
+
+                // all feats can be computed using SpectralProfile
+                // wall distance will take time
+                //use octomap to filter out occluded regions
+
+            }
+
+    for (size_t oclass = 0; oclass < classes.size(); oclass++)
+    {
+        //   replace<float>(heatMapTop[oclass], -FLT_MAX, minCost);
+        //    replace<float>(heatMapFront[oclass], -FLT_MAX, minCost);
+        maxS[oclass].setAvgCentroid();
+        maxS[oclass].transformCentroid(invTrans); // come back to original
+        
+        maximas[oclass].x = maxS[oclass].centroid.x;
+        maximas[oclass].y = maxS[oclass].centroid.y;
+        maximas[oclass].z = maxS[oclass].centroid.z;
+        maximas[oclass].intensity = maxCost[oclass];
+        
+        writeHeatMap<float>((lexical_cast<string > (classes[oclass]) + "_topHeat" + lexical_cast<string > (scene_num) + ".png").data(), heatMapTop[oclass], maxCost[oclass], minCost[oclass], numBins[1] - 1 - getBinIndex(maxS[oclass].getCentroid(), min, steps, 1), getBinIndex(maxS[oclass].getCentroid(), min, steps, 0));
+        writeHeatMap<float>((lexical_cast<string > (classes[oclass]) + "frontHeat" + lexical_cast<string > (scene_num) + ".png").data(), heatMapFront[oclass], maxCost[oclass], minCost[oclass], numBins[2] - 1 - getBinIndex(maxS[oclass].getCentroid(), min, steps, 2), getBinIndex(maxS[oclass].getCentroid(), min, steps, 1));
+        //cout << "optimal point" << maxS.centroid.x << "," << maxS.centroid.y << "," << maxS.centroid.z << " with cost:" << minCost << endl;
+    }
+    exit(1);
+
+
+}
+
+void lookForClassInOriginalFrameProjective(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
+{
+    pcl::PointXYZ steps(0.01, 0.01, 0.01);
+    std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
+
+    maximas.resize(classes.size());
+    createTrees(segment_clouds, trees);
+    /* find bounding box and discretize
+     */
+    pcl::PointXYZ max;
+    pcl::PointXYZ min;
+    TransformG invTrans=globalTransform.inverse();
+    pcl::PointCloud<pcl::PointXYZRGBCamSL>  cloudOriginal=cloud;
+    invTrans.transformPointCloudInPlaceAndSetOrigin(cloudOriginal);
+    
+    for (int i = 0; i < 3; i++)
+    {
+        max.data[i] = FLT_MIN;
+        min.data[i] = FLT_MAX;
+    }
+    for (size_t i = 0; i < cloud.size(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (max.data[j] < cloudOriginal.points[i].data[j])
+                max.data[j] = cloudOriginal.points[i].data[j];
+
+            if (min.data[j] > cloudOriginal.points[i].data[j])
+                min.data[j] = cloudOriginal.points[i].data[j];
+        }
+    }
+    
+    saveOriginalImages(cloudOriginal, max, min, steps, scene_num);
+    int numBins[3];
+    for (int i = 0; i < 3; i++)
+    {
+        numBins[i] = (int) ((max.data[i] - min.data[i]) / steps.data[i]) + 1;
+    }
+
+    Matrix<float, Dynamic, 1 > nodeFeatsB(nodeFeatIndices.size()*10);
+    Matrix<float, Dynamic, 1 > edgeFeatsB(edgeFeatIndices.size()*10);
+    vector<float> nodeFeats(nodeFeatIndices.size(), 0.0);
+    vector<float> edgeFeats(edgeFeatIndices.size(), 0.0);
+    cout << "max:" << max << endl;
+    cout << "min:" << min << endl;
+    double maxDist[360];
+    getMaxRanges(maxDist, cloud);
+    double cost;
+    double maxCost[classes.size()];
+    double minCost[classes.size()];
+    SpectralProfile maxS[classes.size()];
+    Matrix<float, Dynamic, Dynamic> heatMapTop[classes.size()];
+    //Matrix<float, Dynamic, Dynamic> heatMapFront[classes.size()];
+
+    int imageWidth=640;
+    int imageHeight=480;
+    for (int oclass = 0; oclass < classes.size(); oclass++)
+    {
+        minCost[oclass] = DBL_MAX;
+        maxCost[oclass] = -DBL_MAX;
+        heatMapTop[oclass].setConstant(imageHeight, imageWidth, -FLT_MAX);
+       // heatMapFront[oclass].setConstant(numBins[2], numBins[1], -FLT_MAX);
+    }
+
+    int countx = 0;
+    int county = 0;
+    int countz = 0;
+    int k;
+    float x;
+    float y;
+    float z;
+                    int imageX;
+                    int imageY;
+    for (x = min.x, countx = 0; x < max.x; countx++, x += steps.x)
+        for (y = min.y, county = 0; y < max.y; county++, y += steps.y)
+            for (z = min.z, countz = 0; z < max.z; countz++, z += steps.z)
+            {
+                vector<int> neighbors;
+                    SpectralProfile target;
+                    target.centroid.x = x;
+                    target.centroid.y = y;
+                    target.centroid.z = z;
+                    
+                    target.transformCentroid(globalTransform);
+                    
+                PointT centroid=target.getCentroidSL();
+                double dist = getWallDistanceCent(maxDist, centroid);
+                
+                    nodeFeats.at(0) = target.centroid.z;
+                    nodeFeats.at(1) = dist;
+                    
+                if (dist < 0)
+                    continue;
+                findNeighbors(centroid, segment_clouds, trees, neighbors);
+                
+                for (int oclass = 0; oclass < classes.size(); oclass++)
+                {
+                    k = classes[oclass];
+                    cost = 0.0;
+                    //compute feats
+                    //                nodeFeats.at(1)=0;//dummy for now
+
+
+                    for (size_t i = 0; i < nodeFeatIndices.size(); i++)
+                    {
+                        nodeFeatStumps[nodeFeatIndices.at(i)].storeBinnedValues(nodeFeats[i], nodeFeatsB, i);
+                    }
+
+                    cost += nodeFeatsB.dot(nodeWeights->row(k));
+
+                    for (size_t i = 0; i < neighbors.size(); i++)
+                    {
+                        int nbrIndex = neighbors.at(i);
+                        int nbrLabel = segIndex2label[nbrIndex] - 1;
+                        
+                        if(nbrLabel<0) // this neighbor was not labeled by the classifier(probably it is using sum<1)
+                            continue;
+                        
+                        //cerr << nbrIndex<<","<<nbrLabel << ",nl - k," << k << endl;
+                        //assert(nbrLabel != k);
+                        edgeFeats.at(0) = target.getHorzDistanceBwCentroids(spectralProfiles.at(nbrIndex));
+                        edgeFeats.at(1) = target.getVertDispCentroids(spectralProfiles.at(nbrIndex));
+                        edgeFeats.at(2) = target.getDistanceSqrBwCentroids(spectralProfiles.at(nbrIndex));
+                        edgeFeats.at(3) = target.getInnerness(spectralProfiles.at(nbrIndex));
+                        //  cout<<"edge feats "<<edgeFeats[0]<<","<<edgeFeats[1]<<","<<edgeFeats[2]<<endl;
+
+                        for (size_t j = 0; j < edgeFeatIndices.size(); j++)
+                        {
+                            edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
+                        }
+                        cost += edgeFeatsB.dot(edgeWeights[k]->row(nbrLabel));
+
+                        edgeFeats.at(0) = spectralProfiles.at(nbrIndex).getHorzDistanceBwCentroids(target);
+                        edgeFeats.at(1) = spectralProfiles.at(nbrIndex).getVertDispCentroids(target);
+                        edgeFeats.at(2) = spectralProfiles.at(nbrIndex).getDistanceSqrBwCentroids(target);
+                        edgeFeats.at(3) = spectralProfiles.at(nbrIndex).getInnerness(target);
+
+                        for (size_t j = 0; j < edgeFeatIndices.size(); j++)
+                        {
+                            edgeFeatStumps[edgeFeatIndices.at(j)].storeBinnedValues(edgeFeats[j], edgeFeatsB, j);
+                        }
+
+                        assert(nbrLabel >= 0);
+                        assert(nbrLabel < NUM_CLASSES);
+                        assert(k >= 0);
+                        assert(k < NUM_CLASSES);
+                        cost += edgeFeatsB.dot(edgeWeights[nbrLabel]->row(k));
+                    }
+
+                    //     cout<<x<<","<<y<<","<<z<<","<<dist<<","<<cost<<endl;
+                    if (maxCost[oclass] < cost)
+                    {
+                        maxCost[oclass] = cost;
+                        maxS[oclass].setCentroid( target);
+                      //  maximas[oclass].x = x;
+                      //  maximas[oclass].y = y;
+                      //  maximas[oclass].z = z;
+                      //  maximas[oclass].intensity = cost;
+                      //  cout<<"nodeFeats \n"<<nodeFeatsB<<endl;                    
+                    } 
+                    else if(maxCost[oclass] == cost)
+                    {
+                        maxS[oclass].addCentroid(target);                        
+                    }
+
+                    if (minCost[oclass] > cost)
+                    {
+                        minCost[oclass] = cost;
+                    }
+                    
+                        imageX=(640*x/z/1.1147 + 640*0.5)/2.0  ;
+                        imageY=(480*0.5 -460*y/z/0.8336)/2.0  ; 
+                        
+                        assert(imageX>=0);
+                        assert(imageY>=0);
+                        assert(imageX<imageWidth);
+                        assert(imageY>imageHeight);
+
+                    if (heatMapTop[oclass](imageY, imageX) < cost)
+                    {
+                        heatMapTop[oclass](imageY, imageX) = cost;
+                    }
+
+                }
+
+                // all feats can be computed using SpectralProfile
+                // wall distance will take time
+                //use octomap to filter out occluded regions
+
+            }
+
+    for (size_t oclass = 0; oclass < classes.size(); oclass++)
+    {
+        //   replace<float>(heatMapTop[oclass], -FLT_MAX, minCost);
+        //    replace<float>(heatMapFront[oclass], -FLT_MAX, minCost);
+        maxS[oclass].setAvgCentroid();
+        maxS[oclass].transformCentroid(invTrans); // come back to original
+                        imageX=(640*maxS[oclass].centroid.x/maxS[oclass].centroid.z/1.1147 + 640*0.5)/2.0  ;
+                        imageY=(480*0.5 -460*maxS[oclass].centroid.y/maxS[oclass].centroid.z/0.8336)/2.0  ; 
+        
+        maximas[oclass].x = maxS[oclass].centroid.x;
+        maximas[oclass].y = maxS[oclass].centroid.y;
+        maximas[oclass].z = maxS[oclass].centroid.z;
+        maximas[oclass].intensity = maxCost[oclass];
+        
+        writeHeatMap<float>((lexical_cast<string > (classes[oclass]) + "_topHeat" + lexical_cast<string > (scene_num) + ".png").data(), heatMapTop[oclass], maxCost[oclass], minCost[oclass],imageY, imageX);
+      //  writeHeatMap<float>((lexical_cast<string > (classes[oclass]) + "frontHeat" + lexical_cast<string > (scene_num) + ".png").data(), heatMapFront[oclass], maxCost[oclass], minCost[oclass], numBins[2] - 1 - getBinIndex(maxS[oclass].getCentroid(), min, steps, 2), getBinIndex(maxS[oclass].getCentroid(), min, steps, 1));
+        //cout << "optimal point" << maxS.centroid.x << "," << maxS.centroid.y << "," << maxS.centroid.z << " with cost:" << minCost << endl;
+    }
+    exit(1);
+
+
+}
 
 void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
 {
-    pcl::PointXYZ steps(0.05, 0.02, 0.1);
+    pcl::PointXYZ steps(0.01, 0.01, 0.01);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
     maximas.resize(classes.size());
@@ -1848,7 +2337,7 @@ void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> 
         writeHeatMap<float>((lexical_cast<string > (classes[oclass]) + "frontHeat" + lexical_cast<string > (scene_num) + ".png").data(), heatMapFront[oclass], maxCost[oclass], minCost[oclass], numBins[2] - 1 - getBinIndex(maxS[oclass].getCentroid(), min, steps, 2), getBinIndex(maxS[oclass].getCentroid(), min, steps, 1));
         //cout << "optimal point" << maxS.centroid.x << "," << maxS.centroid.y << "," << maxS.centroid.z << " with cost:" << minCost << endl;
     }
-    //exit(1);
+
 
 
 }
@@ -2150,7 +2639,6 @@ void readLabelList(const string & file) {
 
 }
 
-TransformG globalTransform;
 int step = 1;
 
 void processPointCloud(/*const sensor_msgs::ImageConstPtr& visual_img_msg, 
@@ -2417,9 +2905,182 @@ void robotMovementControl(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
     
 }
 
+void robotMovementControlSingleObject(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
+    double angle = 0;
+    
+    // first frame just pick a random direction and move to it
+    if(turnCount== 0){
+       srand ( time(NULL) );
+
+        angle = rand() % SPAN - SPAN/2;
+        robot->turnLeft(angle,2);
+        currentAngle = angle;
+        cout << "current Angle now is "  << currentAngle<< endl;
+        turnCount ++;
+        return;
+    }
+     // second frame onwards, 
+    else if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES){
+        // process the cloud
+        ROS_INFO("processing %d cloud.. \n",turnCount+1);
+        processPointCloud (point_cloud);
+        
+        // look for the class
+        getMovement(true);
+        // if maxima changed the look-for/rotations list will be non-empty
+        if(labelsToLookFor.size() != 0){
+             printLabelsToLookFor();
+             double angle = rotations[0] - currentAngle;
+             robot->turnLeft(angle, 0);
+             currentAngle = rotations[0];
+             cout << "current Angle now is "  << currentAngle<< endl;
+             cout << "Looking for object " << labelsToLookFor.at(objCount)<< endl;
+             labelsAlreadyLookedFor.set(labelsToLookFor.at(objCount),true);
+             objCount++;
+             rotations.erase(rotations.begin());
+             
+
+        }else {// else pic a random angle and move
+            angle = rand() % SPAN - SPAN/2;
+            robot->turnLeft(angle-currentAngle,2);
+            currentAngle = angle;
+            cout << "current Angle now is "  << currentAngle<< endl;
+        }  
+        // increase the count
+        turnCount++;
+        return;
+        
+    }else {exit (0);}
+    
+      
+}
+
+void robotMovementControlRandom(const sensor_msgs::PointCloud2ConstPtr& point_cloud){
+    double angle = 0;
+    
+    // first frame just pick a random direction and move to it
+    if(turnCount== 0){
+       srand ( time(NULL) );
+
+        angle = rand() % SPAN - SPAN/2;
+        robot->turnLeft(angle,2);
+        currentAngle = angle;
+        cout << "current Angle now is "  << currentAngle<< endl;
+        turnCount ++;
+        return;
+    }
+     // second frame onwards, 
+    else if (turnCount < MAX_TRYS && labelsFound.count() < NUM_CLASSES){
+        // process the cloud
+        ROS_INFO("processing %d cloud.. \n",turnCount+1);
+        processPointCloud (point_cloud);
+        
+            angle = rand() % SPAN - SPAN/2;
+            robot->turnLeft(angle-currentAngle,2);
+            currentAngle = angle;
+            cout << "current Angle now is "  << currentAngle<< endl;
+        turnCount++;
+        return;
+        
+    }else {exit (0);}
+    
+      
+}
+
+Vector3d getCenter(pcl::PointCloud<PointT> & cloud)
+{
+    Vector3d max;
+    Vector3d min;
+        for (size_t i = 0; i < cloud.size(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (max(j) < cloud.points[i].data[j])
+                max(j) = cloud.points[i].data[j];
+
+            if (min(j) > cloud.points[i].data[j])
+                min(j) = cloud.points[i].data[j];
+        }
+    }
+    return (max+min)/2;
+}
+
+void evaluate(string inp, string out, int oclass)
+{
+        pcl::PointCloud<PointT> outc;
+        pcl::io::loadPCDFile<PointT>(out, outc);
+ /*       
+    std::vector<pcl::PointCloud<PointT> > segment_clouds;
+        pcl::PointCloud<PointT> cloud;
+        pcl::PointCloud<PointT>::Ptr cloud_seg(new pcl::PointCloud<PointT>());
+        pcl::io::loadPCDFile<PointT>(inp, cloud);
+    map<int, int> segIndex2Label;
+    int max_segment_num;
+    for (size_t i = 0; i < cloud.points.size(); i++) {
+        counts[cloud.points[i].segment]++;
+        if (max_segment_num < cloud.points[i].segment) {
+            max_segment_num = (int) cloud.points[i].segment;
+        }
+    }
 
 
+    int index_ = 0;
+    vector<SpectralProfile> spectralProfiles;
+    std::cerr << "max_seg num:" << max_segment_num << "," << cloud.points.size() << endl;
+    for (int seg = 1; seg <= max_segment_num; seg++) {
+         if(counts[seg]<=MIN_SEG_SIZE)
+           continue;
+        SpectralProfile temp;
+        apply_segment_filter(cloud, *cloud_seg, seg, temp);
+        getSpectralProfileCent(*cloud_seg,temp);
 
+        //if (label!=0) cout << "segment: "<< seg << " label: " << label << " size: " << cloud_seg->points.size() << endl;
+        if (!cloud_seg->points.empty() && cloud_seg->points.size() > MIN_SEG_SIZE) {
+            segIndex2Label[index_]=labelMap[cloud_seg->points[1].label];
+            //std::cout << seg << ". Cloud size after extracting : " << cloud_seg->points.size() << std::endl;
+            segment_clouds.push_back(*cloud_seg);
+            pcl::PointCloud<PointT>::Ptr tempPtr(new pcl::PointCloud<PointT > (segment_clouds[segment_clouds.size() - 1]));
+            temp.cloudPtr = tempPtr;
+
+            spectralProfiles.push_back(temp);
+           // segment_num_index_map[cloud_seg->points[1].seugment] = index_;
+            index_++;
+        }
+    }
+    
+    vector<int> classes;
+    classes.push_back(oclass);
+    vector<PointXYZI> maximas;
+    lookForClass(classes, cloud, spectralProfiles, segIndex2Label, segment_clouds, 0, maximas);
+    cout<<"heatMax"<<maximas.at(0)<<endl;
+    
+    Vector3d predL(maximas.at(0).x,maximas.at(0).y,maximas.at(0).z);
+*/
+    Vector3d sump(0,0,0);
+        Vector3d predL=getCenter(outc);
+    int count=0;
+    int targetLabel=invLabelMap[oclass+1];
+    double minDist=DBL_MAX;
+    cout<<"keyboard:"<<targetLabel<<endl;
+    for (size_t i = 0; i < outc.points.size(); i++) {
+        if(outc.points[i].label==targetLabel)
+        {
+                Vector3d point(outc.points[i].x,outc.points[i].y,outc.points[i].z);
+                sump+=point;
+                count++;
+                double dist=(predL-point).norm();
+                if(minDist>dist)
+                    minDist=dist;
+        }
+    }
+    
+    cout<<count<<" points had label keyboard"<<endl;
+    Vector3d centroid=sump/count;
+    cout<<"minDist"<<minDist<<endl;
+    cout<<"centDist"<<(predL-centroid).norm()<<endl;
+  
+    
+}
 int main(int argc, char** argv) {
     readWeightVectors();
     ros::init(argc, argv, "hi");
@@ -2456,7 +3117,11 @@ int main(int argc, char** argv) {
     pub = n.advertise<sensor_msgs::PointCloud2 > ("/scene_labler/labeled_cloud", 10);
     //    std_msgs::String str;
     //    str.data = "hello world";
-    ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, robotMovementControl);
+    
+    evaluate(argv[2],argv[3],7);
+    exit(0);
+    
+    ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, robotMovementControlRandom);
 
     ros::spin();
   
