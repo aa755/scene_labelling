@@ -3007,12 +3007,13 @@ Vector3d getCenter(pcl::PointCloud<PointT> & cloud)
 
 void evaluate(string inp, string out, int oclass)
 {
+        pcl::PointCloud<PointT> outc;
+        pcl::io::loadPCDFile<PointT>(out, outc);
+        
     std::vector<pcl::PointCloud<PointT> > segment_clouds;
         pcl::PointCloud<PointT> cloud;
         pcl::PointCloud<PointT>::Ptr cloud_seg(new pcl::PointCloud<PointT>());
-        pcl::PointCloud<PointT> outc;
         pcl::io::loadPCDFile<PointT>(inp, cloud);
-        pcl::io::loadPCDFile<PointT>(out, outc);
     map<int, int> segIndex2Label;
     int max_segment_num;
     for (size_t i = 0; i < cloud.points.size(); i++) {
