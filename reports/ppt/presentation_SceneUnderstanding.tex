@@ -52,7 +52,8 @@
 \newcommand{\df}[3]{{f_{#3}(#1,#2)}}   % discriminant function
 \newcommand{\loss}[2]{{\Delta(#1,#2)}}   % discriminant function
 
-
+\newcommand{\wep}[3]{{w_{#1}'^{#2#3}}}   % weight vector of edge
+\newcommand{\wnp}[1]{{w_n'^{#1}}}        % weight vector of segment node
 
 \begin{document}
 \begin{frame}
@@ -172,7 +173,7 @@ match the following to table/printer
 \begin{equation} \label{eq:model}
 \begin{split}
 \df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
- & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
  \end{split}
 \end{equation}
 
@@ -191,6 +192,20 @@ match the following to table/printer
 \item Non-associative edges: $T_t=\{(l,k)| \forall l,k=1..K\}$
 \item Object-associate edges: $T_t=\{(l,k) | \exists object , ~ l,k\in {\rm parts}({\rm object})\}$
 
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Model}
+\begin{itemize}
+
+\item Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$ and edge features $\fe{t}{i}{j}$
+
+\begin{equation} \label{eq:model}
+\begin{split}
+\df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ \end{split}
+\end{equation}
 \end{itemize}
 \end{frame}
 
@@ -460,6 +475,13 @@ Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64  
 \end{frame}
 
 
+\begin{frame}{What if an object in not found?}
+\begin{itemize}
+\item 
+\end{itemize}
+\end{frame}
+
+
 \begin{frame}{Robotic Experiments}
 
 % setup
@@ -519,7 +541,37 @@ Overall Macro & 93.45 & 76.66 \\
 
 \end{frame}
 
-\begin{frame}{Current Work: }
+\begin{frame}{Current Work: Object Affordance Detection via Human Demonstration}
+\begin{itemize}
+\item Affordances :  properties of the environment that afford a certain action to be performed by a human or an animal
+\end{itemize}
+\begin{figure}[t!]
+\includegraphics[width=.95\linewidth]{affordances.pdf}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Object Affordance Detection via Human Demonstration}
+\begin{itemize}
+\item Human-Object interactions: Affordance depends on human-poses / sub-actions
+\end{itemize}
+\begin{figure}[t!]
+\includegraphics[width=.25\linewidth]{couch_sit.jpg}
+\includegraphics[width=.25\linewidth]{couch_read.jpg}
+\includegraphics[width=.25\linewidth]{couch_sleep.jpg}
+\end{figure}
+\begin{itemize}
+\item Object-Object interactions: Affordance of objects are related
+\end{itemize}
+\begin{figure}[h]
+\includegraphics[width=.25\linewidth]{pitcher-pouring.jpg}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Object Affordance Detection via Human Demonstration}
+\begin{itemize}
+\item 
+\end{itemize}
+
 \end{frame}
 
 \end{document} 
