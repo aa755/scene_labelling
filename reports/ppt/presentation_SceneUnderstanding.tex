@@ -277,10 +277,49 @@ match the following to table/printer
 \ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
 \forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
 \forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \} \label{eq:relaxconst}
-\end{eqnarray*}
-
- 
+\end{eqnarray*} 
 \end{frame}
+
+
+\begin{frame}{Inference for Learning}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+& \color<0-1>{red}{\loss{\y_i}{\y}} \label{eq:relaxobj}\\
+\end{eqnarray*} 
+
+\begin{eqnarray*}
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\invisible<2->
+{\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \} \label{eq:relaxconst}\\}
+\uncover<2->
+{\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst}\\}
+\invisible<3->
+{\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\}
+\end{eqnarray*} 
+
+\end{frame}
+
+\begin{frame}{Inference for Learning}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst}
+\end{eqnarray*} 
+
+\begin{itemize}
+ \item $y_i^k\in{0,0.5,1}$
+ \item can be also solved by QBPO(which uses graph-cut)
+\end{itemize}
+\end{frame}
+
 
 \begin{frame}{Data}
 % types and number of scene 
@@ -366,6 +405,16 @@ Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64  
 
 \end{frame}
 
+\begin{frame}{Putting it on the robot}
+
+\begin{itemize}
+\item the world has more than 17 classes
+\item what if an object is not found
+\end{itemize}
+
+\end{frame}
+
+
 \begin{frame}{Robotic Experiments}
 % setup
 %demo
@@ -385,8 +434,8 @@ Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64  
 
 \begin{frame}{What if an object is not found?}
 % motivate seach by showing vedio
-
 \begin{itemize}
+
 \item go to another location
 \item predict where it can be found based on currently found objects
 \end{itemize}
