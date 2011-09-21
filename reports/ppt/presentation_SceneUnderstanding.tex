@@ -273,7 +273,23 @@ match the following to table/printer
 \begin{frame}{Data}
 % types and number of scene 
 % examples of labeled pointclouds
-
+\begin{itemize}
+   \item Two types of indoor environments : 
+   \begin{itemize}
+   \item Office 
+   	\begin{itemize}
+	\item 24 stitched scenes
+	\item 1108 labeled segments
+	\item wall, floor, tableTop, tableDrawer, tableLeg, chairBackRest, chairBase, chairBack, monitor, printerFront, printerSide keyboard, cpuTop, cpuFront, cpuSide, book, paper
+	\end{itemize}
+   \item Home
+   	\begin{itemize}
+   	\item  28 stitched scenes
+	\item 1387 labeled segments
+	\item wall, floor, tableTop, tableDrawer, tableLeg, chairBackRest, chairBase, sofaBase, sofaArm, sofaBackRest, bed, bedSide, quilt, pillow, shelfRack, laptop, book 
+	\end{itemize} 
+\end{itemize}
+\end{itemize}
 \end{frame}
 
 
@@ -281,13 +297,12 @@ match the following to table/printer
 % put table
 % put confusion matrices 
 % discuss the points mentioned in the paper  
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Table of results 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 \begin{table}
 
 \caption{{\bf Learning experiment statistics.} The table shows average micro precision/recall, and average macro precision and recall for home and office scenes. }
- \label{tbl:overall_result}
+ %\label{tbl:overall_result}
  
 {\tiny
 \newcolumntype{P}[2]{>{\footnotesize#1\hspace{0pt}\arraybackslash}p{#2}}
@@ -335,6 +350,7 @@ Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64  
 }
 
 \end{table}
+
 
 \end{frame}
 
