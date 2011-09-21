@@ -416,15 +416,30 @@ Thorsten's slides
 \forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
 \zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
 \ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
-\invisible<2->
-{\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \} \label{eq:relaxconst}\\}
-\uncover<2->
-{\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst}\\}
-\invisible<3->
-{\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\}
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \} \label{eq:relaxconst}\\
+\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
 \end{eqnarray*} 
 
 \end{frame}
+
+\begin{frame}{Inference for Learning}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+& \loss{\y_i}{\y}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i,j,l,k &:& \color<0-1>{red}{\zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \}}\\
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst}\\
+\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
+\end{eqnarray*}
+
+\end{frame}
+
 
 \begin{frame}{Inference for Learning}
  \begin{eqnarray*}
