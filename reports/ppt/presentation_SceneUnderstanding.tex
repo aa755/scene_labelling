@@ -419,20 +419,25 @@ Thorsten's slides
 %{p{0.15\linewidth}p{0.18\linewidth}|p{10mm}p{12mm}p{12mm}|p{12mm}p{12mm}p{12mm}|p{12mm}p{12mm}p{12mm}|p{12mm}p{10mm}p{12mm}p{12mm}p{12mm}p{12mm}}
 %\multicolumn{18}{c}{Listed environment-wise, averaged over the objects.} \\
 \whline{1.1pt} 
+
 & & \multicolumn{3}{c|}{Office Scenes} & \multicolumn{3}{c}{Home Scenes}  \\
 \cline{3-8}
 & & \multicolumn{1}{c}{micro} & \multicolumn{2}{c|}{macro} & \multicolumn{1}{c}{micro} &  \multicolumn{2}{c}{macro}   \\
 \whline{0.4pt} 
+
      features &  algorithm & \multicolumn{1}{c}{$P/R$} & \multicolumn{1}{c}{Precision}  & \multicolumn{1}{c|}{Recall} &  \multicolumn{1}{c}{$P/R$} & \multicolumn{1}{c}{Precision} &  \multicolumn{1}{c}{Recall}  \\ 
 \whline{0.8pt} 
+
 None &  chance &  26.23 & 5.88 & 5.88 & 29.38 & 5.88 & 5.88\\
 \whline{0.6pt} 
+
 Image Only &           svm\_node\_only                        & 46.67  & 35.73 & 31.67 &   38.00 & 15.03 & 14.50\\%  &  &  &     \\
 Shape Only &              svm\_node\_only                        & 75.36  & 64.56 & 60.88 &    56.25 & 35.90 & 36.52 \\
 % &  &  &    \\
 Image+Shape &         svm\_node\_only                         & 77.97  & 69.44 & 66.23 &   56.50 & 37.18 & 34.73 \\
 % &  &  &   \\
-\whline{0.6pt} 
+\whline{0.6pt}
+
 Image+Shape \& context &  single\_frames                 & 84.32 & 77.84 & 68.12 & 69.13 & 47.84 & 43.62 \\
 %Image+Shape \& context &  single\_frames 500                 & 70.37 & 62.88 & 47.27 &  &  &  \\
 %Image+Shape \& context &  single\_frames 500,sum$\le$1                 & 77.57/63.35 & 63.58 & 36.51 &  &  &  \\
@@ -441,6 +446,7 @@ Image+Shape \& context &  single\_frames                 & 84.32 & 77.84 & 68.12
 
 %  &  &  &    \\
 \whline{0.6pt} 
+
 Image+Shape \& context &  svm\_mrf\_assoc   					& 75.94  & 63.89 & 61.79 &    62.50 & 44.65 & 38.34\\
 %  & &  &   \\
 Image+Shape \& context &  svm\_mrf\_nonassoc   					& 81.45  &76.79  &70.07   & 72.38  & 57.82  & 53.62 \\
@@ -449,11 +455,19 @@ Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64  
 %  &  &   \\
 
 \whline{1.1pt} 
+
 \end{tabular}
 }
 }
 
 \end{table}
+{\small
+\begin{itemize}
+\item Do image and point-cloud features capture complimentary information? 
+\item How	important	is context?
+\item How does a full 3D model compare to a 2.5D model?
+\end{itemize}
+}
 \end{frame}
 
 \begin{frame}{Results}
@@ -471,6 +485,12 @@ Confusion Matrix for Home dataset
  \end{figure}
 \end{frame}
 
+\begin{frame}{Results}
+How Large should the Context Range be?
+  \begin{figure}
+	\includegraphics[scale=0.5]{radiusEffectPlot.pdf} 
+  \end{figure}
+\end{frame}
 
 \begin{frame}{Putting it on the robot}
 
