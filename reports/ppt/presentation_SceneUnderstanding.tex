@@ -52,7 +52,8 @@
 \newcommand{\df}[3]{{f_{#3}(#1,#2)}}   % discriminant function
 \newcommand{\loss}[2]{{\Delta(#1,#2)}}   % discriminant function
 
-
+\newcommand{\wep}[3]{{w_{#1}'^{#2#3}}}   % weight vector of edge
+\newcommand{\wnp}[1]{{w_n'^{#1}}}        % weight vector of segment node
 
 \begin{document}
 \begin{frame}
@@ -445,6 +446,13 @@ Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64  
 \end{frame}
 
 
+\begin{frame}{What if an object in not found?}
+\begin{itemize}
+\item 
+\end{itemize}
+\end{frame}
+
+
 \begin{frame}{Robotic Experiments}
 
 % setup
@@ -504,7 +512,37 @@ Overall Macro & 93.45 & 76.66 \\
 
 \end{frame}
 
-\begin{frame}{Current Work: }
+\begin{frame}{Current Work: Object Affordance Detection via Human Demonstration}
+\begin{itemize}
+\item Affordances :  properties of the environment that afford a certain action to be performed by a human or an animal
+\end{itemize}
+\begin{figure}[t!]
+\includegraphics[width=.95\linewidth]{affordances.pdf}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Object Affordance Detection via Human Demonstration}
+\begin{itemize}
+\item Human-Object interactions: Affordance depends on human-poses / sub-actions
+\end{itemize}
+\begin{figure}[t!]
+\includegraphics[width=.25\linewidth]{couch_sit.jpg}
+\includegraphics[width=.25\linewidth]{couch_read.jpg}
+\includegraphics[width=.25\linewidth]{couch_sleep.jpg}
+\end{figure}
+\begin{itemize}
+\item Object-Object interactions: Affordance of objects are related
+\end{itemize}
+\begin{figure}[h]
+\includegraphics[width=.25\linewidth]{pitcher-pouring.jpg}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Object Affordance Detection via Human Demonstration}
+\begin{itemize}
+\item 
+\end{itemize}
+
 \end{frame}
 
 \end{document} 
