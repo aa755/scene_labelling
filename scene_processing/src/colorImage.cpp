@@ -38,20 +38,23 @@ using namespace pcl;
 
 int main(int argc, char** argv) {
 
+    bool saveColoredPCD=false;
   bool colorLabels=true;
   if(argc<3)
     {
-    cerr<<"usage: "<<argv[1]<<" pointCloudFile label2color [NoLabels]"<<endl;
+    cerr<<"usage: "<<argv[1]<<" pointCloudFile label2color [NoLabels||SaveColoredPCD]"<<endl;
     exit(-1);
     }
-  if(argc==4)
+  if(argc==4&&argv[3][0]=='N')
       colorLabels=false;
+  if(argc==4&&argv[3][0]=='S')
+      saveColoredPCD=true;
   
   std::map<int,int> color_mapping; 
 
     sensor_msgs::PointCloud2 cloud_blob;
     pcl::PointCloud<PointT> cloud;
-    // read the pcd file
+    pcl::PointCloud<PointT> cloud_colored;
     std::ifstream labelFile;
     labelFile.open(argv[2]);
     int labelNum, colorNum;
@@ -97,7 +100,7 @@ int main(int argc, char** argv) {
     ROS_INFO("Loaded %d data points from test_pcd.pcd with the following fields: %s", (int) (cloud_blob.width * cloud_blob.height), pcl::getFieldsList(cloud_blob).c_str());
 
    pcl::fromROSMsg (cloud_blob, cloud);
-
+   cloud_colored=cloud;
 
 
   CvSize size;
@@ -116,7 +119,12 @@ int main(int argc, char** argv) {
         if(colorLabels&&tmp.label>0&&color_mapping[tmp.label]>0)
         {
            tmpColor=*labelColors[color_mapping[tmp.label]-1]; 
+            if(saveColoredPCD)
+            {
+                cloud_colored.points[index].rgb=tmpColor.getFloatRep();
+            }
         }
+        
             
         CV_IMAGE_ELEM ( image, float, y, 3 * x ) = tmpColor.b;
         CV_IMAGE_ELEM ( image, float, y, 3 * x + 1 ) = tmpColor.g;
@@ -128,6 +136,11 @@ int main(int argc, char** argv) {
           sprintf(filename,"%s.png",argv[1]);
 HOG::saveFloatImage ( filename, image );
 cvReleaseImage (&image);
+          sprintf(filename,"%s_colored.pcd",argv[1]);
+          if(saveColoredPCD)
+          {
+          pcl::io::savePCDFileBinary(filename,cloud_colored);
+          }
 
 }
 
