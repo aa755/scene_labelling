@@ -494,7 +494,7 @@ Confusion Matrix for Home dataset
 \end{frame}
 
 \begin{frame}{Results}
-How Large should the Context Range be?
+How large should the Context Range be?
   \begin{figure}
 	\includegraphics[scale=0.5]{radiusEffectPlot.pdf} 
   \end{figure}
@@ -559,8 +559,12 @@ Home & 82.09 & 52.35 & 52.03 & 26.22 \\
 
 \begin{frame}{What if an object in not found?}
 \begin{itemize}
-\item 
+\item Find the most contextually likely location by imagining an segment at every discretized 3D location.
 \end{itemize}
+ \begin{figure}   
+ \includegraphics[scale=0.2]{heatImage.png} 
+ \end{figure}
+
 \end{frame}
 
 
