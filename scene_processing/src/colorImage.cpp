@@ -104,8 +104,8 @@ int main(int argc, char** argv) {
 
 
   CvSize size;
-  size.height=480;
-  size.width=640;
+  size.height=cloud.height;
+  size.width=cloud.width;
   IplImage * image = cvCreateImage ( size, IPL_DEPTH_32F, 3 );
   
           pcl::PointXYZRGBCamSL tmp;
