@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
     assert(argc==2);
     pcl::io::loadPCDFile(argv[1],cloud);
     segmentInPlace(cloud,1);
-    pcl::io::savePCDFileBinary("fine_seg_"+string(argv[1]),cloud);
+    pcl::io::savePCDFileBinary(string(argv[1])+"_fine_seg.pcd",cloud);
     
     return 0;
 }
