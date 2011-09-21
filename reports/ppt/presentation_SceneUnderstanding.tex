@@ -260,11 +260,6 @@ match the following to table/printer
 
 \end{frame}
 
-
-\begin{frame}{Learning}
-
-\end{frame}
-
 \begin{frame}{Inference}
  \begin{eqnarray*}
 \hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
@@ -277,7 +272,27 @@ match the following to table/printer
 \ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
 \forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
 \forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \} \label{eq:relaxconst}
-\end{eqnarray*} 
+\end{eqnarray*}
+\end{frame}
+
+\begin{frame}{Learning using $SVM^{struct}$}
+
+\begin{equation} \label{eq:model}
+\begin{split}
+\df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+& = \w^T \Psi(\x,\y)
+ \end{split}
+\end{equation}
+where, $\Psi(\x,\y)=XY$
+
+\end{frame}
+
+\begin{frame}{Learning using $SVM^{struct}$}
+learn weights w such that $\w^T \Psi(\x,\y)$  is max for correct y
+\begin{figure}[t!]
+\includegraphics[width=.9\linewidth]{struct.png}
+\end{figure}
 \end{frame}
 
 
