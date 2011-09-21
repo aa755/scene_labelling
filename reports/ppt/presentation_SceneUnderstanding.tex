@@ -318,6 +318,7 @@ match the following to table/printer
  \item $y_i^k\in{0,0.5,1}$
  \item can be also solved by QBPO(which uses graph-cut)
 \end{itemize}
+
 \end{frame}
 
 
@@ -414,8 +415,38 @@ Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64  
 
 \end{frame}
 
+\begin{frame}{The world has more than 17 classes}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst}\\
+\color<0->{red}{\forall i &:& \sum_{j=1}^{K} y_i^j = 1}
+\end{eqnarray*} 
+
+\end{frame}
+
+
+
+\begin{frame}{The world has more than 17 classes}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst} \\
+\forall i &:& \sum_{j=1}^{K} y_i^j \le 1
+\end{eqnarray*} 
+\end{frame}
+
 
 \begin{frame}{Robotic Experiments}
+
 % setup
 %demo
 % table of results
