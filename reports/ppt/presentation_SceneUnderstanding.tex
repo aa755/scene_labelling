@@ -33,7 +33,8 @@
 \DeclareMathOperator*{\argmin}{argmin}  
 
 \usetheme{Warsaw}
-\title{Semantic Labeling of 3D Point Clouds for Indoor Scenes}
+\title{Contextually Guided Semantic Labeling and Search for 3D Point Clouds}
+
 
 
 
@@ -150,17 +151,20 @@ match the following to table/printer
 \end{figure}
 \end{frame}
 
-
+\begin{frame}{Model}
+\begin{itemize}
+ \item The 3D scene is encoded using Markov Random Field with log-linear node and pairwise edge potentials
+ \item SHOW CONSTRUCTION GRAPH HERE
+ % a small graph with objects in the scene representing nodes and edges?
+\end{itemize}
+\end{frame}
 
 \begin{frame}{Model}
 \begin{itemize}
 
- \item The 3D scene is encoded using Markov Random Field with log-linear node and pairwise edge potentials
- 
- % a small graph with objects in the scene representing nodes and edges?
- 
-\item Goal: Given a segmented point cloud $\x=(\xs{1},...,\xs{N})$  predict a labeling $\y=(\ys{1},...,\ys{N})$
 
+\item Goal: Given a segmented point cloud $\x=(\xs{1},...,\xs{N})$  predict a labeling $\y=(\ys{1},...,\ys{N})$
+\item Number of labels: K
 \item where $\ys{i}=(\ysc{i}{1},...,\ysc{i}{K})$,  $ \forall \ysc{i}{k} \in \{0,1\}$ 
 
 
@@ -193,16 +197,11 @@ match the following to table/printer
 \begin{itemize}
 %There may be multiple types $t$ of edge feature maps $\fe{t}{i}{j}$, and each type has a graph over the $K$ classes with edges $T_t$. If $T_t$ contains an edge between classes $l$ and $k$, then this feature map and a weight vector $\we{t}{l}{k}$ is used to model the dependencies between classes $l$ and $k$. If the edge is not present in $T_t$, then $\fe{t}{i}{j}$ is not used.
 
-\item Multiple types of edge feature maps $\fe{t}{i}{j}$
-\item Each type has a graph over the $K$ classes with edges  $T_t$
-\item If $T_t$ contains edge $(l,k)$, then $\fe{t}{i}{j}$ and $\we{t}{l}{k}$  model the dependencies between classes $l$ and $k$.
-\item Associative edges:  ${T_t}=\{(k,k)| \forall k=1..K\}$
-\item Non-associative edges: $T_t=\{(l,k)| \forall l,k=1..K\}$
-\item Object-associate edges: $T_t=\{(l,k) | \exists object , ~ l,k\in {\rm parts}({\rm object})\}$
+\item Multiple types of edge feature maps
 
-\begin{figure}
-		\includegraphics[width=.8\linewidth]{objAssoc.png}
-	\end{figure}
+\item Visual similarity between segments -- parts of the same object
+\item Vertical distance between segment centers -- relates multiple objects
+\item IMAGE
 
 \end{itemize}
 \end{frame}
@@ -210,7 +209,25 @@ match the following to table/printer
 \begin{frame}{Model}
 \begin{itemize}
 
-\item Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$ and edge features $\fe{t}{i}{j}$
+\item Each type has a graph over the $K$ classes with edges  $T_t$
+
+\item Associative edges:  ${T_t}=\{(k,k)| \forall k=1..K\}$
+\item Non-associative edges: $T_t=\{(l,k)| \forall l,k=1..K\}$
+\item Object-associate edges: $T_t=\{(l,k) | \exists object , ~ l,k\in {\rm parts}({\rm object})\}$
+\end{itemize}
+\hskip 1in
+\begin{figure}
+		\includegraphics[width=.8\linewidth]{objAssoc.png}
+	\end{figure}
+
+
+\end{frame}
+
+\begin{frame}{Model}
+Parsimonious model
+
+
+%\item Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$ and edge features $\fe{t}{i}{j}$
 
 \begin{equation} \label{eq:model}
 \begin{split}
@@ -218,19 +235,12 @@ match the following to table/printer
  & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
  \end{split}
 \end{equation}
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Model}
 \begin{itemize}
-\item Parsimonious model
-
-\item Two types of feature maps: 
-\begin{itemize}
-\item ``object-associative'' features $\fe{oa}{i}{j}$ - used between classes that are parts of the same object (e.g., ``chair base'', ``chair back'' and ``chair back rest''). 
-\item ``non-associative'' features $\fe{na}{i}{j}$ -  used between any pair of classes.
-\end{itemize}
+\item If $T_t$ contains edge $(l,k)$, then $\fe{t}{i}{j}$ and $\we{t}{l}{k}$  model the dependencies between classes $l$ and $k$.
 \item Since $|T_{na}| >> |T_{oa}|$ , the number of parameters to learn is lesser compared to modeling all edges as non-associative.
+%\item ``object-associative'' features $\fe{oa}{i}{j}$ - used between classes that are parts of the same object (e.g., ``chair base'', ``chair back'' and ``chair back rest''). 
+%\item ``non-associative'' features $\fe{na}{i}{j}$ -  used between any pair of classes.
+
 \end{itemize}
 \end{frame}
 
