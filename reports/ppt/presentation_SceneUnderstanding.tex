@@ -192,6 +192,10 @@ match the following to table/printer
 \item Non-associative edges: $T_t=\{(l,k)| \forall l,k=1..K\}$
 \item Object-associate edges: $T_t=\{(l,k) | \exists object , ~ l,k\in {\rm parts}({\rm object})\}$
 
+\begin{figure}
+		\includegraphics[width=.8\linewidth]{objAssoc.png}
+	\end{figure}
+
 \end{itemize}
 \end{frame}
 
@@ -417,9 +421,23 @@ Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64  
 }
 
 \end{table}
+\end{frame}
 
+\begin{frame}{Results}
+Confusion Matrix for Office dataset
+  \begin{figure}
+		\includegraphics[scale=0.2]{objassoc_office_radius0_6.pdf} 
+	\end{figure}
 
 \end{frame}
+
+\begin{frame}{Results}
+Confusion Matrix for Home dataset
+ \begin{figure}   
+ \includegraphics[scale=0.2]{objassoc_home_radius0_6.pdf} 
+ \end{figure}
+\end{frame}
+
 
 \begin{frame}{Putting it on the robot}
 
@@ -457,6 +475,24 @@ Image+Shape \& context &  svm\_mrf\_parsimon	     			& 84.06  & 80.52  & 72.64  
 \forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst} \\
 \forall i &:& \sum_{j=1}^{K} y_i^j \le 1
 \end{eqnarray*} 
+\end{frame}
+
+
+\begin{frame}{The world has more than 17 classes}
+\begin{itemize}
+\item Results on the two datasets using the above inference method:
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{c | c | c | c | c}
+Data & Micro-  & Micro-  & Macro-  & Macro-\\
+ &  precision &  recall &  precision &  recall\\
+\hline
+Office & 89.27 & 55.17 & 74.29 & 35.24 \\
+Home & 82.09 & 52.35 & 52.03 & 26.22 \\
+\hline
+\end{tabular}
+\end{center}
 \end{frame}
 
 
