@@ -75,10 +75,10 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 	\end{figure}
 \end{frame}
 
-\begin{frame}{Prev Approaches}
+\begin{frame}{Previous Approaches}
 
 	\begin{itemize}
-		\item most used 2D images
+		\item Most works used 2D images.
 	\begin{itemize}
 		\item Histogram Of image Gradients(Dalal2005)
 		\item Using context to find objects(eg. Torralba2007)
@@ -86,7 +86,7 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 
 	\end{itemize}
 
-		\item some try to jointly infer 3D structure (eg. Hoeim2006, Vedau 2010, Lee 2010)
+		\item Some try to jointly infer 3D structure (eg. Hoeim2006,  Lee 2010, Vedau 2010).
 	\end{itemize}
 
 \end{frame}
@@ -310,9 +310,9 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 
 \item Each type has a graph over the $K$ classes with edges  $T_t$
 
-\item Associative edges:  ${T_t}=\{(k,k)| \forall k=1..K\}$
-\item Non-associative edges: $T_t=\{(l,k)| \forall l,k=1..K\}$
-\item Object-associate edges: $T_t=\{(l,k) | \exists object , ~ l,k\in {\rm parts}({\rm object})\}$
+\item Associative type:  ${T_t}=\{(k,k)| \forall k=1..K\}$
+\item Non-associative type: $T_t=\{(l,k)| \forall l,k=1..K\}$
+\item Object-associate type: $T_t=\{(l,k) | \exists object , ~ l,k\in {\rm parts}({\rm object})\}$
 \end{itemize}
 \hskip 1in
 \begin{figure}
@@ -405,6 +405,14 @@ Parsimonious Model
 
 \begin{frame}{Inference}
  \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ \label{eq:relaxobj}\\
+\end{eqnarray*}
+\end{frame}
+
+\begin{frame}{Inference}
+ \begin{eqnarray*}
 \hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
 &+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
  \label{eq:relaxobj}\\
@@ -423,7 +431,7 @@ Parsimonious Model
 \begin{equation} \label{eq:model}
 \begin{split}
 \df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
- & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \zsc{ij}{lk}   \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
 & = \w^T \Psi(\x,\y)
  \end{split}
 \end{equation}
@@ -448,7 +456,7 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
 
 \begin{itemize}
 \item convex quadratic program
-\item $3^{N.K}$ constraints!
+\item $2^{N.K}$ constraints!
 \item cutting plane method
 \item need to compute \\ $\bar{\y}_i  = \argmax_{\y \in \{0,1\}^{N \cdot K}} \left[ \w^T \Psi(\x_i,\y) + \loss{\y_i}{\y} \right]$
 \end{itemize}
