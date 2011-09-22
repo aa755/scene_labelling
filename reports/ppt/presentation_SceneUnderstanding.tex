@@ -13,6 +13,7 @@
 \usepackage{verbatim}
 \usepackage{multirow} 
 \usepackage{relsize}
+\usepackage{cancel}
 
 
 \usepackage{cite}
@@ -533,74 +534,7 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
 \end{frame}
 
 
-\begin{frame}{Inference for Learning}
- \begin{eqnarray*}
-\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
-&+& \color<0-1>{red}{\loss{\y_i}{\y}} \label{eq:relaxobj}\\
-\end{eqnarray*} 
-
-\begin{eqnarray*}
-\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
-\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
-\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
-\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \} \label{eq:relaxconst}\\
-\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
-\end{eqnarray*} 
-
-\end{frame}
-
-\begin{frame}{Inference for Learning}
- \begin{eqnarray*}
-\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
-&+& \loss{\y_i}{\y}
-\end{eqnarray*}
-
-\begin{eqnarray*}
-\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
-\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
-\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
-\forall i,j,l,k &:& \color<0-1>{red}{\zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \}}\\
-\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
-\end{eqnarray*}
-
-\end{frame}
-
-\begin{frame}{Inference for Learning}
- \begin{eqnarray*}
-\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
-&+& \loss{\y_i}{\y}
-\end{eqnarray*}
-
-\begin{eqnarray*}
-\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
-\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
-\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
-\forall i,j,l,k &:& \color<0-1>{red}{\zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] }\\
-\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
-\end{eqnarray*}
-
-\end{frame}
-
-\begin{frame}{Inference for Learning}
- \begin{eqnarray*}
-\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
-&+& \loss{\y_i}{\y}
-\end{eqnarray*}
-
-\begin{eqnarray*}
-\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
-\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
-\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
-\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \\
-\forall i &:& \color<0-1>{red}{\sum_{j=1}^{K} y_i^j = 1}\\
-\end{eqnarray*}
-
-\end{frame}
-
+%\renewcommand{\CancelColor}{\red}
 
 \begin{frame}{Inference for Learning}
  \begin{eqnarray*}
@@ -610,7 +544,8 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
 \forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
 \zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
 \ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
-\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst}
+\forall i,j,l,k &:& \xcancel{ \zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \} } \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \\
+\forall i &:& \xcancel{\sum_{j=1}^{K} y_i^j = 1 }
 \end{eqnarray*} 
 
 \begin{itemize}
@@ -872,16 +807,48 @@ Overall Macro & & 93.45 & 76.66 \\
 
 \end{frame}
 
+\begin{frame}{Conclusions}
+\begin{itemize}
+\item kinect(and others) are invaluable for scene understanding
+\item visual and shape based features can be modelled parsimoniously
+\item context can be used for detection and active search
+\end{itemize}
+
+\end{frame}
+
 \begin{frame}
+\begin{block}{Data and code available!}
+\text{http://pr.cs.cornell.edu/sceneunderstanding/}
+ \begin{figure}   
+\includegraphics[width=0.25\linewidth]{qr.png}
+ \end{figure}
+\end{block}
+
+\begin{block}{}
+
 \begin{center}
+
 {\Huge 
 Questions?
+}
+
+\end{center}
+
+\end{block}
+
+\end{frame}
+
+
+\begin{frame}{Current Work}
+\begin{center}
+{\huge
+Using grammars for scene understanding
 }
 \end{center}
 \end{frame}
 
 \begin{frame}{Current Work: Using grammars for scene understanding}
-current approach can't model:
+use grammars to model:
 \begin{itemize}
 \item objects are typically composed of characteristic parts
 \item higher level cues can help in segmentation
