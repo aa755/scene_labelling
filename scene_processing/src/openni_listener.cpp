@@ -3009,7 +3009,6 @@ void evaluate(string inp, string out, int oclass)
 {
         pcl::PointCloud<PointT> outc;
         pcl::io::loadPCDFile<PointT>(out, outc);
- /*       
     std::vector<pcl::PointCloud<PointT> > segment_clouds;
         pcl::PointCloud<PointT> cloud;
         pcl::PointCloud<PointT>::Ptr cloud_seg(new pcl::PointCloud<PointT>());
@@ -3055,9 +3054,8 @@ void evaluate(string inp, string out, int oclass)
     cout<<"heatMax"<<maximas.at(0)<<endl;
     
     Vector3d predL(maximas.at(0).x,maximas.at(0).y,maximas.at(0).z);
-*/
     Vector3d sump(0,0,0);
-        Vector3d predL=getCenter(outc);
+    //    Vector3d predL=getCenter(outc);
     int count=0;
     int targetLabel=invLabelMap[oclass+1];
     double minDist=DBL_MAX;
