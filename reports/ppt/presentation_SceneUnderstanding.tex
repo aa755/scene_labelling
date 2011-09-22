@@ -604,7 +604,8 @@ Confusion Matrix for Home dataset
 
 \begin{frame}{Putting it on the robot}
 
-\begin{columns}\column{.65\textwidth}
+\begin{columns}
+\column{.65\textwidth}
 \begin{itemize}
 \item The world has more than 17 classes.
 \item What if an object is not found?
@@ -635,15 +636,11 @@ Confusion Matrix for Home dataset
 %demo
 % table of results
 \begin{itemize}
-\item Goal : Robot is asked to find a set of object classes in an office scene.
-\item Start at a predetermined location. 
-\item Scan room by turning a fixed angle.
-\item Classify and save the labeled point clouds. 
-\item Find contextually likely locations for object classes not found.
-\item Move to the predicted locations and obtain new point clouds.
+\item Goal : Find a set of object classes in an office scene.
+\item Start at a predetermined location and scan room. 
+\item Classify pointclouds. 
+\item Find contextually likely locations for the rest.
 \item Update predicted locations when new objects are found.
-\item Stop when all object classes are found.
-
 \end{itemize}
 
 \end{frame}
