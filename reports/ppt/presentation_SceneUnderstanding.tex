@@ -426,7 +426,7 @@ Parsimonious Model
 \begin{equation} \label{eq:model}
 \begin{split}
 \df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
- & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \zsc{ij}{lk}   \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
 & = \w^T \Psi(\x,\y)
  \end{split}
 \end{equation}
