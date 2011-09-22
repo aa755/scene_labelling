@@ -1668,7 +1668,7 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud, pcl
         }
         if (frontIndexMatrix[zbin][ybin] != -1) {
             //   cout << "indexMatrix[xbin][ybin]= " << indexMatrix[xbin][ybin] << endl;
-            if (cloud.points[frontIndexMatrix[zbin][ybin]].x < cloud.points[i].x) {
+            if (cloud.points[frontIndexMatrix[zbin][ybin]].x > cloud.points[i].x) {
                 frontIndexMatrix[zbin][ybin] = i;
             }
         } else {
