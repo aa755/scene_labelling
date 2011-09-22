@@ -33,7 +33,9 @@
 \DeclareMathOperator*{\argmin}{argmin}  
 
 \usetheme{Warsaw}
-\title{Contextually Guided Semantic Labeling and Search for 3D Point Clouds}
+\title{Contextually Guided Semantic Labeling and Search for 3D Pointclouds}
+\author{Abhishek Anand, Hema Koppula, Thorsten Joachims, Ashutosh Saxena}
+
 
 
 
@@ -62,6 +64,15 @@
 \end{frame}
 
 \begin{frame}{Motivation}
+Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
+	\begin{figure}
+		\includegraphics[width=0.65\linewidth]{scene2.png}
+		\hskip0.1in
+		\includegraphics[width=0.3\linewidth]{robot2.jpg}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Motivation}
 	\begin{figure}[t!]
 		\includegraphics[width=.5\linewidth]{kinect.jpg}
 	\end{figure}
@@ -76,27 +87,35 @@
 
 \begin{frame}{Introduction}
 	\begin{itemize}
-		\item How does a kinect pointcloud look like? \footnote{http://arstechnica.com/gaming/news/2010/11/bathed-in-light-how-the-kinect-paints-your-room-in-ir-video.ars}
+		\item How does a kinect pointcloud look like?
+% \footnote{http://arstechnica.com/gaming/news/2010/11/bathed-in-light-how-the-kinect-paints-your-room-in-ir-video.ars}
 
 	\end{itemize}
 \end{frame}
 
 \begin{frame}{Introduction}
 	\begin{itemize}
-		\item Desired goal: labeled pointcloud:(show)
+		\item Desired goal: Labeled pointcloud
 
 	\end{itemize}
 \end{frame}
 
 \begin{frame}{Approach}
 	\begin{itemize}
-		\item stitching:(show animation)
-		\item  segmentation:(show)
-		\item  graph construction(show using graphviz?)
-		\item  feature generation
-		\item  inference
+		\item Obtain stitched pointclouds.
+		\item Segment based on smoothness and continuity. 
+		%\begin{figure}
+		     %  \includegraphics[width=.5\linewidth]{segmented.jpg}
+	         %\end{figure}
+		\item Generate features.
+		\item Predict a label for each segment.
 	\end{itemize}
+	
+	\vskip 0.5in
+{\scriptsize 
 
+ H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Semantic Labeling of 3d point clouds for indoor scenes.} In NIPS, 2011.\\ H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Labeling 3d scenes for personal assistant robots. CoRR, abs/1106.5551, 2011.}
+}
 \end{frame}
 
 \begin{frame}{Captured Properties}
@@ -653,11 +672,15 @@ Questions?
 \end{frame}
 
 
-\begin{frame}
-TITLE
+\begin{frame}{Current Work}
+\begin{center}
+{\huge
+Object Affordance and Human Activity Recognition
+}
+\end{center}
 \end{frame}
 
-\begin{frame}{Current Work: Object Affordance Detection via Human Demonstration}
+\begin{frame}{ Object Affordance and Human Activity Recognition}
 \begin{itemize}
 \item Affordances :  properties of the environment that afford a certain action to be performed by a human or an animal
 \end{itemize}
@@ -666,7 +689,7 @@ TITLE
 \end{figure}
 \end{frame}
 
-\begin{frame}{Object Affordance Detection via Human Demonstration}
+\begin{frame}{Object Affordance and Human Activity Recognition}
 \begin{itemize}
 \item Human-Object interactions: Affordance depends on human-poses / sub-actions
 \end{itemize}
