@@ -1660,7 +1660,7 @@ void saveOriginalImages(const pcl::PointCloud<pcl::PointXYZRGBCamSL> &cloud, pcl
         // cout << "x:" << xbin << " y:" << ybin <<endl;
         if (indexMatrix[ybin][xbin] != -1) {
             //   cout << "indexMatrix[xbin][ybin]= " << indexMatrix[xbin][ybin] << endl;
-            if (cloud.points[indexMatrix[ybin][xbin]].z > cloud.points[i].z) {
+            if (cloud.points[indexMatrix[ybin][xbin]].z < cloud.points[i].z) {
                 indexMatrix[ybin][xbin] = i;
             }
         } else {
