@@ -410,7 +410,7 @@ learn weights w such that $\w^T \Psi(\x,\y)$  is max for correct y
 \begin{frame}{Learning using $SVM^{struct}$}
 \begin{eqnarray} \label{eq:trainqp}
 \min_{w,\xi}    \frac{1}{2} \w^T\w + C\xi\\
-s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,0.5,1\}^{N \cdot K} :\\
+s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
  \frac{1}{n} \w^T \sum_{i=1}^{n} [\Psi( \x_i, \y_i) \nonumber - \Psi(\x_i,\bar{\y}_i)] \ge \Delta(\y_i,\bar{\y}_i) -\xi \nonumber
 \end{eqnarray}
 
@@ -418,7 +418,7 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,0.5,1\}^{N \cdot K} :\\
 \item convex quadratic program
 \item $3^{N.K}$ constraints!
 \item cutting plane method
-\item need to compute $\bar{\y}_i  =  \!\!\!\!\!\argmax_{\y \in \{0,0.5,1\}^{N \cdot K}} \left[ \w^T \Psi(\x_i,\y) + \loss{\y_i}{\y} \right]$
+\item need to compute \\ $\bar{\y}_i  = \argmax_{\y \in \{0,1\}^{N \cdot K}} \left[ \w^T \Psi(\x_i,\y) + \loss{\y_i}{\y} \right]$
 \end{itemize}
 \end{frame}
 
