@@ -34,7 +34,9 @@
 \DeclareMathOperator*{\argmin}{argmin}  
 
 \usetheme{Warsaw}
-\title{Contextually Guided Semantic Labeling and Search for 3D Point Clouds}
+\title{Contextually Guided Semantic Labeling and Search for 3D Pointclouds}
+\author{Abhishek Anand, Hema Koppula, Thorsten Joachims, Ashutosh Saxena}
+
 
 
 
@@ -63,6 +65,15 @@
 \end{frame}
 
 \begin{frame}{Motivation}
+Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
+	\begin{figure}
+		\includegraphics[width=0.65\linewidth]{scene2.png}
+		\hskip0.1in
+		\includegraphics[width=0.3\linewidth]{robot2.jpg}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Motivation}
 	\begin{figure}[t!]
 		\includegraphics[width=.5\linewidth]{kinect.jpg}
 	\end{figure}
@@ -77,27 +88,35 @@
 
 \begin{frame}{Introduction}
 	\begin{itemize}
-		\item How does a kinect pointcloud look like? \footnote{http://arstechnica.com/gaming/news/2010/11/bathed-in-light-how-the-kinect-paints-your-room-in-ir-video.ars}
+		\item How does a kinect pointcloud look like?
+% \footnote{http://arstechnica.com/gaming/news/2010/11/bathed-in-light-how-the-kinect-paints-your-room-in-ir-video.ars}
 
 	\end{itemize}
 \end{frame}
 
 \begin{frame}{Introduction}
 	\begin{itemize}
-		\item Desired goal: labeled pointcloud:(show)
+		\item Desired goal: Labeled pointcloud
 
 	\end{itemize}
 \end{frame}
 
 \begin{frame}{Approach}
 	\begin{itemize}
-		\item stitching:(show animation)
-		\item  segmentation:(show)
-		\item  graph construction(show using graphviz?)
-		\item  feature generation
-		\item  inference
+		\item Obtain stitched pointclouds.
+		\item Segment based on smoothness and continuity. 
+		%\begin{figure}
+		     %  \includegraphics[width=.5\linewidth]{segmented.jpg}
+	         %\end{figure}
+		\item Generate features.
+		\item Predict a label for each segment.
 	\end{itemize}
+	
+	\vskip 0.5in
+{\scriptsize 
 
+ H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Semantic Labeling of 3d point clouds for indoor scenes.} In NIPS, 2011.\\ H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Labeling 3d scenes for personal assistant robots. CoRR, abs/1106.5551, 2011.}
+}
 \end{frame}
 
 \begin{frame}{Captured Properties}
@@ -562,12 +581,7 @@ Confusion Matrix for Home dataset
  \end{figure}
 \end{frame}
 
-\begin{frame}{Results}
-How large should the Context Range be?
-  \begin{figure}
-	\includegraphics[scale=0.5]{radiusEffectPlot.pdf} 
-  \end{figure}
-\end{frame}
+
 
 \begin{frame}{Putting it on the robot}
 
@@ -577,54 +591,6 @@ How large should the Context Range be?
 \end{itemize}
 
 \end{frame}
-
-\begin{frame}{The world has more than 17 classes}
- \begin{eqnarray*}
-\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
-&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
-\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
-\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
-\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
-\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst}\\
-\forall i &:& \sum_{j=1}^{K} y_i^j = 1
-\end{eqnarray*} 
-
-\end{frame}
-
-
-
-\begin{frame}{The world has more than 17 classes}
- \begin{eqnarray*}
-\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
-&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
-\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
-\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
-\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
-\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst} \\
-\forall i &:& \sum_{j=1}^{K} y_i^j \le 1
-\end{eqnarray*} 
-\end{frame}
-
-
-\begin{frame}{The world has more than 17 classes}
-\begin{itemize}
-\item Results on the two datasets using the above inference method:
-\end{itemize}
-
-\begin{center}
-\begin{tabular}{c | c | c | c | c}
-Data & Micro-  & Micro-  & Macro-  & Macro-\\
- &  precision &  recall &  precision &  recall\\
-\hline
-Office & 89.27 & 55.17 & 74.29 & 35.24 \\
-Home & 82.09 & 52.35 & 52.03 & 26.22 \\
-\hline
-\end{tabular}
-\end{center}
-\end{frame}
-
 
 \begin{frame}{What if an object in not found?}
 \begin{itemize}
@@ -691,6 +657,14 @@ Overall Macro & & 93.45 & 76.66 \\
 
 \end{frame}
 
+\begin{frame}
+\begin{center}
+{\Huge 
+Questions?
+}
+\end{center}
+\end{frame}
+
 \begin{frame}{Current Work: Using grammars for scene understanding}
 current approach can't model:
 \begin{itemize}
@@ -702,7 +676,16 @@ current approach can't model:
 
 \end{frame}
 
-\begin{frame}{Current Work: Object Affordance Detection via Human Demonstration}
+
+\begin{frame}{Current Work}
+\begin{center}
+{\huge
+Object Affordance and Human Activity Recognition
+}
+\end{center}
+\end{frame}
+
+\begin{frame}{ Object Affordance and Human Activity Recognition}
 \begin{itemize}
 \item Affordances :  properties of the environment that afford a certain action to be performed by a human or an animal
 \end{itemize}
@@ -711,7 +694,7 @@ current approach can't model:
 \end{figure}
 \end{frame}
 
-\begin{frame}{Object Affordance Detection via Human Demonstration}
+\begin{frame}{Object Affordance and Human Activity Recognition}
 \begin{itemize}
 \item Human-Object interactions: Affordance depends on human-poses / sub-actions
 \end{itemize}
@@ -728,11 +711,70 @@ current approach can't model:
 \end{figure}
 \end{frame}
 
-\begin{frame}{Object Affordance Detection via Human Demonstration}
-\begin{itemize}
-\item 
-\end{itemize}
+
+\begin{frame}
+\begin{center}
+{\Huge 
+Thank You!
+}
+\end{center}
+\end{frame}
+
+\begin{frame}{Results}
+How large should the Context Range be?
+  \begin{figure}
+	\includegraphics[scale=0.5]{radiusEffectPlot.pdf} 
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}{The world has more than 17 classes}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst}\\
+\forall i &:& \sum_{j=1}^{K} y_i^j = 1
+\end{eqnarray*} 
 
 \end{frame}
+
+
+
+\begin{frame}{The world has more than 17 classes}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst} \\
+\forall i &:& \sum_{j=1}^{K} y_i^j \le 1
+\end{eqnarray*} 
+\end{frame}
+
+
+\begin{frame}{The world has more than 17 classes}
+\begin{itemize}
+\item Results on the two datasets using the above inference method:
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{c | c | c | c | c}
+Data & Micro-  & Micro-  & Macro-  & Macro-\\
+ &  precision &  recall &  precision &  recall\\
+\hline
+Office & 89.27 & 55.17 & 74.29 & 35.24 \\
+Home & 82.09 & 52.35 & 52.03 & 26.22 \\
+\hline
+\end{tabular}
+\end{center}
+\end{frame}
+
+
 
 \end{document} 
