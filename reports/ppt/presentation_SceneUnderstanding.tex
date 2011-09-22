@@ -81,16 +81,16 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 	\end{figure}
 
 	\begin{itemize}
-		\item 3D era for robots has arrived 
-		\item  cheap, fast 3D machine vision
-		\item  both color and depth available
+		\item 3D era for robots has arrived.
+		\item Cheap, fast 3D machine vision.
+		\item Both color and depth available.
 	\end{itemize}
 
 \end{frame}
 
 \begin{frame}{Introduction}
 	\begin{itemize}
-		\item How does a kinect pointcloud look like?
+		\item How does a Kinect pointcloud look like?
 % \footnote{http://arstechnica.com/gaming/news/2010/11/bathed-in-light-how-the-kinect-paints-your-room-in-ir-video.ars}
 
 	\end{itemize}
@@ -107,17 +107,17 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 	\begin{itemize}
 		\item Obtain stitched pointclouds.
 		\item Segment based on smoothness and continuity. 
-		%\begin{figure}
-		     %  \includegraphics[width=.5\linewidth]{segmented.jpg}
-	         %\end{figure}
-		\item Generate features.
-		\item Predict a label for each segment.
+		\begin{figure}
+		       \includegraphics[width=.9\linewidth]{mengo.png}\\
+		       \includegraphics[width=.9\linewidth]{meng_segmented.png}
+	         \end{figure}
+		\item Generate features and predict a label for each segment.
 	\end{itemize}
 	
-	\vskip 0.5in
-{\scriptsize 
-
- H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Semantic Labeling of 3d point clouds for indoor scenes.} In NIPS, 2011.\\ H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Labeling 3d scenes for personal assistant robots. CoRR, abs/1106.5551, 2011.}
+	\vskip 0.25in
+{\scriptsize
+ H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Semantic Labeling of 3d point clouds for indoor scenes.} In NIPS, 2011.\\
+ %H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Labeling 3d scenes for personal assistant robots. CoRR, abs/1106.5551, 2011.}
 }
 \end{frame}
 
@@ -172,9 +172,9 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
                 \item  Local Shape and Geometry
 
 		\begin{itemize}
-			\item tableTops are horizontal
-			\item tableTops are at fixed hights
-			\item faces of a printer form a convex shape
+			\item Table tops are horizontal.
+			\item Table tops are at fixed heights.
+			\item Faces of a printer form a convex shape.
 		\end{itemize}
 
                 \item  Geometrical Context
@@ -229,9 +229,10 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 
 \begin{frame}{Model}
 \begin{itemize}
- \item The 3D scene is encoded using Markov Random Field with log-linear node and pairwise edge potentials.
- \item Each segment forms a node in the graph.
- \item Every segment is connected to its near-by segments with an edge.  
+ \item The 3D scene is encoded using Markov Random Field  
+  \item Each segment forms a node in the graph.
+ \item Every segment is connected to its near-by segments with an edge.
+ \item Log-linear node and pairwise edge potentials.
  % a small graph with objects in the scene representing nodes and edges?
 \end{itemize}
 \end{frame}
@@ -241,7 +242,7 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 
 
 \item Goal: Given a segmented point cloud $\x=(\xs{1},...,\xs{N})$  predict a labeling $\y=(\ys{1},...,\ys{N})$
-\item Number of labels: K
+\item Labels $\in  \{ 1, ..., K \} $
 \item where $\ys{i}=(\ysc{i}{1},...,\ysc{i}{K})$,  $ \forall \ysc{i}{k} \in \{0,1\}$ 
 
 
@@ -277,7 +278,7 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 \item Multiple types of edge feature maps.
 
 \item Visual similarity between segments -- parts of the same object.
-\item Vertical distance between segments -- relates multiple objects.
+\item Vertical distance between segments -- relates different objects.
 \item IMAGE
 
 \end{itemize}
@@ -588,10 +589,17 @@ Confusion Matrix for Home dataset
 
 \begin{frame}{Putting it on the robot}
 
+\begin{columns}\column{.65\textwidth}
 \begin{itemize}
-\item the world has more than 17 classes
-\item what if an object is not found
+\item The world has more than 17 classes.
+\item What if an object is not found?
 \end{itemize}
+\column{.35\textwidth}
+ \begin{figure}   
+\includegraphics[width=\linewidth]{robot2.jpg}
+ \end{figure}
+
+\end{columns}
 
 \end{frame}
 
