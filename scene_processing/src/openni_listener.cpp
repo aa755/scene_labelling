@@ -2145,7 +2145,7 @@ void lookForClassInOriginalFrameProjective(vector<int> & classes, pcl::PointClou
 
 void lookForClass(vector<int> & classes, pcl::PointCloud<pcl::PointXYZRGBCamSL> & cloud, vector<SpectralProfile> & spectralProfiles, map<int, int> & segIndex2label, const std::vector<pcl::PointCloud<PointT> > &segment_clouds, int scene_num, vector<pcl::PointXYZI> & maximas)
 {
-    pcl::PointXYZ steps(0.01, 0.01, 0.01);
+    pcl::PointXYZ steps(0.005, 0.005, 0.005);
     std::vector< pcl::KdTreeFLANN<PointT>::Ptr > trees;
 
     maximas.resize(classes.size());
