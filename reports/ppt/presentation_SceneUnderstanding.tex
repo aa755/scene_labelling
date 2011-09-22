@@ -34,7 +34,9 @@
 
 \usetheme{Warsaw}
 \title{Contextually Guided Semantic Labeling and Search for 3D Pointclouds}
-\author{Abhishek Anand, Hema Koppula, Thorsten Joachims, Ashutosh Saxena}
+\author{Abhishek Anand, Hema Koppula }
+\institute{Joint work with Thorsten Joachims and Ashutosh Saxena}
+
 
 
 
@@ -206,9 +208,9 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
                 \item  Local Shape and Geometry
 
                 \begin{itemize}
-                        \item tableTops are horizontal
-                        \item tableTops are at fixed hights
-                        \item faces of a printer form a convex shape
+                        \item Table tops are horizontal.
+                        \item Table tops are at fixed heights.
+                        \item Faces of a printer form a convex shape.
                 \end{itemize}
 
                 \item  Geometrical Context
@@ -226,8 +228,9 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 
 \begin{frame}{Model}
 \begin{itemize}
- \item The 3D scene is encoded using Markov Random Field with log-linear node and pairwise edge potentials
- \item SHOW CONSTRUCTION GRAPH HERE
+ \item The 3D scene is encoded using Markov Random Field with log-linear node and pairwise edge potentials.
+ \item Each segment forms a node in the graph.
+ \item Every segment is connected to its near-by segments with an edge.  
  % a small graph with objects in the scene representing nodes and edges?
 \end{itemize}
 \end{frame}
@@ -270,10 +273,10 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 \begin{itemize}
 %There may be multiple types $t$ of edge feature maps $\fe{t}{i}{j}$, and each type has a graph over the $K$ classes with edges $T_t$. If $T_t$ contains an edge between classes $l$ and $k$, then this feature map and a weight vector $\we{t}{l}{k}$ is used to model the dependencies between classes $l$ and $k$. If the edge is not present in $T_t$, then $\fe{t}{i}{j}$ is not used.
 
-\item Multiple types of edge feature maps
+\item Multiple types of edge feature maps.
 
-\item Visual similarity between segments -- parts of the same object
-\item Vertical distance between segments -- relates multiple objects
+\item Visual similarity between segments -- parts of the same object.
+\item Vertical distance between segments -- relates multiple objects.
 \item IMAGE
 
 \end{itemize}
