@@ -4,6 +4,7 @@
 \usepackage{ upgreek }
 \usepackage{verbatim} 
 \usepackage{amsmath}
+\usepackage{wrapfig}
 
 \usepackage{array}
 \usepackage{amssymb}
@@ -419,11 +420,9 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,0.5,1\}^{N \cdot K} :\\
 \begin{itemize}
 \item convex quadratic program
 \item $3^{N.K}$ constraints!
+\item cutting plane method
+\item need to compute $\bar{\y}_i  =  \!\!\!\!\!\argmax_{\y \in \{0,0.5,1\}^{N \cdot K}} \left[ \w^T \Psi(\x_i,\y) + \loss{\y_i}{\y} \right]$
 \end{itemize}
-\end{frame}
-
-\begin{frame}{Learning algorithm}
-Thorsten's slides
 \end{frame}
 
 
@@ -670,7 +669,13 @@ Questions?
 \end{frame}
 
 \begin{frame}{Current Work: Using grammars for scene understanding}
-
+current approach can't model:
+\begin{itemize}
+\item objects are typically composed of characteristic parts
+\item higher level cues can help in segmentation
+\item global shapes and sizes of segments
+\item occlusion
+\end{itemize}
 
 \end{frame}
 
