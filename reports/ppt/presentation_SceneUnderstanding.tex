@@ -602,14 +602,16 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
 \end{frame}
 
 \begin{frame}{Results }
-Results on 24 Office and 28 Home scenes for 17 classes each.
-%\begin{table*}
+Results on 24 Office and 28 Home scenes for 17 classes each.\\
+\vskip 0.1in
 {\small
 \begin{tabular}{|c|r|r|r|r|r|r|}
 \hline
- & \multicolumn{1}{c}{micro} & \multicolumn{2}{c|}{macro} & \multicolumn{1}{c}{micro} & \multicolumn{2}{c}{macro}   \\
+ & \multicolumn{3}{c|}{Office} & \multicolumn{3}{c|}{Home} \\
 \hline
-model  & $P/R$ & Preci.  & \multicolumn{1}{c|}{Rec.} &  $P/R$ & Prec. &  \multicolumn{1}{c}{Rec.}  \\ 
+ & \multicolumn{1}{c}{micro} & \multicolumn{2}{|c}{macro} & \multicolumn{1}{|c|}{micro} & \multicolumn{2}{|c|}{macro}   \\
+\hline
+model  & $P/R$ & Preci.  & \multicolumn{1}{c|}{Rec.} &  $P/R$ & Prec. &  Rec.  \\ 
 \hline
 baseline &  26.23 & 5.88 & 5.88 & 29.38 & 5.88 & 5.88\\
 \color<2>{red}{Image Only}  & \color<2>{red}{46.67}  & \color<2>{red}{35.73} & \color<2>{red}{31.67} &   \color<2>{red}{38.00} & \color<2>{red}{15.03} & \color<2>{red}{14.50}\\
@@ -619,7 +621,10 @@ Shape Only & 75.36  & 64.56 & 60.88 &    56.25 & 35.90 & 36.52 \\
 \hline
 \end{tabular}
 }
-
+\begin{itemize}
+\item \uncover<2->{How valuable are colored pointclouds ?}
+\item \uncover<3->{How important is context? }
+\end{itemize}
 \end{frame}
 
 
