@@ -126,7 +126,7 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 
 \begin{itemize}
 \item Colored pointclouds (eg. Lai2010)
-\item Uncolored pointclouds(eg. Xiong2010)
+\item Uncolored pointclouds (eg. Xiong2010)
 \end{itemize}
 \end{frame}
 
@@ -151,7 +151,7 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 
 \begin{frame}{Model}
 \begin{itemize}
- \item The 3D scene is encoded using Markov Random Field  
+ \item The 3D scene is encoded using Markov Random Field.  
  \item Each segment forms a node in the graph.
  \item Every segment is connected to its near-by segments with an edge.
  \item Log-linear node and pairwise edge potentials.
@@ -173,9 +173,19 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 \hat{\y} = \argmax_\y \df{\x}{\y}{\w}
 \end{equation}
 
+%\item Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$ and edge features $\fe{t}{i}{j}$
+\pause
+\begin{equation} \label{eq:model}
+\begin{split}
+\df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ \end{split}
+\end{equation}
+
 \end{itemize}
 \end{frame}
 
+\begin{comment}
 
 \begin{frame}{Model}
 \begin{itemize}
@@ -191,6 +201,7 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 
 \end{itemize}
 \end{frame}
+\end{comment}
 
 \begin{frame}{Captured Properties}
 	\begin{itemize}
@@ -697,13 +708,16 @@ Confusion Matrix for Home dataset
  & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
  \end{split}
 \end{equation}
-\begin{itemize}
-\item If $T_t$ contains edge $(l,k)$, then $\fe{t}{i}{j}$ and $\we{t}{l}{k}$  model the dependencies between classes $l$ and $k$.
-\item Since $|T_{na}| >> |T_{oa}|$ , the number of parameters to learn is lesser compared to modeling all edges as non-associative.
-%\item ``object-associative'' features $\fe{oa}{i}{j}$ - used between classes that are parts of the same object (e.g., ``chair base'', ``chair back'' and ``chair back rest''). 
-%\item ``non-associative'' features $\fe{na}{i}{j}$ -  used between any pair of classes.
+%\begin{itemize}
+%\item If $T_t$ contains edge $(l,k)$, then $\fe{t}{i}{j}$ and $\we{t}{l}{k}$  model the dependencies between classes $l$ and $k$.
+%\item Since $|T_{na}| >> |T_{oa}|$ , the number of parameters to learn is lesser compared to modeling all edges as non-associative.
 
-\end{itemize}
+%\end{itemize}
+\begin{figure}
+\includegraphics[width=\linewidth]{table3_1.pdf}\\
+\includegraphics[width=\linewidth]{table3_2.pdf}
+\end{figure}
+
 \end{frame}
 
 
@@ -809,9 +823,9 @@ Overall Macro & & 93.45 & 76.66 \\
 
 \begin{frame}{Conclusions}
 \begin{itemize}
-\item kinect(and others) are invaluable for scene understanding
-\item visual and shape based features can be modelled parsimoniously
-\item context can be used for detection and active search
+\item Kinect(and others) are invaluable for scene understanding.
+\item Visual and shape based features can be modeled parsimoniously.
+\item Context can be used for detection and active search.
 \end{itemize}
 
 \end{frame}
