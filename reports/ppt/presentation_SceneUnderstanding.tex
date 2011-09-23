@@ -70,13 +70,40 @@
 \end{frame}
 
 \begin{frame}{Motivation}
-Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
-	\begin{figure}
-		\includegraphics[width=0.65\linewidth]{scene2.png}
+	\begin{columns}
+	\column{0.55\textwidth}
+		\begin{figure}
+		\includegraphics[width=0.45\linewidth,height=2.5in]{robot2.jpg}
 		\hskip0.1in
-		\includegraphics[width=0.3\linewidth]{robot2.jpg}
-	\end{figure}
+		\includegraphics[width=0.45\linewidth,height=2.5in]{luna.png}
+		\end{figure}
+	\column{0.45\textwidth}
+		\vskip 0.9in
+		\begin{figure}
+		\hskip-0.2in
+		\includegraphics[width=1.1\linewidth]{scene2.png}
+		\end{figure}
+	\end{columns}
 \end{frame}
+
+\begin{frame}{Motivation}
+	\begin{columns}
+	\column{0.55\textwidth}
+		\begin{figure}
+		\includegraphics[width=0.45\linewidth,height=2.5in]{robot2.jpg}
+		\hskip0.1in
+		\includegraphics[width=0.45\linewidth,height=2.5in]{luna.png}
+		\end{figure}
+	\column{0.45\textwidth}
+		\begin{figure}
+		\hskip-0.1in
+		\includegraphics[width=0.9\linewidth]{kinect.jpg}\\
+		\hskip-0.2in
+		\includegraphics[width=1.1\linewidth]{scene2.png}
+		\end{figure}
+	\end{columns}
+\end{frame}
+
 
 \begin{frame}{Previous Approaches}
 
@@ -89,45 +116,31 @@ Find objects : Wall, Table, Chair, Monitor, Keyboard, etc.
 
 	\end{itemize}
 
-		\item Some try to jointly infer 3D structure (eg. Hoeim2006,  Lee 2010, Vedau 2010).
+		\item Some try to jointly infer 3D structure (eg. Hoeim2006, Saxena2005).
 	\end{itemize}
 
 \end{frame}
 
-\begin{frame}{Motivation}
-	\begin{figure}[t!]
-		\includegraphics[width=.5\linewidth]{kinect.jpg}
-	\end{figure}
 
-	\begin{itemize}
-		\item 3D era for robots has arrived.
-		\item Cheap, fast 3D machine vision.
-		\item Both color and depth available.
-	\end{itemize}
 
-\end{frame}
 
-\begin{frame}{Introduction}
-	\begin{itemize}
-		\item How does a Kinect pointcloud look like?
-% \footnote{http://arstechnica.com/gaming/news/2010/11/bathed-in-light-how-the-kinect-paints-your-room-in-ir-video.ars}
 
-	\end{itemize}
-\end{frame}
 
-\begin{frame}{Introduction}
-	\begin{itemize}
-		\item Desired goal: Labeled pointcloud
+\begin{frame}{Our Contribution}
 
-	\end{itemize}
-\end{frame}
 
-\begin{frame}{Related Work on 3D data}
+\begin{columns}
+\column{0.5\textwidth}
+\begin{itemize}
+\item Previous Work
 
 \begin{itemize}
-\item Colored pointclouds (eg. Lai2010)
-\item Uncolored pointclouds (eg. Xiong2010)
+\item Lai et. al. (2010)
 \end{itemize}
+\end{itemize}
+\column{0.5\textwidth}
+\end{columns}
+
 \end{frame}
 
 \begin{frame}{Approach}
