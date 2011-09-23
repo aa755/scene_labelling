@@ -39,7 +39,8 @@
 \usetheme{Warsaw}
 \title{Contextually Guided Semantic Labeling and Search for 3D Pointclouds}
 \author{Abhishek Anand, Hema Koppula }
-\institute{Joint work with Thorsten Joachims and Ashutosh Saxena}
+\institute{Joint work with Thorsten Joachims and Ashutosh Saxena\\
+Cornell University}
 
 
 
@@ -136,7 +137,9 @@
 \end{figure}
 \end{columns}
 \end{block}
+\pause
 \begin{block}{Our Approach}
+
 \begin{columns}
 
 \column{0.4\textwidth}
@@ -177,7 +180,7 @@
 \begin{itemize}
  \item The 3D scene is encoded using Markov Random Field.
  \begin{figure}
- \includegraphics[width=.8\linewidth,height=1.5in]{segments_graph.png}
+ \includegraphics[width=.8\linewidth,height=1.5in]{segments_graph_edges.png}
  \end{figure}  
  \item Each segment forms a node in the graph.
  \item Every segment is connected to its near-by segments.
@@ -204,7 +207,7 @@
 \begin{equation} \label{eq:model}
 \begin{split}
 \df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
- & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
  \end{split}
 \end{equation}
 
@@ -389,7 +392,7 @@
 \end{frame}
 
 
-
+\begin{comment}
 \begin{frame}{Geometrical Context}
 \begin{figure}[t!]
 \includegraphics[width=.8\linewidth]{contextHole.png}
@@ -402,6 +405,7 @@
 \includegraphics[width=.8\linewidth]{contextHoleFilled.png}
 \end{figure}
 \end{frame}
+\end{comment}
 
 \begin{frame}{Captured Properties}
        
@@ -449,9 +453,9 @@
         \column{.4\textwidth}
         \begin{figure}
         \vskip 0.1in
-\includegraphics[width=.42\linewidth]{contextHole.png}
+\includegraphics[width=.42\linewidth]{keyboard.png}
 \hskip .1in
-\includegraphics[width=.42\linewidth]{contextHoleFilled.png}
+\includegraphics[width=.42\linewidth]{keyboard_scene.png}
 \end{figure}
         \end{columns}
 
@@ -511,10 +515,10 @@
 \end{comment}
 
 \begin{frame}{Inference}
- Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$,  edge features $\fe{t}{i}{j}$ and weight vectors %$\wn{k}$ and $\we{t}{l}{k}$
+ Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$,  edge features $\fe{e}{i}{j}$ and weight vectors %$\wn{k}$ and $\we{t}{l}{k}$
  \begin{eqnarray*}
 \hat{\y}\!\!\!&=&\!\!\!\argmax_{\y} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{l=1}^{K} \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
  \label{eq:relaxobj}\\
 \forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
 \pause
@@ -525,7 +529,7 @@
 \begin{frame}{Inference}
  \begin{eqnarray*}
 \hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{l=1}^{K} \sum_{k=1}^{K} \zsc{ij}{lk} \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
  \label{eq:relaxobj}\\
 \end{eqnarray*}
  \begin{eqnarray*}
