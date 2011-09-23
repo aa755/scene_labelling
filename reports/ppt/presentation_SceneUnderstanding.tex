@@ -39,7 +39,8 @@
 \usetheme{Warsaw}
 \title{Contextually Guided Semantic Labeling and Search for 3D Pointclouds}
 \author{Abhishek Anand, Hema Koppula }
-\institute{Joint work with Thorsten Joachims and Ashutosh Saxena}
+\institute{Joint work with Thorsten Joachims and Ashutosh Saxena\\
+Cornell University}
 
 
 
@@ -136,7 +137,9 @@
 \end{figure}
 \end{columns}
 \end{block}
+\pause
 \begin{block}{Our Approach}
+
 \begin{columns}
 
 \column{0.4\textwidth}
@@ -177,7 +180,7 @@
 \begin{itemize}
  \item The 3D scene is encoded using Markov Random Field.
  \begin{figure}
- \includegraphics[width=.8\linewidth,height=1.5in]{segments_graph.png}
+ \includegraphics[width=.8\linewidth,height=1.5in]{segments_graph_edges.png}
  \end{figure}  
  \item Each segment forms a node in the graph.
  \item Every segment is connected to its near-by segments.
@@ -389,7 +392,7 @@
 \end{frame}
 
 
-
+\begin{comment}
 \begin{frame}{Geometrical Context}
 \begin{figure}[t!]
 \includegraphics[width=.8\linewidth]{contextHole.png}
@@ -402,6 +405,7 @@
 \includegraphics[width=.8\linewidth]{contextHoleFilled.png}
 \end{figure}
 \end{frame}
+\end{comment}
 
 \begin{frame}{Captured Properties}
        
@@ -449,9 +453,9 @@
         \column{.4\textwidth}
         \begin{figure}
         \vskip 0.1in
-\includegraphics[width=.42\linewidth]{contextHole.png}
+\includegraphics[width=.42\linewidth]{keyboard.png}
 \hskip .1in
-\includegraphics[width=.42\linewidth]{contextHoleFilled.png}
+\includegraphics[width=.42\linewidth]{keyboard_scene.png}
 \end{figure}
         \end{columns}
 
