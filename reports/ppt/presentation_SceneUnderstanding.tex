@@ -542,7 +542,7 @@
 \begin{equation} \label{eq:model}
 \begin{split}
 \df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
- & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \zsc{ij}{lk}   \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K}  \zsc{ij}{lk}   \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] \\
 & = \w^T \Psi(\x,\y)
  \end{split}
 \end{equation}
@@ -580,7 +580,7 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
 \begin{frame}{Inference for Learning}
  \begin{eqnarray*}
 \hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{l=1}^{K}  \sum_{k=1}^{K}  \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
 &+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
 \forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
 \zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
@@ -591,7 +591,7 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
 
 \begin{itemize}
  \item $y_i^k\in{0,0.5,1}$
- \item can be also solved by QBPO(which uses graph-cut)
+ \item can also be solved as QBPO using uses graph-cut
 \end{itemize}
 
 \end{frame}
@@ -691,7 +691,7 @@ Confusion Matrix for Home dataset
 \begin{equation} \label{eq:model}
 \begin{split}
 \df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
- & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{e}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
  \end{split}
 \end{equation}
 
@@ -738,11 +738,19 @@ Confusion Matrix for Home dataset
 
 
 %\item Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$ and edge features $\fe{t}{i}{j}$
-
+{\small
 \begin{equation} \label{eq:model}
 \begin{split}
 \df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
- & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
+ \end{split}
+\end{equation}
+}
+%\vskip -0.1in
+\begin{equation} \label{eq:model}
+\begin{split}
+\df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \color<1>{red}{\sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t}} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
  \end{split}
 \end{equation}
 %\begin{itemize}
@@ -762,18 +770,11 @@ Confusion Matrix for Home dataset
 
 \begin{frame}{Putting it on the robot}
 
-\begin{columns}
-\column{.65\textwidth}
-\begin{itemize}
-\item The world has more than 17 classes.
-\item What if an object is not found?
-\end{itemize}
-\column{.35\textwidth}
- \begin{figure}   
-\includegraphics[width=\linewidth]{robot2.jpg}
- \end{figure}
-
-\end{columns}
+\begin{figure}[t!]
+\includegraphics[width=.335\linewidth]{blue_robot.jpg}
+\hskip .2in
+\includegraphics[width=.5\linewidth]{robot2.jpg}
+\end{figure}
 
 \end{frame}
 
@@ -809,20 +810,6 @@ Where is the keyboard?
 \end{frame}
 
 
-\begin{frame}{Robotic Experiments}
-
-% setup
-%demo
-% table of results
-\begin{itemize}
-\item Goal : Find a set of object classes in an office scene.
-\item Start at a predetermined location and scan room. 
-\item Classify pointclouds. 
-\item Find contextually likely locations for the rest.
-\item Update predicted locations when new objects are found.
-\end{itemize}
-
-\end{frame}
 
 \begin{frame}{Robotic Experiments: Results}
 
@@ -1009,6 +996,20 @@ Home & 82.09 & 52.35 & 52.03 & 26.22 \\
 \end{center}
 \end{frame}
 
+\begin{frame}{Robotic Experiments}
+
+% setup
+%demo
+% table of results
+\begin{itemize}
+\item Goal : Find a set of object classes in an office scene.
+\item Start at a predetermined location and scan room. 
+\item Classify pointclouds. 
+\item Find contextually likely locations for the rest.
+\item Update predicted locations when new objects are found.
+\end{itemize}
+
+\end{frame}
 
 
 \end{document} 
