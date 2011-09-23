@@ -604,16 +604,22 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
 \begin{frame}{Results }
 Results on 24 Office and 28 Home scenes for 17 classes each.
 %\begin{table*}
+{\small
 \begin{tabular}{|c|r|r|r|r|r|r|}
-
+\hline
  & \multicolumn{1}{c}{micro} & \multicolumn{2}{c|}{macro} & \multicolumn{1}{c}{micro} & \multicolumn{2}{c}{macro}   \\
+\hline
 model  & $P/R$ & Preci.  & \multicolumn{1}{c|}{Rec.} &  $P/R$ & Prec. &  \multicolumn{1}{c}{Rec.}  \\ 
+\hline
 baseline &  26.23 & 5.88 & 5.88 & 29.38 & 5.88 & 5.88\\
-Image Only  & 46.67  & 35.73 & 31.67 &   38.00 & 15.03 & 14.50\\
+\color<2>{red}{Image Only}  & \color<2>{red}{46.67}  & \color<2>{red}{35.73} & \color<2>{red}{31.67} &   \color<2>{red}{38.00} & \color<2>{red}{15.03} & \color<2>{red}{14.50}\\
 Shape Only & 75.36  & 64.56 & 60.88 &    56.25 & 35.90 & 36.52 \\
-Image+Shape  & 77.97  & 69.44 & 66.23 &   56.50 & 37.18 & 34.73 \\
-Image+Shape \& context & 81.45  &76.79  &70.07   & 72.38  & 57.82  & 53.62 
+\color<2->{red}{Image+Shape}  & \color<2->{red}{77.97}  & \color<2->{red}{69.44} & \color<2->{red}{66.23} &   \color<2->{red}{56.50} & \color<2->{red}{37.18} & \color<2->{red}{34.73} \\
+\color<3>{red}{Image+Shape \& context} & \color<3>{red}{81.45}  &\color<3>{red}{76.79}  &\color<3>{red}{70.07}   & \color<3>{red}{72.38}  & \color<3>{red}{57.82}  & \color<3>{red}{53.62}\\
+\hline
 \end{tabular}
+}
+
 \end{frame}
 
 
