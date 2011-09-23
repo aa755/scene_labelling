@@ -698,9 +698,9 @@ Confusion Matrix for Home dataset
 
 \item Each type has a graph over the $K$ classes with edges  $T_t$
 
-\item Associative type:  ${T_t}=\{(k,k)| \forall k=1..K\}$
-\item Non-associative type: $T_t=\{(l,k)| \forall l,k=1..K\}$
 \item Object-associate type: $T_t=\{(l,k) | \exists object , ~ l,k\in {\rm parts}({\rm object})\}$
+\item Non-associative type: $T_t=\{(l,k)| \forall l,k=1..K\}$
+\item Associative type:  ${T_t}=\{(k,k)| \forall k=1..K\}$
 \end{itemize}
 \hskip 1in
 \begin{figure}
@@ -764,15 +764,6 @@ Where is the keyboard?
 \end{frame}
 
 \begin{frame}{What if an object in not found?}
-\begin{itemize}
-\item Find the most contextually likely location by imagining an segment at every discretized 3D location.
-\end{itemize}
- \begin{figure}   
- \includegraphics[scale=0.3]{heatImage.png} 
- \end{figure}
-\end{frame}
-
-\begin{frame}{What if an object in not found?}
 \begin{center}
 Where is the keyboard?
  \begin{figure}   
@@ -782,6 +773,16 @@ Where is the keyboard?
 \includegraphics[width=0.5\linewidth]{topHeatCropped.png} \\
  \end{figure}
  \end{center}
+\end{frame}
+
+
+\begin{frame}{What if an object in not found?}
+\begin{itemize}
+\item Find the most contextually likely location by imagining an segment at every discretized 3D location.
+\end{itemize}
+ \begin{figure}   
+ \includegraphics[scale=0.3]{heatImage.png} 
+ \end{figure}
 \end{frame}
 
 
