@@ -584,7 +584,7 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
 \begin{frame}{Inference for Learning}
  \begin{eqnarray*}
 \hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
-&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{l=1}^{K}  \sum_{k=1}^{K}  \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{l=1}^{K}  \sum_{k=1}^{K}  \zsc{ij}{lk} \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] \\
 &+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
 \forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
 \zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
@@ -594,7 +594,7 @@ s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
 \end{eqnarray*} 
 
 \begin{itemize}
- \item $y_i^k\in{0,0.5,1}$
+ \item $y_i^k\in{0,0.5,1}$ , Persistence
  \item can also be solved as QBPO using uses graph-cut
 \end{itemize}
 
