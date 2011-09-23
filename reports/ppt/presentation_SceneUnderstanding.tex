@@ -121,37 +121,48 @@
 
 \end{frame}
 
-
-
-
-
-
-\begin{frame}{Our Contribution}
-
-
-\begin{columns}
-\column{0.5\textwidth}
-\begin{itemize}
-\item Previous Work
-
+\begin{frame}{Importance of Context}
+\begin{block}{Previous Work}
+\begin{columns}[t!]
+\column{0.4\textwidth}
+\vskip -0.2in
 \begin{itemize}
 \item Lai et. al. (2010)
 \end{itemize}
-\end{itemize}
-\column{0.5\textwidth}
+\column{0.6\textwidth}
+\begin{figure}
+\vskip -0.2in
+\includegraphics[width=.9\linewidth,height=1in]{lai_objects.pdf}
+\end{figure}
 \end{columns}
+\end{block}
+\begin{block}{Our Approach}
+\begin{columns}
 
+\column{0.4\textwidth}
+\vskip -0.2in
+  \begin{figure}
+  \includegraphics[width=.7\linewidth]{keyboard.png}\\
+  \end{figure}
+ 
+\column{0.6\textwidth}
+\pause
+\vskip -0.2in
+  \begin{figure}
+  \includegraphics[width=.9\linewidth,height=1.3in]{keyboard_scene.png}\\
+  \end{figure}
+\end{columns}
+\end{block}
 \end{frame}
 
-\begin{frame}{Approach}
+\begin{frame}{Segments}
 	\begin{itemize}
-		\item Obtain stitched pointclouds.
-		\item Segment based on smoothness and continuity. 
+		\item Basic unit of representation: Segment based on smoothness and continuity. 
 		\begin{figure}
 		       \includegraphics[width=.9\linewidth]{mengo.png}\\
 		       \includegraphics[width=.9\linewidth]{meng_segmented.png}
 	         \end{figure}
-		\item Generate features and predict a label for each segment.
+		\item Goal: predict a label for each segment.
 	\end{itemize}
 	
 	\vskip 0.25in
@@ -167,7 +178,6 @@
  \item The 3D scene is encoded using Markov Random Field.  
  \item Each segment forms a node in the graph.
  \item Every segment is connected to its near-by segments with an edge.
- \item Log-linear node and pairwise edge potentials.
  % a small graph with objects in the scene representing nodes and edges?
 \end{itemize}
 \end{frame}
