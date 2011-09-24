@@ -78,7 +78,7 @@ public:
       			j++;
 			if(j>2+time_to_move+rate*secsToSleepAtFinish) break;
 		}
-        
+		return true;
     }
     
     //double toRadians(float)
