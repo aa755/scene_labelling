@@ -13,13 +13,13 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include "moveRobot.h"
-#include <point_cloud_mapping/kdtree/kdtree_ann.h>
+//#include <point_cloud_mapping/kdtree/kdtree_ann.h>
 #include <vector>
 #include "sensor_msgs/point_cloud_conversion.h"
 #include "includes/color.cpp"
 #include "pcl/kdtree/kdtree.h"
 #include "pcl/kdtree/tree_types.h"
-#include <point_cloud_mapping/geometry/nearest.h>
+//#include <point_cloud_mapping/geometry/nearest.h>
 #include <pcl_ros/io/bag_io.h>
 #include "HOG.cpp"
 typedef pcl::PointXYZRGBCamSL PointT;
