@@ -1,3 +1,4 @@
+#include "includes/CovarianceMatrix.h"
 #include "float.h"
 #include "math.h"
 #include <iostream>
@@ -1054,7 +1055,20 @@ void getSpectralProfile(const pcl::PointCloud<PointT> &cloud, SpectralProfile &s
     pcl::toROSMsg(cloud, cloudMsg2);
     sensor_msgs::PointCloud cloudMsg;
     sensor_msgs::convertPointCloud2ToPointCloud(cloudMsg2, cloudMsg);
-    cloud_geometry::nearest::computePatchEigenNormalized(cloudMsg, eigen_vectors, eigen_values, spectralProfile.centroid);
+    //    cloud_geometry::nearest::computePatchEigenNormalized(cloudMsg, eigen_vectors, eigen_values, spectralProfile.centroid);
+
+    Eigen::Matrix3d covariance_matrix;
+    computeCovarianceMatrix (cloudMsg, covariance_matrix, spectralProfile.centroid);
+    for (unsigned int i = 0 ; i < 3 ; i++)
+      {
+        for (unsigned int j = 0 ; j < 3 ; j++)
+	  {
+	    covariance_matrix(i, j) /= static_cast<double> (cloudMsg.points.size ());
+	  }
+      }
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> ei_symm (covariance_matrix);
+    eigen_values = ei_symm.eigenvalues ();
+    eigen_vectors = ei_symm.eigenvectors ();    
 
     spectralProfile.setEigValues(eigen_values);
     float minEigV = FLT_MAX;
