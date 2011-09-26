@@ -7,19 +7,23 @@ make
 sudo make install
 cd ..
 sudo apt-get install subversion ros-diamondback-octomap-mapping
-cd ..
-svn co https://code.ros.org/svn/wg-ros-pkg/branches/trunk_boxturtle/stacks/semantic_mapping
-rosstack find semantic_mapping # scene_labelling must be in ROS_PACKAGE_PATH
-cd semantic_mapping
-cd ANN
-make
-cd ../cminpack
-make
+#cd ..
+#svn co https://code.ros.org/svn/wg-ros-pkg/branches/trunk_boxturtle/stacks/semantic_mapping
+#rosstack find semantic_mapping # scene_labelling must be in ROS_PACKAGE_PATH
+#cd semantic_mapping
+#cd ANN
+#make
+#cd ../cminpack
+#make
 
-cd ../FLANN
-make
+#cd ../FLANN
+#make
 
-cd ../point_cloud_mapping
+#cd ../point_cloud_mapping
+#make
+
+svn co http://svn.pointclouds.org/ros/trunk/perception_pcl_unstable/pcl pcl
+cd pcl
 make
 
 echo "Success!!"
