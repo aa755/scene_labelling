@@ -4,10 +4,9 @@
      scene_processing
 
   </description>
-  <author> Abhishek Anand </author>
-  <license>BSD</license>
+  <author> <a href="http://www.cs.cornell.edu/~aa755/">Abhishek Anand</a>, Hema Koppula, Dave Kotfis </author>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/scene_processing</url>
+  <url>http://pr.cs.cornell.edu/sceneunderstanding/</url>
   <depend package="pcl"/>
   <depend package="pcl_ros"/>
   <depend package="eigen"/>
