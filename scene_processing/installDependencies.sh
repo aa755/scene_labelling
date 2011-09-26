@@ -6,7 +6,7 @@ echo "installing boost numeric bindings for gels least squares fitting and other
 make
 sudo make install
 cd ..
-sudo apt-get install subversion ros-eclectic-octomap-mapping ros-eclectic-perception-pcl ros-eclectic-perception-pcl-addons
+sudo apt-get install subversion ros-electric-octomap-mapping ros-electric-perception-pcl ros-electric-perception-pcl-addons
 #cd ..
 #svn co https://code.ros.org/svn/wg-ros-pkg/branches/trunk_boxturtle/stacks/semantic_mapping
 #rosstack find semantic_mapping # scene_labelling must be in ROS_PACKAGE_PATH
