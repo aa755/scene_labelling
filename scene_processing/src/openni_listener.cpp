@@ -3116,10 +3116,10 @@ int main(int argc, char** argv) {
     //    std_msgs::String str;
     //    str.data = "hello world";
     
-    evaluate(argv[2],argv[3],7);
-    exit(0);
+//    evaluate(argv[2],argv[3],7);
+//    exit(0);
     
-    ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, robotMovementControlRandom);
+    ros::Subscriber cloud_sub_ = n.subscribe("/rgbdslam/my_clouds", 1, processPointCloud);
 
     ros::spin();
   
