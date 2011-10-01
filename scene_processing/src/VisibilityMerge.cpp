@@ -1,3 +1,4 @@
+#include <pcl_ros/io/bag_io.h>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
@@ -86,6 +87,7 @@ main(int argc, char** argv)
     int pcl_count = 0;
     int numOccluded=0;
     int numOcclRepudiated=0;
+    bool check;
 
     std::vector<TransformG> transformsG;
     std::vector<pcl::PointCloud<PointT>::Ptr> pointClouds;
@@ -94,13 +96,30 @@ main(int argc, char** argv)
   std::vector<int> k_indices;
   std::vector<float> k_distances;
 
-    pcl_ros::BAGReader reader;
-    if (!reader.open(argv[1], "/rgbdslam/batch_clouds"))
+    rosbag::Bag reader;
+    rosbag::View view;
+    rosbag::View::iterator it;
+    try
+      {
+	reader.open (argv[1], rosbag::bagmode::Read);
+	view.addQuery (reader, rosbag::TopicQuery ("/rgbdslam/batch_clouds"));
+	
+	if (view.size () == 0)
+	  check = false;
+	else
+	  it = view.begin ();
+      }
+    catch (rosbag::BagException &e)
+      {
+	check = false;
+      }
+    check = true;
+    if (!check)
     {
         ROS_ERROR("Couldn't read file ");
         return (-1);
     }
-    sensor_msgs::PointCloud2ConstPtr cloud_blob, cloud_blob_prev;
+    sensor_msgs::PointCloud2ConstPtr cloud_blob, cloud_blob_prev, cloud_blob_temp;
     pcl::PointCloud<pcl::PointXYZRGB> inp_cloud;
 
     int rejectCount=0;
@@ -108,7 +127,12 @@ main(int argc, char** argv)
     do
     {
         cloud_blob_prev = cloud_blob;
-        cloud_blob = reader.getNextCloud();
+        if (it != view.end ())
+	  {
+	    cloud_blob_temp = it->instantiate<sensor_msgs::PointCloud2> ();
+	    ++it;
+	  }
+        cloud_blob = cloud_blob_temp;
         ros::Time ptime = cloud_blob->header.stamp;
 
         if (cloud_blob_prev != cloud_blob)

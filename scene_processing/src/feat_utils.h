@@ -12,13 +12,13 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include <point_cloud_mapping/kdtree/kdtree_ann.h>
+//#include <point_cloud_mapping/kdtree/kdtree_ann.h>
 #include <vector>
 #include "sensor_msgs/point_cloud_conversion.h"
 #include "includes/color.cpp"
 #include "pcl/kdtree/kdtree.h"
 #include "pcl/kdtree/tree_types.h"
-#include <point_cloud_mapping/geometry/nearest.h>
+//#include <point_cloud_mapping/geometry/nearest.h>
 #include <pcl_ros/io/bag_io.h>
 #include "HOG.cpp"
 typedef pcl::PointXYZRGBCamSL PointT;
@@ -456,9 +456,27 @@ void gatherOriginalFrames(std::string unTransformedPCDFile,std::string RGBDSlamB
           cout<<cloudUntransformed.size ()<<endl;
     */
     
-  pcl_ros::BAGReader reader;
+  rosbag::Bag reader;
   char *topic = "/camera/rgb/points";
-  if (!reader.open (RGBDSlamBag, "/rgbdslam/my_clouds"))
+  bool check;
+  rosbag::View view;
+  rosbag::View::iterator it;
+  try
+    {
+      reader.open (RGBDSlamBag, rosbag::bagmode::Read);
+      view.addQuery (reader, rosbag::TopicQuery ("/rgbdslam/my_clouds"));
+      
+      if (view.size () == 0)
+	check = false;
+      else
+	it = view.begin ();
+    }
+  catch (rosbag::BagException &e)
+    {
+      check = false;
+    }
+  check = true;
+  if (!check)
     {
       cout << "Couldn't open RGBDSLAM topic" << (topic);
       exit(-1);
@@ -469,8 +487,14 @@ void gatherOriginalFrames(std::string unTransformedPCDFile,std::string RGBDSlamB
   
        sensor_msgs::PointCloud2ConstPtr cloud_blob_new;
        sensor_msgs::PointCloud2ConstPtr cloud_blob_old;
-       
-      cloud_blob_new = reader.getNextCloud ();
+       sensor_msgs::PointCloud2ConstPtr cloud_blob_temp;
+
+       if (it != view.end ())
+	 {
+	   cloud_blob_temp = it->instantiate<sensor_msgs::PointCloud2> ();
+	   ++it;
+	 }
+       cloud_blob_new = cloud_blob_temp;       
      do
     {
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp (new pcl::PointCloud<pcl::PointXYZRGB> ());
@@ -513,8 +537,14 @@ void gatherOriginalFrames(std::string unTransformedPCDFile,std::string RGBDSlamB
           }
 	originalFrames.push_back (temp);
       cloud_blob_old=cloud_blob_new;
-      for (int i = 0; i < 5; i++)
-        cloud_blob_new=reader.getNextCloud ();
+      for (int i = 0; i < 5; i++){
+        if (it != view.end ())
+          {
+            cloud_blob_temp = it->instantiate<sensor_msgs::PointCloud2> ();
+            ++it;
+          }
+        cloud_blob_new = cloud_blob_temp;
+      }
     }
   while (cloud_blob_new != cloud_blob_old);
 //    ROS_INFO("Loaded %d data points from test_pcd.pcd with the following fields: %s", (int) (cloud_blob.width * cloud_blob.height), pcl::getFieldsList(cloud_blob).c_str());

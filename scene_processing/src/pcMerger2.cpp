@@ -86,7 +86,7 @@ ColorHandlerPtr color_handler_merged;
 //sensor_msgs::PointCloud2 cloud_blob_new;
 //sensor_msgs::PointCloud2 cloud_blob_prev;
 sensor_msgs::PointCloud2 cloud_blob_merged;
-sensor_msgs::PointCloud2ConstPtr cloud_blob_new, cloud_blob_prev;
+sensor_msgs::PointCloud2ConstPtr cloud_blob_new, cloud_blob_prev, cloud_blob_temp;
 sensor_msgs::PointCloud2 cloud_blobc_new;
 sensor_msgs::PointCloud2 cloud_blobc_prev;
 sensor_msgs::PointCloud2 cloud_blobc_mod;
@@ -109,7 +109,10 @@ pcl::PointCloud<PointT>::Ptr cloud_merged_backup_ptr(new pcl::PointCloud<PointT 
 bool doUpdate = false;
 bool Merged = false;
 bool ITpresent = false;
-pcl_ros::BAGReader reader;
+bool check;
+rosbag::Bag reader;
+rosbag::View view;
+rosbag::View::iterator it;
 int skipNum = 20;
 
 scene_processing::pcmergerConfig InitialTransformConfig;
@@ -255,7 +258,12 @@ conf.setIT = false;
         doUpdate = true;
         int count = 0;
         cloud_blob_prev = cloud_blob_new;
-        cloud_blob_new = reader.getNextCloud();
+        if (it != view.end ())
+          {
+            cloud_blob_temp = it->instantiate<sensor_msgs::PointCloud2> ();
+            ++it;
+          }
+        cloud_blob_new = cloud_blob_temp;
         cout<<"header"<<cloud_blob_new->header<<endl;
 //        cloud_blob_new->
         ros::M_string::iterator iter;
@@ -266,7 +274,12 @@ conf.setIT = false;
         while(count < skipNum && cloud_blob_prev != cloud_blob_new)
         {
             cloud_blob_prev = cloud_blob_new;
-            cloud_blob_new = reader.getNextCloud();
+	    if (it != view.end ())
+	      {
+		cloud_blob_temp = it->instantiate<sensor_msgs::PointCloud2> ();
+		++it;
+	      }
+	    cloud_blob_new = cloud_blob_temp;
             count ++;
         }
         if (cloud_blob_prev != cloud_blob_new) {
@@ -345,7 +358,22 @@ main(int argc, char** argv) {
   if(argc>2)
     topic=argv[2];
 
-  if (!reader.open (argv[1], topic))
+    try
+      {
+        reader.open (argv[1], rosbag::bagmode::Read);
+        view.addQuery (reader, rosbag::TopicQuery (topic));
+
+        if (view.size () == 0)
+          check = false;
+        else
+          it = view.begin ();
+      }
+    catch (rosbag::BagException &e)
+      {
+        check = false;
+      }
+    check = true;
+  if (!check)
   {
     cout <<"Couldn't read bag file on topic" <<(topic);
     return (-1);
