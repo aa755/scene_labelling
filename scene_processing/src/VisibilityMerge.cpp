@@ -15,6 +15,7 @@
 #include "pcl/io/pcd_io.h"
 #include <string>
 #include <pcl_ros/io/bag_io.h>
+//#include <pcl_ros/io/bag_io.h>
 #include "pcl/kdtree/kdtree_flann.h"
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>

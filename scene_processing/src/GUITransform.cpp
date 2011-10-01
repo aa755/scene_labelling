@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2010, Abhishek Anand
+ *  Copyright (c) 2010, Abhishek Anand, Hema Koppula
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 
 /**
 
-\author Abhishek Anand
+\author Abhishek Anand, Hema Koppula
 
  * can be used to estimate camera transforms. If no input is given ,uses live kinect feed
  * it was used to determine Z floor level
@@ -112,7 +112,7 @@ pcl::PointCloud<PointT>::Ptr cloud_merged_backup_ptr(new pcl::PointCloud<PointT 
 bool doUpdate = false;
 bool Merged = false;
 bool ITpresent = false;
-pcl_ros::BAGReader reader;
+//pcl_ros::BAGReader reader;
 int skipNum = 20;
 
 scene_processing::pcmergerConfig InitialTransformConfig;
