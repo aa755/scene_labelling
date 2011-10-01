@@ -1,3 +1,4 @@
+#include "includes/CovarianceMatrix.h"
 #include "float.h"
 #include "math.h"
 #include <iostream>
@@ -12,13 +13,13 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include <point_cloud_mapping/kdtree/kdtree_ann.h>
+//#include <point_cloud_mapping/kdtree/kdtree_ann.h>
 #include <vector>
 #include "sensor_msgs/point_cloud_conversion.h"
 #include "includes/color.cpp"
 #include "pcl/kdtree/kdtree.h"
 #include "pcl/kdtree/tree_types.h"
-#include <point_cloud_mapping/geometry/nearest.h>
+//#include <point_cloud_mapping/geometry/nearest.h>
 #include <pcl_ros/io/bag_io.h>
 #include "HOG.cpp"
 typedef pcl::PointXYZRGBCamSL PointT;
@@ -883,8 +884,20 @@ void getSpectralProfile(const pcl::PointCloud<PointT> &cloud, SpectralProfile &s
    pcl::toROSMsg (cloud,cloudMsg2);
    sensor_msgs::PointCloud cloudMsg;
    sensor_msgs::convertPointCloud2ToPointCloud(cloudMsg2,cloudMsg);
-  cloud_geometry::nearest::computePatchEigenNormalized (cloudMsg,eigen_vectors,eigen_values,spectralProfile.centroid);
-  
+   //  cloud_geometry::nearest::computePatchEigenNormalized (cloudMsg,eigen_vectors,eigen_values,spectralProfile.centroid);
+   Eigen::Matrix3d covariance_matrix;
+   computeCovarianceMatrix (cloudMsg, covariance_matrix, spectralProfile.centroid);
+   for (unsigned int i = 0 ; i < 3 ; i++)
+     {
+       for (unsigned int j = 0 ; j < 3 ; j++)
+	 {
+	   covariance_matrix(i, j) /= static_cast<double> (cloudMsg.points.size ());
+	 }
+     }
+   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> ei_symm (covariance_matrix);
+   eigen_values = ei_symm.eigenvalues ();
+   eigen_vectors = ei_symm.eigenvectors (); 
+ 
   spectralProfile.setEigValues (eigen_values);
   float minEigV=FLT_MAX;
  
@@ -1358,20 +1371,44 @@ int main(int argc, char** argv) {
     
     // convert to templated message type
 
-  pcl_ros::BAGReader reader;
+  rosbag::Bag reader;
+  rosbag::View view;
+  rosbag::View::iterator it;
+  bool check;
+
   char *topic = "/camera/rgb/points";
   
-  if (!reader.open (rgbdslamBag, "/rgbdslam/my_clouds"))
+  try
+    {
+      reader.open (rgbdslamBag, rosbag::bagmode::Read);
+      view.addQuery (reader, rosbag::TopicQuery ("/rgbdslam/my_clouds"));
+      
+      if (view.size () == 0)
+	check = false;
+      else
+	it = view.begin ();
+    }
+  catch (rosbag::BagException &e)
+    {
+      check = false;
+    }
+  check = true;
+  if (!check)
     {
       cout << "Couldn't open RGBDSLAM topic" << (topic);
       exit(-1);
     }
-      rosbag::Bag bag;
+    rosbag::Bag bag;
     std::cerr << "opening " << rgbdslamBag << std::endl;
     bag.open(rgbdslamBag, rosbag::bagmode::Read);
-       sensor_msgs::PointCloud2ConstPtr cloud_blob;
-       
-      cloud_blob = reader.getNextCloud ();
+    sensor_msgs::PointCloud2ConstPtr cloud_blob, cloud_blob_temp;
+
+       if (it != view.end ())
+	 {
+	   cloud_blob_temp = it->instantiate<sensor_msgs::PointCloud2> ();
+	   ++it;
+	 }
+       cloud_blob = cloud_blob_temp;       
       
       pcl::fromROSMsg (*cloud_blob, *cloud_ptr);
       originalFrame=new OriginalFrameInfo(cloud_ptr);
