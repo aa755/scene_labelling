@@ -2,11 +2,11 @@
 #include "matrix.h"
 #include <iostream>
 
-inline void fit(matrix <double> &A, std::vector<double> &b, double numPoints)
+inline void fit(matrx <double> &A, std::vector<double> &b, double numPoints)
 {
   bool success;
   double temp, temp1, temp2;
-  matrix <double> mat( 4, 4);
+  matrx <double> mat( 4, 4);
   std::vector<double> result(6);
   //Obtain mat = A_transpose * A
   for (int i=0; i<4; i++)
