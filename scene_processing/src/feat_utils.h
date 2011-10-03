@@ -387,7 +387,7 @@ void computeGlobalTransform(pcl::PointCloud<PointT> & combined_cloud_trans /*z a
   int numPoints=combined_cloud_orig.size ()-1;// semantics of first point not known
   //ublas::matrix<float,ublas::column_major> A(numPoints,4);
   //ublas::vector<float> b(numPoints);
-  matrix <double>A(numPoints,4);
+  matrx <double>A(numPoints,4);
   std::vector<double> b(numPoints);
 
 

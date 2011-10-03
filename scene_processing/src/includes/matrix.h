@@ -1,24 +1,26 @@
-// header file for matrix template class
+// header file for matrx template class
 // NOTE:  all matrices handled here must be SQUARE 
 //        (i.e., # rows = # columns)
 // in addition, all DIAGONAL ELEMENTS MUST BE NONZERO
 
-// generic object (class) definition of matrix:
-template <class D> class matrix{
+// generic object (class) definition of matrx:
+#ifndef MATRX_H_
+#define MATRX_H_
+template <class D> class matrx{
   // NOTE: maxsize determines available memory storage, but
-  // actualsize determines the actual size of the stored matrix in use
+  // actualsize determines the actual size of the stored matrx in use
   // at a particular time.
   int maxsize;  // max number of rows (same as max number of columns)
-  int actualsize;  // actual size (rows, or columns) of the stored matrix
-  D* data;      // where the data contents of the matrix are stored
+  int actualsize;  // actual size (rows, or columns) of the stored matrx
+  D* data;      // where the data contents of the matrx are stored
   void allocate()   {
     delete[] data;
     data = new D [maxsize*maxsize];
     };
-  matrix() {};                  // private ctor's
-  matrix(int newmaxsize) {matrix(newmaxsize,newmaxsize);};
+  matrx() {};                  // private ctor's
+  matrx(int newmaxsize) {matrx(newmaxsize,newmaxsize);};
 public:
-  matrix(int newmaxsize, int newactualsize)  { // the only public ctor
+  matrx(int newmaxsize, int newactualsize)  { // the only public ctor
     if (newmaxsize <= 0) newmaxsize = 5;
     maxsize = newmaxsize; 
     if ((newactualsize <= newmaxsize)&&(newactualsize>0))
@@ -29,7 +31,7 @@ public:
     data = 0;
     allocate();
     };
-  ~matrix() { delete[] data; };
+  ~matrx() { delete[] data; };
   void comparetoidentity()  {
     int worstdiagonal = 0;
     D maxunitydeviation = 0.0;
@@ -65,7 +67,7 @@ public:
     //   << maxzerodeviation << " at row = " << worstoffdiagonalrow 
     //   << ", column = " << worstoffdiagonalcolumn << endl;
   }
-  void settoproduct(matrix& left, matrix& right)  {
+  void settoproduct(matrx& left, matrx& right)  {
     actualsize = left.getactualsize();
     if ( maxsize < left.getactualsize() )   {
       maxsize = left.getactualsize();
@@ -84,7 +86,7 @@ public:
         setvalue(i,j,sum);
         }
     }
-  void copymatrix(matrix&  source)  {
+  void copymatrx(matrx&  source)  {
     actualsize = source.getactualsize();
     if ( maxsize < source.getactualsize() )  {
       maxsize = source.getactualsize();
@@ -171,4 +173,3 @@ public:
     };
 };
 #endif
-
