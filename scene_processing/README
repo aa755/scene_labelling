@@ -1,4 +1,3 @@
-
 To run the live classifier:
 
 
@@ -11,5 +10,5 @@ To run the live classifier:
 2) do rosrun scene_processing live_segment_computeFeats . It will publish labeled clouds the topic /scene_labler/labeled_cloud . Check the pointtype in src/includes/point_types.h . check ../polar_scene to see of we used this module to create a package which moves robot to a keyboard
 
 
-
+(you can also visualize images of labeled scripts by running ./colorAll.sh)
 
