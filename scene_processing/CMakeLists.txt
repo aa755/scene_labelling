@@ -35,7 +35,7 @@ gencfg()
 
 
 #rosbuild_add_executable (seg_size src/compute_num_points.cpp)
-rosbuild_add_executable (live_segment_computeFeats src/openni_listener.cpp)
+rosbuild_add_executable (live_semantic_labeler src/openni_listener.cpp)
 #rosbuild_add_executable (GUITransform src/GUITransform.cpp)
 rosbuild_add_executable (colorImage src/colorImage.cpp)
 rosbuild_add_executable (compute_all_features src/compute_all_features.cpp)
