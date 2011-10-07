@@ -2982,7 +2982,7 @@ int main(int argc, char** argv) {
     pub = n.advertise<sensor_msgs::PointCloud2 > ("/scene_labler/labeled_cloud", 10);
     //    std_msgs::String str;
     //    str.data = "hello world";
-    ros::Subscriber cloud_sub_ = n.subscribe("/rgbdslam/my_clouds", 1, processPointCloud);
+    ros::Subscriber cloud_sub_ = n.subscribe("/camera/rgb/points", 1, processPointCloud);
 
     ros::spin();
   
