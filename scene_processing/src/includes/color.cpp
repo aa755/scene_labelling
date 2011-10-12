@@ -132,5 +132,19 @@ class ColorRGB{
    {
        std::cerr<<r*255<<" "<<g*255<<" "<<b*255<<endl;
    }
+   int getR()
+   {
+       return r*255; 
+   }
+   int getG()
+   {
+       return g*255; 
+   }
+   int getB()
+   {
+       return b*255; 
+   }
+   
+   
 };
 #endif	/* COLOR_H */
