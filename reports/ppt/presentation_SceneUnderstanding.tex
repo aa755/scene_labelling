@@ -4,17 +4,46 @@
 \usepackage{ upgreek }
 \usepackage{verbatim} 
 \usepackage{amsmath}
+\usepackage{wrapfig}
 
+\usepackage{array}
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{url}
-\usepackage{verbatim} 
+\usepackage{verbatim}
+\usepackage{multirow} 
+\usepackage{relsize}
+\usepackage{cancel}
+
+
+\usepackage{cite}
+\usepackage{url}
+\usepackage{color}
+
+%\usepackage{ulem}
+%\usepackage{soul}
+
+
+
+\newlength\savedwidth
+\newcommand\whline[1]{\noalign{\global\savedwidth\arrayrulewidth
+                               \global\arrayrulewidth #1} %
+                      \hline
+                      \noalign{\global\arrayrulewidth\savedwidth}}
+\renewcommand\multirowsetup{\centering}                  
+
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}  
 
 \usetheme{Warsaw}
-\title{Semantic Labeling of 3D Point Clouds for Indoor Scenes}
+\title{Contextually Guided Semantic Labeling and Search for 3D Pointclouds}
+\author{Abhishek Anand, Hema Koppula }
+\institute{Joint work with Thorsten Joachims and Ashutosh Saxena\\
+Cornell University}
+
+
+
 
 
 
@@ -33,7 +62,8 @@
 \newcommand{\df}[3]{{f_{#3}(#1,#2)}}   % discriminant function
 \newcommand{\loss}[2]{{\Delta(#1,#2)}}   % discriminant function
 
-
+\newcommand{\wep}[3]{{w_{#1}'^{#2#3}}}   % weight vector of edge
+\newcommand{\wnp}[1]{{w_n'^{#1}}}        % weight vector of segment node
 
 \begin{document}
 \begin{frame}
@@ -41,42 +71,169 @@
 \end{frame}
 
 \begin{frame}{Motivation}
-	\begin{figure}[t!]
-		\includegraphics[width=.5\linewidth]{kinect.jpg}
-	\end{figure}
+	\begin{columns}
+	\column{0.55\textwidth}
+		\begin{figure}
+		\includegraphics[width=0.45\linewidth,height=2.5in]{robot2.jpg}
+		\hskip0.1in
+		\includegraphics[width=0.45\linewidth,height=2.5in]{luna.png}
+		\end{figure}
+	\column{0.45\textwidth}
+		\vskip 0.9in
+		\begin{figure}
+		\hskip-0.2in
+		\includegraphics[width=1.1\linewidth]{scene2.png}
+		\end{figure}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Motivation}
+	\begin{columns}
+	\column{0.55\textwidth}
+		\begin{figure}
+		\includegraphics[width=0.45\linewidth,height=2.5in]{robot2.jpg}
+		\hskip0.1in
+		\includegraphics[width=0.45\linewidth,height=2.5in]{luna.png}
+		\end{figure}
+	\column{0.45\textwidth}
+		\begin{figure}
+		\hskip-0.1in
+		\includegraphics[width=0.9\linewidth]{kinect.jpg}\\
+		\hskip-0.2in
+		\includegraphics[width=1.1\linewidth]{scene2.png}
+		\end{figure}
+	\end{columns}
+\end{frame}
+
+
+\begin{frame}{Previous Approaches}
 
 	\begin{itemize}
-		\item 3D era for robots has arrived 
-		\item  cheap, fast 3D machine vision
-		\item  both color and depth available
+		\item Most works used 2D images.
+	\begin{itemize}
+		\item Histogram Of image Gradients(Dalal2005)
+		\item Using context to find objects(eg. Torralba2007)
+		\item Part based models (eg. Pedro2008)
+
+	\end{itemize}
+
+		\item Some try to jointly infer 3D structure (eg. Hoeim2006, Saxena2005).
 	\end{itemize}
 
 \end{frame}
 
-\begin{frame}{Introduction}
-	\begin{itemize}
-		\item How does a kinect pointcloud look like? \footnote{http://arstechnica.com/gaming/news/2010/11/bathed-in-light-how-the-kinect-paints-your-room-in-ir-video.ars}
+\begin{frame}{Importance of Context}
+\begin{block}{Previous Work}
+\begin{columns}[t!]
+\column{0.4\textwidth}
+\vskip -0.2in
+\begin{itemize}
+\item Lai et. al. (2010)
+\end{itemize}
+\column{0.6\textwidth}
+\begin{figure}
+\vskip -0.2in
+\includegraphics[width=.9\linewidth,height=0.9in]{lai_objects.pdf}
+\end{figure}
+\end{columns}
+\end{block}
+\pause
+\vskip -0.1in
+\begin{block}{Our Approach}
 
-	\end{itemize}
+\begin{columns}
+
+\column{0.4\textwidth}
+\vskip -0.2in
+  \begin{figure}
+  \includegraphics[width=.7\linewidth]{keyboard.png}\\
+  \end{figure}
+ 
+\column{0.6\textwidth}
+\pause
+\vskip -0.2in
+  \begin{figure}
+  \includegraphics[width=.9\linewidth,height=1.2in]{keyboard_scene.png}\\
+  \end{figure}
+\end{columns}
+\end{block}
+\pause
+{\scriptsize X. Xiong and D. Huber. Using context to create semantic 3d models of indoor environments. In BMVC, 2010.}
 \end{frame}
 
-\begin{frame}{Introduction}
+\begin{frame}{Segments}
 	\begin{itemize}
-		\item Desired goal: labeled pointcloud:(show)
-
+		\item Basic unit of representation: Segment based on smoothness and continuity. 
+		\begin{figure}
+		       \includegraphics[width=.9\linewidth]{mengo.png}\\
+		       \includegraphics[width=.9\linewidth]{meng_segmented.png}
+	         \end{figure}
+		\item Goal: predict a label for each segment.
 	\end{itemize}
+	
+	\vskip 0.25in
+{\scriptsize
+ H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Semantic Labeling of 3d point clouds for indoor scenes.} In NIPS, 2011.\\
+ %H.Koppula, A.Anand, T.Joachims, and A.Saxena. \emph{Labeling 3d scenes for personal assistant robots. CoRR, abs/1106.5551, 2011.}
+}
 \end{frame}
 
-\begin{frame}{Approach}
-	\begin{itemize}
-		\item stitching:(show)
-		\item  segmentation:(show)
-		\item  graph construction(show using graphviz?)
-		\item  feature generation
-		\item  inference
-	\end{itemize}
 
+\begin{frame}{Model}
+\begin{itemize}
+ \item The 3D scene is encoded using Markov Random Field.
+ \begin{figure}
+ \includegraphics[width=.8\linewidth,height=1.5in]{segments_graph_edges.png}
+ \end{figure}  
+ \item Each segment forms a node in the graph.
+ \item Every segment is connected to its near-by segments.
+ % a small graph with objects in the scene representing nodes and edges?
+\end{itemize}
 \end{frame}
+
+\begin{frame}{Model}
+\begin{itemize}
+
+
+\item Goal: Given a segmented point cloud $\x=(\xs{1},...,\xs{N})$  predict a labeling $\y=(\ys{1},...,\ys{N})$
+\item Labels $\in  \{ 1, ..., K \} $
+\item where $\ys{i}=(\ysc{i}{1},...,\ysc{i}{K})$,  $ \forall \ysc{i}{k} \in \{0,1\}$ 
+
+
+\item For a segmented point cloud $\x$, the prediction $\hat{\y}$ is 
+\begin{equation} \label{eq:argmax}
+\hat{\y} = \argmax_\y \df{\x}{\y}{\w}
+\end{equation}
+
+%\item Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$ and edge features $\fe{t}{i}{j}$
+\pause
+\begin{equation} \label{eq:model}
+\begin{split}
+\df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
+ \end{split}
+\end{equation}
+
+\end{itemize}
+\end{frame}
+
+\begin{comment}
+
+\begin{frame}{Model}
+\begin{itemize}
+
+\item Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$ and edge features $\fe{t}{i}{j}$
+
+\begin{equation} \label{eq:model}
+\begin{split}
+\df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ \end{split}
+\end{equation}
+
+\end{itemize}
+\end{frame}
+\end{comment}
 
 \begin{frame}{Captured Properties}
 	\begin{itemize}
@@ -87,125 +244,779 @@
 
 \end{frame}
 
-\begin{frame}{Visual Appearance}
-match the following to table/printer
+\begin{frame}{Captured Properties}
+        \begin{itemize}
+                \item {\bf Visual Appearance}
 \begin{figure}[t!]
 \includegraphics[width=.3\linewidth]{printer-small.png}
 \hskip .2in
 \includegraphics[width=.3\linewidth]{table-small.png}
 \end{figure}
+                \item  Local Shape and Geometry
+                \item  Geometrical Context
+        \end{itemize}
+
 \end{frame}
 
-\begin{frame}{Visual Appearance}
 
+\begin{frame}{Captured Properties}
+        \begin{itemize}
+                \item {\bf Visual Appearance}
 \begin{figure}[t!]
-\includegraphics[width=.4\linewidth]{printer.jpg}
+\includegraphics[width=.3\linewidth]{printer.jpg}
 \hskip .2in
-\includegraphics[width=.4\linewidth]{table.jpg}
+\includegraphics[width=.3\linewidth]{table.jpg}
+\end{figure}
+		\begin{itemize}
+		\item HOG, avg. HSV values, diff. in avg. HSV values
+		\end{itemize}
+                \item  Local Shape and Geometry
+                \item  Geometrical Context
+        \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}{Captured Properties}
+       
+        	\begin{columns}
+	
+	\column{.5\textwidth}
+	 \begin{itemize}
+                \item  Visual Appearance
+		\begin{itemize}
+		\item HOG, avg. HSV values, diff. in avg. HSV values
+		\end{itemize}
+		\end{itemize}
+	\column{.5\textwidth}
+
+	 \begin{figure}[t!]
+	\includegraphics[width=.25\linewidth]{printer.jpg}
+	\hskip .2in
+	\includegraphics[width=.25\linewidth]{table.jpg}
+	\end{figure}
+	
+	\end{columns}
+	
+        	\begin{columns}
+	\column{.7\textwidth}
+	\begin{itemize}
+                \item  {\bf Local Shape and Geometry }
+
+		\begin{itemize}
+			\item Table tops are horizontal.
+			\item Table tops are at fixed heights.
+			\item Faces of a printer form a convex shape.
+		\end{itemize}
+
+                \item  Geometrical Context
+        \end{itemize}
+        \column{.3\textwidth}
+        \end{columns}
+
+\end{frame}
+
+\begin{frame}{Captured Properties}
+       
+        	\begin{columns}
+	
+	\column{.5\textwidth}
+	 \begin{itemize}
+                \item Visual Appearance
+		\begin{itemize}
+		\item HOG, avg. HSV values, diff. in avg. HSV values
+		\end{itemize}
+		\end{itemize}
+	\column{.5\textwidth}
+
+	 \begin{figure}[t!]
+	\includegraphics[width=.25\linewidth]{printer.jpg}
+	\hskip .2in
+	\includegraphics[width=.25\linewidth]{table.jpg}
+	\end{figure}
+	
+	\end{columns}
+	
+        	\begin{columns}
+	\column{.7\textwidth}
+	\begin{itemize}
+                \item  {\bf Local Shape and Geometry }
+
+		\begin{itemize}
+			\item Linear-ness , Planar-ness and Scatter
+			\item Normal, centroid, bounding box
+			\item Coplanarity and convexity
+		\end{itemize}
+
+                \item  Geometrical Context
+        \end{itemize}
+        \column{.3\textwidth}
+        \end{columns}
+
+\end{frame}
+
+\begin{frame}{Captured Properties}
+       
+        	\begin{columns}
+	
+	\column{.5\textwidth}
+	 \begin{itemize}
+                \item Visual Appearance
+		\begin{itemize}
+		\item HOG, avg. HSV values, diff. in avg. HSV values
+		\end{itemize}
+		\end{itemize}
+	\column{.5\textwidth}
+
+	 \begin{figure}[t!]
+	\includegraphics[width=.25\linewidth]{printer.jpg}
+	\hskip .2in
+	\includegraphics[width=.25\linewidth]{table.jpg}
+	\end{figure}
+	
+	\end{columns}
+	
+        	\begin{columns}
+	\column{.7\textwidth}
+	\begin{itemize}
+                \item  Local Shape and Geometry
+
+		\begin{itemize}
+			\item Linear-ness , Planar-ness and Scatter
+			\item Normal, centroid, bounding box
+			\item Coplanarity and convexity
+		\end{itemize}
+
+                \item {\bf Geometrical Context }
+        \end{itemize}
+        \column{.3\textwidth}
+        \end{columns}
+
+\end{frame}
+
+
+\begin{comment}
+\begin{frame}{Geometrical Context}
+\begin{figure}[t!]
+\includegraphics[width=.8\linewidth]{contextHole.png}
 \end{figure}
 \end{frame}
 
-\begin{frame}{Model}
-\begin{itemize}
 
- \item The 3D scene is encoded using Markov Random Field with log-linear node and pairwise edge potentials
- 
- % a small graph with objects in the scene representing nodes and edges?
- 
-\item Goal: Given a segmented point cloud $\x=(\xs{1},...,\xs{N})$  predict a labeling $\y=(\ys{1},...,\ys{N})$
+\begin{frame}{Geometrical Context}
+\begin{figure}[t!]
+\includegraphics[width=.8\linewidth]{contextHoleFilled.png}
+\end{figure}
+\end{frame}
+\end{comment}
 
-\item where $\ys{i}=(\ysc{i}{1},...,\ysc{i}{K})$,  $ \forall \ysc{i}{k} \in \{0,1\}$ 
+\begin{frame}{Captured Properties}
+       
+        	\begin{columns}
+	
+	\column{.5\textwidth}
+	 \begin{itemize}
+                \item Visual Appearance
+		\begin{itemize}
+		\item HOG, avg. HSV values, diff. in avg. HSV values
+		\end{itemize}
+		\end{itemize}
+	\column{.5\textwidth}
 
+	 \begin{figure}[t!]
+	\includegraphics[width=.25\linewidth]{printer.jpg}
+	\hskip .2in
+	\includegraphics[width=.25\linewidth]{table.jpg}
+	\end{figure}
+	
+	\end{columns}
+	
+        	\begin{columns}
+	\column{.7\textwidth}
+	\begin{itemize}
+                \item  Local Shape and Geometry
 
-\item For a segmented point cloud $\x$, the prediction $\hat{\y}$ is 
-\begin{equation} \label{eq:argmax}
-\hat{\y} = \argmax_\y \df{\x}{\y}{\w}
-\end{equation}
+		\begin{itemize}
+			\item Linear-ness , Planar-ness and Scatter
+			\item Normal, centroid, bounding box
+			\item Coplanarity and convexity
+		\end{itemize}
+	\end{itemize}
+        \column{.3\textwidth}
+        \end{columns}
+        	\begin{columns}
+	\column{.6\textwidth}
+	\begin{itemize}
+                \item   {\bf Geometrical Context }
+                \begin{itemize}
+                \item``on-top-of", ``in-front-of", ``near-by" 
+                \item Geometric arrangement features
+                \end{itemize}
+        \end{itemize}
+        \column{.4\textwidth}
+        \begin{figure}
+        \vskip 0.1in
+\includegraphics[width=.42\linewidth]{keyboard.png}
+\hskip .1in
+\includegraphics[width=.42\linewidth]{keyboard_scene.png}
+\end{figure}
+        \end{columns}
 
-\end{itemize}
 \end{frame}
 
+\begin{comment}
+\begin{frame}{Features}
 
-\begin{frame}{Model}
 \begin{itemize}
+\item Node Features
+\begin{itemize}
+\item Visual Appearance
+	\begin{itemize}
+	\item Histogram of HSV color values
+	\item Average HSV color values
+	\item HOG features corresponding to the segment
+	\end{itemize}
+	\item Local Shape and Geometry
+	\begin{itemize}
+	\item Linear-ness , Planar-ness and Scatter
+	\item Vertical component of the normal
+	\item Vertical position of centroid
+	\item Bounding box dimensions
+	\item Distance from scene boundary
+	\end{itemize}
+\end{itemize}
+\end{itemize}
 
-\item Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$ and edge features $\fe{t}{i}{j}$
+\end{frame}
+
+\begin{frame}{Features}
+
+\begin{itemize}
+\item Edge Features
+\begin{itemize}
+\item Visual Appearance
+	\begin{itemize}
+	\item Diff in avg. HSV color values
+	\end{itemize}
+	\item Local Shape and Geometry
+	\begin{itemize}
+	\item Coplanarity and convexity
+	\end{itemize}
+	\item Geometric context
+	\begin{itemize}
+	\item Horizontal distance b/w centroids
+	\item Vertical displacement b/w centroids
+	\item Angle between normals
+	\item Diff in angle with vertical
+	\item Distance between closest points
+	\item Relative position from camera (in front of/ behind) 
+	\end{itemize}
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+\end{comment}
+
+\begin{frame}{Inference}
+ Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$,  edge features $\fe{e}{i}{j}$ and weight vectors %$\wn{k}$ and $\we{t}{l}{k}$
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{l=1}^{K} \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
+ \label{eq:relaxobj}\\
+\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
+\pause
+\color<2>{red}{\ysc{i}{l} \ysc{j}{k}} &\rightarrow& \color<2>{red}{ \zsc{ij}{lk}}
+\end{eqnarray*}
+\end{frame}
+
+\begin{frame}{Inference}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{l=1}^{K} \sum_{k=1}^{K} \zsc{ij}{lk} \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
+ \label{eq:relaxobj}\\
+\end{eqnarray*}
+ \begin{eqnarray*}
+  \forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i &:& \sum_{j=1}^{K} y_i^j = 1\\
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \} \label{eq:relaxconst}
+\end{eqnarray*}
+\end{frame}
+
+\begin{frame}{Learning using $SVM^{struct}$}
 
 \begin{equation} \label{eq:model}
 \begin{split}
 \df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
- & + \sum_{(i,j)\in \mathcal{E}}   \sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K}  \zsc{ij}{lk}   \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] \\
+& = \w^T \Psi(\x,\y)
  \end{split}
 \end{equation}
+where, $\Psi(\x,\y)=XY$
 
-\end{itemize}
 \end{frame}
+\begin{comment}
+\begin{frame}{Learning using $SVM^{struct}$}
+learn weights w such that $\w^T \Psi(\x,\y)$  is max for correct y
+\begin{figure}[t!]
+\includegraphics[width=.9\linewidth]{struct.png}
+\end{figure}
+\end{frame}
+\end{comment}
 
-\begin{frame}{Model}
+\begin{frame}{Learning using $SVM^{struct}$}
+\begin{eqnarray*} \label{eq:trainqp}
+\min_{w,\xi}    \frac{1}{2} \w^T\w + C\xi\\
+s.t.   \forall \bar{\y}_1,...,\bar{\y}_\n \in \{0,1\}^{N \cdot K} :\\
+ \frac{1}{n} \w^T \sum_{i=1}^{n} [\Psi( \x_i, \y_i) \nonumber - \Psi(\x_i,\bar{\y}_i)] \ge \Delta(\y_i,\bar{\y}_i) -\xi \nonumber \\
+\text{where, } \Delta(\y_i,\bar{\y}_i)=|\y_i-\bar{\y}_i|_1=\text{number of incorrect labelings}
+\end{eqnarray*}
 
 \begin{itemize}
-%There may be multiple types $t$ of edge feature maps $\fe{t}{i}{j}$, and each type has a graph over the $K$ classes with edges $T_t$. If $T_t$ contains an edge between classes $l$ and $k$, then this feature map and a weight vector $\we{t}{l}{k}$ is used to model the dependencies between classes $l$ and $k$. If the edge is not present in $T_t$, then $\fe{t}{i}{j}$ is not used.
-
-\item Multiple types of edge feature maps $\fe{t}{i}{j}$
-\item Each type has a graph over the $K$ classes with edges  $T_t$
-\item If $T_t$ contains edge $(l,k)$, then $\fe{t}{i}{j}$ and $\we{t}{l}{k}$  model the dependencies between classes $l$ and $k$.
-\item Associative edges:  ${T_t}=\{(k,k)| \forall k=1..K\}$
-\item Non-associative edges: $T_t=\{(l,k)| \forall l,k=1..K\}$
-\item Object-associate edges: $T_t=\{(l,k) | \exists object , ~ l,k\in {\rm parts}({\rm object})\}$
-
+\item convex quadratic program
+\item $2^{N.K}$ constraints!
+\item cutting plane method
+\item need to compute \\ $\bar{\y}_i  = \argmax_{\y \in \{0,1\}^{N \cdot K}} \left[ \w^T \Psi(\x_i,\y) + \loss{\y_i}{\y} \right]$
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Model}
+
+%\renewcommand{\CancelColor}{\red}
+
+\begin{frame}{Inference for Learning}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{l=1}^{K}  \sum_{k=1}^{K}  \zsc{ij}{lk} \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] \\
+&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i,j,l,k &:& \xcancel{ \zsc{ij}{lk},\ysc{i}{l} \in \{ 0,1 \} } \;\;\; \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \\
+\forall i &:& \xcancel{\sum_{j=1}^{K} y_i^j = 1 }
+\end{eqnarray*} 
+
 \begin{itemize}
-\item Parsimonious model
-
-\item Two types of feature maps: 
-\begin{itemize}
-\item ``object-associative'' features $\fe{oa}{i}{j}$ - used between classes that are parts of the same object (e.g., ``chair base'', ``chair back'' and ``chair back rest''). 
-\item ``non-associative'' features $\fe{na}{i}{j}$ -  used between any pair of classes.
+ \item $y_i^k\in{0,0.5,1}$ , Persistence
+ \item can also be solved as QBPO using uses graph-cut
 \end{itemize}
-\item Since $|T_{na}| >> |T_{oa}|$ , the number of parameters to learn is lesser compared to modeling all edges as non-associative.
-\end{itemize}
-\end{frame}
-
-
-\begin{frame}{Features}
 
 \end{frame}
 
-\begin{frame}{Learning}
-
-\end{frame}
-
-\begin{frame}{Inference}
- 
- 
-\end{frame}
 
 \begin{frame}{Data}
 % types and number of scene 
 % examples of labeled pointclouds
+%Two types of indoor environments : 
+	\begin{figure}
+	\includegraphics[width=0.5\linewidth,height=0.75in]{office_scene.pdf}
+	\includegraphics[width=0.5\linewidth,height=0.75in]{home_scene.pdf}
+	\end{figure}
+
+   \begin{itemize}
+   \item Office 
+
+   	\begin{itemize}
+	\item 24 stitched scenes
+	\item 1108 labeled segments
+	\item {\scriptsize  \emph{wall, floor, tableTop, tableDrawer, tableLeg, chairBackRest, chairBase, chairBack, monitor, printerFront, printerSide keyboard, cpuTop, cpuFront, cpuSide, book, paper}}
+	\end{itemize}
+
+
+
+   \item Home
+   	\begin{itemize}
+   	\item  28 stitched scenes
+	\item 1387 labeled segments
+	\item {\scriptsize  \emph{wall, floor, tableTop, tableDrawer, tableLeg, chairBackRest, chairBase, sofaBase, sofaArm, sofaBackRest, bed, bedSide, quilt, pillow, shelfRack, laptop, book }}
+	\end{itemize} 
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Results }
+Results on 24 Office and 28 Home scenes for 17 classes each.\\
+\vskip 0.1in
+{\small
+\begin{tabular}{|c|r|r|r|r|r|r|}
+\hline
+ & \multicolumn{3}{c|}{Office} & \multicolumn{3}{c|}{Home} \\
+\hline
+ & \multicolumn{1}{c}{micro} & \multicolumn{2}{|c}{macro} & \multicolumn{1}{|c|}{micro} & \multicolumn{2}{|c|}{macro}   \\
+\hline
+model  & $P/R$ & Preci.  & \multicolumn{1}{c|}{Rec.} &  $P/R$ & Prec. &  Rec.  \\ 
+\hline
+baseline &  26.23 & 5.88 & 5.88 & 29.38 & 5.88 & 5.88\\
+\color<2>{red}{Image Only}  & \color<2>{red}{46.67}  & \color<2>{red}{35.73} & \color<2>{red}{31.67} &   \color<2>{red}{38.00} & \color<2>{red}{15.03} & \color<2>{red}{14.50}\\
+Shape Only & 75.36  & 64.56 & 60.88 &    56.25 & 35.90 & 36.52 \\
+\color<2->{red}{Image+Shape}  & \color<2->{red}{77.97}  & \color<2->{red}{69.44} & \color<2->{red}{66.23} &   \color<2->{red}{56.50} & \color<2->{red}{37.18} & \color<2->{red}{34.73} \\
+\color<3>{red}{Image+Shape \& context} & \color<3>{red}{81.45}  &\color<3>{red}{76.79}  &\color<3>{red}{70.07}   & \color<3>{red}{72.38}  & \color<3>{red}{57.82}  & \color<3>{red}{53.62}\\
+\hline
+\end{tabular}
+}
+\begin{itemize}
+\item \uncover<2->{How valuable are colored pointclouds ?}
+\item \uncover<3->{How important is context? }
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Results}
+
+  \begin{figure}
+  \begin{minipage}[b]{0.45\linewidth}
+\centering
+\includegraphics[width=\linewidth,height=2in]{objassoc_office_radius0_6.pdf} 
+\caption{Office Scenes}
+
+\end{minipage}
+\hspace{0.5cm}
+  \begin{minipage}[b]{0.45\linewidth}
+\centering		             
+		\includegraphics[width=\linewidth,height=2in]{objassoc_home_radius0_6.pdf} 
+\caption{Home Scenes}
+
+\end{minipage}		
+		
+	\end{figure}
+
+\end{frame}
+
+\begin{comment}
+\begin{frame}{Results}
+Confusion Matrix for Home dataset
+ \begin{figure}   
+ \includegraphics[scale=0.2]{objassoc_home_radius0_6.pdf} 
+ \end{figure}
+\end{frame}
+\end{comment}
+
+
+
+\begin{frame}{Parsimonious Model}
+
+\begin{equation} \label{eq:model}
+\begin{split}
+\df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
+ \end{split}
+\end{equation}
+
+\end{frame}
+
+\begin{frame}{Parsimonious Model}
+
+\begin{itemize}
+%There may be multiple types $t$ of edge feature maps $\fe{t}{i}{j}$, and each type has a graph over the $K$ classes with edges $T_t$. If $T_t$ contains an edge between classes $l$ and $k$, then this feature map and a weight vector $\we{t}{l}{k}$ is used to model the dependencies between classes $l$ and $k$. If the edge is not present in $T_t$, then $\fe{t}{i}{j}$ is not used.
+
+\item Multiple types of edge feature maps.
+
+\item Visual similarity between segments -- parts of the same object.
+\item Vertical distance between segments -- relates different objects.
+
+\end{itemize}
+\begin{figure}[t!]
+\includegraphics[width=.5\linewidth]{parsi.jpg}
+\end{figure}
+
+
+
+\end{frame}
+
+\begin{frame}{Parsimonious Model}
+\begin{itemize}
+
+\item Each type has a graph over the $K$ classes with edges  $T_t$
+
+\item Object-associate type: $T_t=\{(l,k) | \exists object , ~ l,k\in {\rm parts}({\rm object})\}$
+\item Non-associative type: $T_t=\{(l,k)| \forall l,k=1..K\}$
+\item Associative type:  ${T_t}=\{(k,k)| \forall k=1..K\}$
+\end{itemize}
+\hskip 1in
+\begin{figure}
+		\includegraphics[width=.8\linewidth]{objAssoc.png}
+	\end{figure}
+
+
+\end{frame}
+
+\begin{frame}{Parsimonious Model}
+
+
+
+%\item Given $(\mathcal{V},\mathcal{E})$, individual segment features $\fn{i}$ and edge features $\fe{t}{i}{j}$
+{\small
+\begin{equation} \label{eq:model}
+\begin{split}
+\df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \sum_{l=1}^{K}  \sum_{k=1}^{K} \ysc{i}{l} \ysc{j}{k}  \left[\we{e}{l}{k} \cdot \fe{e}{i}{j}\right] 
+ \end{split}
+\end{equation}
+}
+%\vskip -0.1in
+\begin{equation} \label{eq:model}
+\begin{split}
+\df{\y}{\x}{\w} & = \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+ & + \sum_{(i,j)\in \mathcal{E}}   \color<1>{red}{\sum_{T_t \in {\cal T}}  \sum_{(l,k)\in T_t}} \ysc{i}{l} \ysc{j}{k}  \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] 
+ \end{split}
+\end{equation}
+%\begin{itemize}
+%\item If $T_t$ contains edge $(l,k)$, then $\fe{t}{i}{j}$ and $\we{t}{l}{k}$  model the dependencies between classes $l$ and $k$.
+%\item Since $|T_{na}| >> |T_{oa}|$ , the number of parameters to learn is lesser compared to modeling all edges as non-associative.
+
+%\end{itemize}
+\begin{figure}
+\includegraphics[width=\linewidth]{table3_1.pdf}\\
+\includegraphics[width=\linewidth]{table3_2.pdf}
+\end{figure}
 
 \end{frame}
 
 
-\begin{frame}{Results }
-% put table
-% put confusion matrices 
-% discuss the points mentioned in the paper  
+
+
+\begin{frame}{Putting it on the robot}
+
+\begin{figure}[t!]
+\includegraphics[width=.335\linewidth]{blue_robot.jpg}
+\hskip .2in
+\includegraphics[width=.5\linewidth]{robot2.jpg}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{What if an object in not found?}
+\begin{center}
+Where is the keyboard?
+ \begin{figure}   
+\includegraphics[width=0.9\linewidth]{contextorig.png}
+ \end{figure}
+ \end{center}
+\end{frame}
+
+\begin{frame}{What if an object in not found?}
+\begin{center}
+Where is the keyboard?
+ \begin{figure}   
+\includegraphics[width=0.5\linewidth]{frontCropped.png}
+\includegraphics[width=0.5\linewidth]{frontHeatCropped.png} \\
+\includegraphics[width=0.5\linewidth]{topCropped.png}
+\includegraphics[width=0.5\linewidth]{topHeatCropped.png} \\
+ \end{figure}
+ \end{center}
+\end{frame}
+
+
+\begin{frame}{What if an object in not found?}
+\begin{itemize}
+\item Find the most contextually likely location by imagining an segment at every discretized 3D location.
+\end{itemize}
+ \begin{figure}   
+ \includegraphics[scale=0.3]{heatImage.png} 
+ \end{figure}
+\end{frame}
+
+
+
+\begin{frame}{Robotic Experiments: Results}
+
+\begin{itemize}
+
+\item Results for finding 12 object classes in 10 office scenes
+
+\end{itemize}
+
+\begin {center}
+{\footnotesize 
+\begin{tabular}{c | c | c | c}
+class & \# instances & precision & recall \\
+\hline
+Wall & 10 & 100 & 100 \\
+Table Top & 10 & 100  &100  \\
+Table Leg & 10 & 71.43 & 50  \\
+Table Drawer & 7 & 100 & 71.43 \\
+Chair Backrest & 10 & 100 & 100  \\
+Chair Base & 10 & 100  & 100 \\
+Chair Back & 8 & 100 & 87.5 \\
+Monitor & 9  & 100 & 100 \\
+Keyboard & 9 & 100 & 77.7 \\
+CPU & 8 & 50 & 11.1 \\ 
+Printer & 1 & 100 & 100 \\
+Paper & 10 & 100 & 22.2 \\
+\hline
+Overall Micro & \multirow{2}{*}{102} & 96.15 & 75 \\
+Overall Macro & & 93.45 & 76.66 \\
+
+\end{tabular}
+}
+\end{center}
+
+\end{frame}
+
+\begin{frame}{Conclusions}
+\begin{itemize}
+\item Kinect(and others) are invaluable for scene understanding.
+\item Visual and shape based features can be modeled parsimoniously.
+\item Context can be used for detection and active search.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\begin{block}{Data and code available!}
+\text{http://pr.cs.cornell.edu/sceneunderstanding/}
+ \begin{figure}   
+\includegraphics[width=0.25\linewidth]{qr.png}
+ \end{figure}
+\end{block}
+
+\begin{block}{}
+
+\begin{center}
+
+{\Huge 
+Questions?
+}
+
+\end{center}
+
+\end{block}
+
+\end{frame}
+
+
+\begin{frame}{Current Work}
+\begin{center}
+{\huge
+Using grammars for scene understanding
+}
+\end{center}
+\end{frame}
+
+\begin{frame}{Current Work: Using grammars for scene understanding}
+use grammars to model:
+\begin{itemize}
+\item objects are typically composed of characteristic parts
+\item higher level cues can help in segmentation
+\item global shapes and sizes of segments
+\item occlusion
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}{Current Work}
+\begin{center}
+{\huge
+Object Affordance and Human Activity Recognition
+}
+\end{center}
+\end{frame}
+
+\begin{frame}{ Object Affordance and Human Activity Recognition}
+\begin{itemize}
+\item Affordances :  properties of the environment that afford a certain action to be performed by a human or an animal
+\end{itemize}
+\begin{figure}[t!]
+\includegraphics[width=.95\linewidth]{affordances.pdf}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Object Affordance and Human Activity Recognition}
+\begin{itemize}
+\item Human-Object interactions: Affordance depends on human-poses / sub-actions
+\end{itemize}
+\begin{figure}[t!]
+\includegraphics[width=.25\linewidth]{couch_sit.jpg}
+\includegraphics[width=.25\linewidth]{couch_read.jpg}
+\includegraphics[width=.25\linewidth]{couch_sleep.jpg}
+\end{figure}
+\begin{itemize}
+\item Object-Object interactions: Affordance of objects are related
+\end{itemize}
+\begin{figure}[h]
+\includegraphics[width=.25\linewidth]{pitcher-pouring.jpg}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}
+\begin{center}
+{\Huge 
+Thank You!
+}
+\end{center}
+\end{frame}
+
+\begin{frame}{Results}
+How large should the Context Range be?
+  \begin{figure}
+	\includegraphics[scale=0.5]{radiusEffectPlot.pdf} 
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}{The world has more than 17 classes}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst}\\
+\forall i &:& \sum_{j=1}^{K} y_i^j = 1
+\end{eqnarray*} 
+
+\end{frame}
+
+
+
+\begin{frame}{The world has more than 17 classes}
+ \begin{eqnarray*}
+\hat{\y}\!\!\!&=&\!\!\!\argmax_{\y}\max_{\mathbf z} \sum_{i \in \mathcal{V}} \sum_{k=1}^{K} \ysc{i}{k} \left[\wn{k} \cdot \fn{i} \right] \\
+&+&  \!\!\!\sum_{(i,j)\in \mathcal{E}}  \sum_{T_t \in {\cal T}} \sum_{(l,k)\in T_t} \zsc{ij}{lk} \left[\we{t}{l}{k} \cdot \fe{t}{i}{j}\right] \\
+&+& \loss{\y_i}{\y} \label{eq:relaxobj}\\
+\forall i,j,l,k &:& \:\: \zsc{ij}{lk}\le \ysc{i}{l}, \:\:\:\:
+\zsc{ij}{lk}\le \ysc{j}{k},\:\:\:\:
+\ysc{i}{l} + \ysc{j}{k} \le \zsc{ij}{lk}+1,\:\:\:\: \\
+\forall i,j,l,k &:& \zsc{ij}{lk},\ysc{i}{l} \in [ 0,1 ] \label{eq:relaxconst} \\
+\forall i &:& \sum_{j=1}^{K} y_i^j \le 1
+\end{eqnarray*} 
+\end{frame}
+
+
+\begin{frame}{The world has more than 17 classes}
+\begin{itemize}
+\item Results on the two datasets using the above inference method:
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{c | c | c | c | c}
+Data & Micro-  & Micro-  & Macro-  & Macro-\\
+ &  precision &  recall &  precision &  recall\\
+\hline
+Office & 89.27 & 55.17 & 74.29 & 35.24 \\
+Home & 82.09 & 52.35 & 52.03 & 26.22 \\
+\hline
+\end{tabular}
+\end{center}
 \end{frame}
 
 \begin{frame}{Robotic Experiments}
+
 % setup
 %demo
 % table of results
+\begin{itemize}
+\item Goal : Find a set of object classes in an office scene.
+\item Start at a predetermined location and scan room. 
+\item Classify pointclouds. 
+\item Find contextually likely locations for the rest.
+\item Update predicted locations when new objects are found.
+\end{itemize}
+
 \end{frame}
 
-\begin{frame}{Current Work: }
-\end{frame}
-
-\begin{frame}{Current Work: }
-\end{frame}
 
 \end{document} 
