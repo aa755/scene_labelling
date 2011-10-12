@@ -184,6 +184,10 @@ void transformXYZYPR(pcl::PointCloud<PointT> &pcd, pcl::PointCloud<PointT> &targ
         double x, double y, double z, double yaw, double pitch, double roll)
 {   
     Matrix4f Ti = computeTransformXYZYPR(x, y, z, yaw,  pitch, roll);
+    
+    for(int i=0;i<3;i++)
+        target->sensor_origin_(i)=Ti(i,3);
+    
     pcl::transformPointCloud<PointT>/*<pcl::PointCloud<PointT>*/(pcd,target,Ti);
 }
 
