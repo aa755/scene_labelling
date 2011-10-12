@@ -83,6 +83,8 @@ main(int argc, char** argv)
         ROS_ERROR("Couldn't read file ");
         return (-1);
     }
+    
+    
     sensor_msgs::PointCloud2ConstPtr cloud_blob, cloud_blob_prev;
     pcl::PointCloud<pcl::PointXYZRGBCamSL> inp_cloud;
 
@@ -96,6 +98,11 @@ main(int argc, char** argv)
             //ROS_INFO ("PointCloud with %d data points and frame %s (%f) received.", (int)cloud.points.size (), cloud.header.frame_id.c_str (), cloud.header.stamp.toSec ());
             pcl_count++;
  
+    TransformG transForm = readTranform(argv[1]);
+
+    for(int i=0;i<3;i++)
+        inp_cloud.sensor_origin_(i)=transForm.transformMat(i,3);
+    
             writer.write<pcl::PointXYZRGBCamSL > (std::string(argv[1])+std::string(".pcd"), inp_cloud, true);
 
     bag.close();

@@ -61,7 +61,7 @@ rosbuild_add_executable (label_visualizer src/labelVisualizer.cpp)
 #rosbuild_add_executable (multiFramePCD2Bag src/pcd2bag.cpp)
 rosbuild_add_executable (combineVisibility src/VisibilityMerge.cpp)
 rosbuild_add_executable (pcmerger src/pcMerger2.cpp)
-#rosbuild_add_executable (bag2pcd src/bag2pcd.cpp)
+rosbuild_add_executable (bag2pcd src/bag2pcd.cpp)
 #rosbuild_add_executable (image_and_label src/genImageAndLabelFile.cpp)
 #rosbuild_add_executable (cfg3D src/cfg3D.cpp)
 
