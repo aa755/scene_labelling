@@ -1,0 +1,25 @@
+\subsubsection parameters ROS parameters
+
+Reads and maintains the following parameters on the ROS server
+
+- \b "~x" : \b [double] x min: -1000.0, default: 0.0, max: 1000.0
+- \b "~y" : \b [double] y min: -1000.0, default: 0.0, max: 1000.0
+- \b "~z" : \b [double] z min: -1000.0, default: 0.0, max: 1000.0
+- \b "~yaw" : \b [double] yaw min: -180.0, default: 50.0, max: 180.0
+- \b "~pitch" : \b [double] pitch min: -180.0, default: 0.0, max: 180.0
+- \b "~roll" : \b [double] roll min: -180.0, default: -115.0, max: 180.0
+- \b "~minx" : \b [double] minx min: -5.0, default: -5.0, max: 10.0
+- \b "~maxx" : \b [double] maxx min: -5.0, default: 10.0, max: 10.0
+- \b "~miny" : \b [double] miny min: -5.0, default: -5.0, max: 10.0
+- \b "~maxy" : \b [double] maxy min: -5.0, default: 10.0, max: 10.0
+- \b "~minz" : \b [double] minz min: -5.0, default: -5.0, max: 5.0
+- \b "~maxz" : \b [double] maxz min: -5.0, default: 5.0, max: 5.0
+- \b "~add_pc" : \b [bool] add point cloud? min: False, default: False, max: True
+- \b "~undo" : \b [bool] Undo? min: False, default: False, max: True
+- \b "~skip_pc" : \b [bool] skip point cloud? min: False, default: False, max: True
+- \b "~update" : \b [bool] update point cloud? min: False, default: False, max: True
+- \b "~setIT" : \b [bool] set Initial Transform? min: False, default: False, max: True
+- \b "~skipNum" : \b [double] skipNum min: 0.0, default: 5.0, max: 100.0
+- \b "~set_skip" : \b [bool] set skip size? min: False, default: False, max: True
+- \b "~done" : \b [bool] Done? min: False, default: False, max: True
+
