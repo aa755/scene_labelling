@@ -1,10 +1,10 @@
 echo "installing some dependencies .... if all steps succed, you will see Success!!  else see comments in this script for possible fixes"
 set -e
-cd boost-numeric-bindings/
-echo "installing boost numeric bindings for gels least squares fitting and others"
-./configure
-make
-sudo make install
+#cd boost-numeric-bindings/
+#echo "installing boost numeric bindings for gels least squares fitting and others"
+#./configure
+#make
+#sudo make install
 cd ..
 sudo apt-get install subversion ros-electric-octomap-mapping ros-electric-perception-pcl ros-electric-perception-pcl-addons
 #cd ..
