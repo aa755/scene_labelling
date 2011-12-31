@@ -12,8 +12,11 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv,"hi");
   unsigned int step = 10;
-  
-  if(argc > 1)  step = atoi(argv[2]);
+  int min=0;
+  int max=INT_MAX;
+  if(argc > 2)  step = atoi(argv[2]);
+  if(argc > 3)  min = atoi(argv[3]);
+  if(argc > 4)  max = atoi(argv[4]);
   ros::NodeHandle n;
   //Instantiate the kinect image listener
   OpenNIListener kinect_listener(n, 
@@ -22,7 +25,7 @@ int main(int argc, char** argv)
                                  "/camera/depth/image",
 								 "/camera/rgb/camera_info",
 								 "/camera/rgb/points",
-                                 argv[1], step);//,  "/camera/depth/image_raw");
+                                 argv[1], step,min,max);//,  "/camera/depth/image_raw");
  
    ros::spin();
   
