@@ -41,7 +41,9 @@ class OpenNIListener  {
                    const char* info_topic= "/cam_info_in", //Kinect:/camera/rgb/camera_info
                    const char* cloud_topic= "/cloud_in",
                    const char* filename= "test.bag",
-				   unsigned int step = 10);
+				   unsigned int step = 3,
+				   int min_frame_index_ = 0,
+				   int max_frame_index_ = INT_MAX);
 
 //    void Callback (const sensor_msgs::PointCloud2ConstPtr&  point_cloud);
 
@@ -68,6 +70,9 @@ class OpenNIListener  {
    //ros::Publisher pc_pub; 
     unsigned int callback_counter_;
     unsigned int step_;
+    int min_frame_index;
+    int max_frame_index;
+    
     //bool pause_;
     //bool first_frame_;
     rosbag::Bag bag_;

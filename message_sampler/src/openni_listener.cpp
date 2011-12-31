@@ -16,14 +16,19 @@
 
 OpenNIListener::OpenNIListener( ros::NodeHandle nh,  const char* visual_topic, 
                                const char* depth_topic, const char* info_topic, 
-                               const char* cloud_topic, const char* filename , unsigned int step ) 
+                               const char* cloud_topic, const char* filename , unsigned int step ,
+				   int min_frame_index_,
+				   int max_frame_index_)
+
 : visual_sub_ (nh, visual_topic, 10),
   depth_sub_(nh, depth_topic, 10),
   info_sub_(nh, info_topic, 10),
   cloud_sub_(nh, cloud_topic, 10),
   sync_(MySyncPolicy(10),  visual_sub_, depth_sub_, info_sub_, cloud_sub_),
   callback_counter_(0),
-  step_(step)
+  step_(step),
+  min_frame_index(min_frame_index_),
+  max_frame_index(max_frame_index_)
 {
   // ApproximateTime takes a queue size as its constructor argument, hence MySyncPolicy(10)
   sync_.registerCallback(boost::bind(&OpenNIListener::cameraCallback, this, _1, _2, _3, _4));
@@ -51,8 +56,8 @@ void OpenNIListener::cameraCallback (const sensor_msgs::ImageConstPtr& visual_im
                                      const sensor_msgs::PointCloud2ConstPtr& point_cloud) {
 
    ROS_INFO("Received a frame from kinect");
-  
-   if(++callback_counter_%step_ == 0) {
+   if(callback_counter_%step_ == 0&&(int)callback_counter_>=min_frame_index&&(int)callback_counter_<=max_frame_index) {
+  ++callback_counter_;
    ROS_INFO("accepted the frame");
      bag_.write ( "/camera/rgb/image_mono" , visual_img_msg->header.stamp, visual_img_msg );
      bag_.write ( "/camera/depth/image" , depth_img_msg->header.stamp, depth_img_msg );
