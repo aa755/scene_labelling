@@ -7,7 +7,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  Release        : w/o debug symbols, w/ optimization
 #  RelWithDebInfo : w/ debug symbols, w/ optimization
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+set(ROS_BUILD_TYPE Debug)
 
 rosbuild_init()
 
@@ -40,7 +40,7 @@ rosbuild_add_executable (scene_segmentation_new src/segmentation_new.cpp)
 #rosbuild_add_executable (lidar_scene_segmentation src/segmentation_lidar.cpp)
 #rosbuild_add_executable (cleaning src/cleaning.cpp)
 rosbuild_add_executable (scene_labler src/labeler.cpp)
-#rosbuild_add_executable (pcmerger src/pcMerger2.cpp)
+rosbuild_add_executable (pcmerger src/pcMerger2.cpp)
 #rosbuild_add_executable (image_features src/compute_image_features.cpp)
 #rosbuild_add_executable (evaluate_image src/evaluate_image_pred.cpp)
 #rosbuild_add_executable (label_visualizer src/labelVisualizer.cpp)

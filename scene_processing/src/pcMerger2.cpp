@@ -110,7 +110,7 @@ bool doUpdate = false;
 bool Merged = false;
 bool ITpresent = false;
 pcl_ros::BAGReader reader;
-int skipNum = 20;
+int skipNum = 0;
 
 scene_processing::pcmergerConfig InitialTransformConfig;
 
@@ -275,6 +275,8 @@ conf.setIT = false;
             cout<<"numPoints="<<cloud_temp_ptr->size ()<<endl;
             appendCamIndexAndDistance (cloud_temp_ptr,cloud_new_ptr,globalFrameCount,VectorG(0,0,0));
             globalFrameCount++;
+            cloud_new_ptr->width=1;
+            cloud_new_ptr->height=cloud_new_ptr->size();
             writer.write (std::string("tempAppend.pcd"),*cloud_new_ptr,true);
   if (pcl::io::loadPCDFile (std::string("tempAppend.pcd"), cloud_blobc_new) == -1)
   {
