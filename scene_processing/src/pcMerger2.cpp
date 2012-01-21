@@ -247,7 +247,27 @@ conf.setIT = false;
 
         
     }
-    if(conf.skip_pc || conf.add_pc) {
+    if(conf.skip_pc || conf.add_pc)
+    {
+        if (conf.skip_pc)
+        {
+            conf.x = -1;
+            conf.y = -0.3;
+            conf.z = 0.78;
+            conf.yaw = 0;
+            conf.pitch = 30;
+            conf.roll = 0;
+        }
+        else
+        {
+            conf.x = -0.1;
+            conf.y = -0.8;
+            conf.z = 0.019;
+            conf.yaw = 175;
+            conf.pitch = 0;
+            conf.roll = 0;
+        }
+
         noMoreUndo=false;
         conf.skip_pc = false;
         conf.add_pc =false;
@@ -293,9 +313,9 @@ conf.setIT = false;
                 cout<<"inside IT"<<endl;
                 transformXYZYPR<PointT>(*cloud_new_ptr, *cloud_mod_ptr, InitialTransformConfig.x, InitialTransformConfig.y, InitialTransformConfig.z, InitialTransformConfig.yaw/180.0*PI, InitialTransformConfig.pitch/180.0*PI, InitialTransformConfig.roll/180.0*PI);
                 *cloud_new_ptr = *cloud_mod_ptr;
-                conf.pitch=0;
-                conf.yaw=0;
-                conf.roll=0;
+             //   conf.pitch=0;
+             //   conf.yaw=0;
+             //   conf.roll=0;
             }
             //ROS_INFO("PointCloud with %d data points and frame %s (%f) received.", (int) cloud_new_ptr->points.size(), cloud_new_ptr->header.frame_id.c_str(), cloud_new_ptr->header.stamp.toSec());
             viewer.removePointCloud("new");
@@ -303,13 +323,6 @@ conf.setIT = false;
             color_handler_new.reset(new pcl_visualization::PointCloudColorHandlerRGBField<sensor_msgs::PointCloud2 > (cloud_blobc_new));
             viewer.addPointCloud(*cloud_new_ptr, color_handler_new, "new", viewportOrig);
             ROS_INFO("displaying new point cloud");
-            conf.x=0;
-            conf.y=0;
-            conf.z=0;
-            conf.yaw=0;
-            conf.pitch=0;
-            conf.roll=0;
-            
           /*  if(Merged){
                 viewer.removePointCloud("merged");
                 pcl::toROSMsg(*cloud_merged_ptr, cloud_blobc_merged);
