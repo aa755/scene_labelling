@@ -2315,10 +2315,12 @@ def evaluation_class_pr_sum1(Y,Ybar,K,N,sparm):
                 predcount[label,0] += 1;
                 numPositives+=1;
                 predClass=label;
-                confusionMatrixWMultiple[label,actualClass]+=1.0/countMax;
+		if(actualClass <> -1):
+                    confusionMatrixWMultiple[label,actualClass]+=1.0/countMax;
 
         if(numPositives==0):
-            zeroClasses[actualClass,0]+=1
+	    if(actualClass <> -1):
+                zeroClasses[actualClass,0]+=1
         elif(numPositives>=1):
 #            multipleClasses[actualClass,0]+=1
 #        else:
@@ -2326,7 +2328,8 @@ def evaluation_class_pr_sum1(Y,Ybar,K,N,sparm):
                 prediction=maxLabelList[random.randint(0,countMax)]
             else:
                 prediction=maxLabelList[0]
-            confusionMatrix[prediction,actualClass]+=1
+	    if(actualClass <> -1):
+                confusionMatrix[prediction,actualClass]+=1
             singlepredcount[prediction,0] += 1;
             if(actualClass==prediction):
                 tpcount[prediction,0] += 1
